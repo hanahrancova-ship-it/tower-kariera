@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tower Finance – Kariérny systém</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green:#1db954;--green-dark:#158a3e;--green-pale:#e8f8ee;
+  --black:#0a0a0a;--white:#ffffff;--gray:#f4f4f4;--gray2:#e8e8e8;--gray3:#999;--gray4:#555;
+  --red:#e53935;--red-pale:#ffeaea;--orange:#f57c00;--orange-pale:#fff3e0;--blue:#1565c0;--blue-pale:#e3f0ff;
+  --font-head:'Syne',sans-serif;--font-mono:'DM Mono',monospace;
+  --radius:10px;--shadow:0 2px 12px rgba(0,0,0,0.08);
+}
+body{font-family:var(--font-mono);background:#f7f7f5;color:var(--black);min-height:100vh}
+h1,h2,h3,h4{font-family:var(--font-head)}
+.app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+.sidebar{background:var(--black);color:var(--white);padding:0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid #222}
+.sidebar-logo .brand{font-family:var(--font-head);font-weight:800;font-size:16px;color:var(--green);letter-spacing:0.5px}
+.sidebar-logo .sub{font-size:10px;color:#666;margin-top:2px;text-transform:uppercase;letter-spacing:1px}
+.nav{padding:16px 0;flex:1}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 20px;cursor:pointer;font-size:12px;color:#aaa;transition:all .15s;border-left:3px solid transparent;font-family:var(--font-head);font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
+.nav-item:hover{color:var(--white);background:#111}
+.nav-item.active{color:var(--green);border-left-color:var(--green);background:#111}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.main{padding:32px;overflow-y:auto;min-height:100vh}
+.page{display:none}.page.active{display:block}
+.page-header{margin-bottom:28px}
+.page-header h2{font-size:26px;font-weight:800;color:var(--black)}
+.page-header p{font-size:13px;color:var(--gray3);margin-top:4px;font-family:var(--font-mono)}
+.card{background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);border:1px solid var(--gray2)}
+.card-title{font-family:var(--font-head);font-weight:700;font-size:14px;margin-bottom:14px;color:var(--black)}
+.upload-zone{border:2px dashed var(--gray2);border-radius:var(--radius);padding:36px;text-align:center;cursor:pointer;transition:all .2s;background:var(--gray)}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--green);background:var(--green-pale)}
+.upload-zone input{display:none}
+.upload-zone .icon{font-size:32px;margin-bottom:10px}
+.upload-zone p{font-size:13px;color:var(--gray3)}
+.upload-zone strong{color:var(--black);font-size:14px;display:block;margin-bottom:6px}
+.btn{font-family:var(--font-head);font-weight:700;font-size:13px;padding:9px 18px;border-radius:6px;border:none;cursor:pointer;transition:all .15s;letter-spacing:0.3px}
+.btn-primary{background:var(--green);color:var(--white)}
+.btn-primary:hover{background:var(--green-dark)}
+.btn-secondary{background:var(--gray2);color:var(--black)}
+.btn-secondary:hover{background:#ddd}
+.btn-danger{background:var(--red);color:var(--white)}
+.btn-sm{padding:5px 12px;font-size:11px}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-family:var(--font-head);font-weight:700;letter-spacing:0.3px}
+.badge-green{background:var(--green-pale);color:var(--green-dark)}
+.badge-red{background:var(--red-pale);color:var(--red)}
+.badge-orange{background:var(--orange-pale);color:var(--orange)}
+.badge-blue{background:var(--blue-pale);color:var(--blue)}
+.badge-gray{background:var(--gray2);color:var(--gray4)}
+.table-wrap{overflow-x:auto;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{font-family:var(--font-head);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;padding:10px 12px;text-align:left;color:var(--gray3);background:var(--gray);border-bottom:2px solid var(--gray2)}
+td{padding:10px 12px;border-bottom:1px solid var(--gray2);vertical-align:middle;color:var(--black)}
+tr:hover td{background:#fafafa}
+tr.warning-row td{background:#fffbf0}
+tr.danger-row td{background:#fff5f5}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:24px}
+.stat-card{background:var(--white);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);border:1px solid var(--gray2)}
+.stat-card .val{font-family:var(--font-head);font-size:28px;font-weight:800;color:var(--black)}
+.stat-card .lbl{font-size:11px;color:var(--gray3);margin-top:2px;text-transform:uppercase;letter-spacing:0.5px}
+.stat-card.accent-green .val{color:var(--green-dark)}
+.stat-card.accent-red .val{color:var(--red)}
+.stat-card.accent-orange .val{color:var(--orange)}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:14px;padding:28px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.2)}
+.modal h3{font-family:var(--font-head);font-size:18px;font-weight:800;margin-bottom:18px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:11px;font-weight:600;font-family:var(--font-head);text-transform:uppercase;letter-spacing:0.5px;color:var(--gray4);margin-bottom:5px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:9px 12px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:13px;color:var(--black);background:var(--white);outline:none;transition:border .15s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--green)}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--black);color:var(--white);padding:12px 20px;border-radius:8px;font-size:13px;font-family:var(--font-head);font-weight:600;z-index:2000;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--green-dark)}
+.toast.error{background:var(--red)}
+.pos{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-family:var(--font-head);font-weight:700}
+.pos-md,.pos-sd,.pos-p{background:#0a0a0a;color:#fff}
+.pos-sm{background:#1db954;color:#fff}
+.pos-em{background:#1565c0;color:#fff}
+.pos-tl{background:#6a1b9a;color:#fff}
+.pos-sc{background:#f57c00;color:#fff}
+.pos-c{background:#78909c;color:#fff}
+.pos-tr{background:#bdbdbd;color:#333}
+.pos-vip{background:#c62828;color:#fff}
+.warn-timeline{display:flex;flex-direction:column;gap:12px}
+.warn-item{background:var(--white);border-radius:8px;padding:14px 16px;border:1px solid var(--gray2);border-left:4px solid var(--orange)}
+.warn-item.active-warn{border-left-color:var(--red)}
+.warn-item.resolved{border-left-color:var(--green);opacity:0.7}
+.warn-item .person{font-family:var(--font-head);font-weight:700;font-size:14px}
+.warn-item .meta{font-size:11px;color:var(--gray3);margin-top:3px}
+.warn-item .actions{margin-top:10px;display:flex;gap:8px}
+.month-warn{display:inline-flex;gap:4px;margin-top:4px}
+.month-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--gray2);background:var(--gray)}
+.month-dot.used{background:var(--orange);border-color:var(--orange)}
+.tabs{display:flex;gap:0;margin-bottom:20px;border-bottom:2px solid var(--gray2)}
+.tab{padding:10px 18px;cursor:pointer;font-family:var(--font-head);font-weight:700;font-size:13px;color:var(--gray3);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.tab.active{color:var(--green);border-bottom-color:var(--green)}
+.tab-pane{display:none}.tab-pane.active{display:block}
+.search-bar{display:flex;gap:10px;margin-bottom:16px;align-items:center}
+.search-bar input{flex:1;padding:8px 12px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:13px}
+.search-bar select{padding:8px 12px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:12px}
+.empty{text-align:center;padding:40px;color:var(--gray3);font-size:13px}
+.empty .big{font-size:32px;margin-bottom:8px}
+.section-title{font-family:var(--font-head);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray3);margin:20px 0 10px}
+.fj-cell{display:inline-flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:12px;font-weight:500}
+.fj-ok{color:var(--green-dark)}
+.fj-fail{color:var(--red);font-weight:700}
+.fj-neutral{color:var(--gray4)}
+.tip-wrap{position:relative;display:inline-flex;align-items:center}
+.tip-icon{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:var(--red);color:#fff;font-size:9px;font-weight:700;cursor:pointer;margin-left:3px;flex-shrink:0;font-family:var(--font-head)}
+.tip-icon:hover+.tip-box,.tip-box:hover{display:block}
+.tip-box{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--black);color:#fff;font-size:11px;padding:8px 12px;border-radius:6px;white-space:nowrap;z-index:100;font-family:var(--font-mono);line-height:1.6;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,0.2)}
+.tip-box::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--black)}
+#eval-main-table table{font-size:12px}
+#eval-main-table th{position:sticky;top:0;z-index:5;background:var(--gray)}
+#eval-main-table td{padding:9px 12px}
+.eval-name-cell{min-width:160px}
+.eval-row-fail td{background:#fff8f8}
+.eval-row-warn td{background:#fffbf0}
+.eval-row-ok td{background:#fff}
+.eval-row-promo td{background:#f0fbff}
+.napom-dot{display:inline-flex;gap:3px;margin-left:4px;vertical-align:middle}
+.napom-m{width:10px;height:10px;border-radius:50%;display:inline-block}
+.napom-m.used{background:var(--red)}
+.napom-m.free{background:var(--gray2);border:1px solid #ccc}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">TOWER FINANCE</div>
+    <div class="sub">Kariérny systém</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-item active" onclick="showPage('dashboard',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard
+    </div>
+    <div class="nav-item" onclick="showPage('import',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import dát
+    </div>
+    <div class="nav-item" onclick="showPage('ludia',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Ľudia
+    </div>
+    <div class="nav-item" onclick="showPage('vyhodnotenie',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Vyhodnotenie
+    </div>
+    <div class="nav-item" onclick="showPage('napomenutia',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Napomenutia
+    </div>
+    <div class="nav-item" onclick="showPage('kariera',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Kariéra
+    </div>
+  </nav>
+</aside>
+<main class="main">
+<div class="page active" id="page-dashboard">
+  <div class="page-header"><h2>Dashboard</h2><p id="dash-period">Načítajte dáta importom</p></div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="val" id="stat-total">–</div><div class="lbl">Celkom ľudí</div></div>
+    <div class="stat-card accent-green"><div class="val" id="stat-ok">–</div><div class="lbl">Spĺňajú štatút</div></div>
+    <div class="stat-card accent-red"><div class="val" id="stat-warn">–</div><div class="lbl">Aktívne napomenutia</div></div>
+    <div class="stat-card accent-orange"><div class="val" id="stat-promo">–</div><div class="lbl">Môžu byť povýšení</div></div>
+  </div>
+  <div class="card"><div class="card-title">Posledný import – prehľad</div><div id="dash-table"><div class="empty"><div class="big">📂</div>Zatiaľ žiadne dáta. Použite Import dát.</div></div></div>
+</div>
+<div class="page" id="page-import">
+  <div class="page-header"><h2>Import dát</h2><p>Nahrajte Excel export s FJ a pozíciami spolupracovníkov</p></div>
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title">Nahrať Excel súbor</div>
+    <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+      <input type="file" id="file-input" accept=".xlsx,.xls,.csv" onchange="handleFile(this.files[0])">
+      <div class="icon">📊</div>
+      <strong>Kliknite alebo pretiahnite súbor sem</strong>
+      <p>Podporované formáty: .xlsx, .xls, .csv</p>
+    </div>
+    <div id="import-status" style="margin-top:14px;display:none"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Očakávaný formát stĺpcov</div>
+    <div class="table-wrap"><table><thead><tr><th>Stĺpec</th><th>Popis</th><th>Príklad</th></tr></thead><tbody>
+      <tr><td><code>meno sprostredkovateľa</code></td><td>Meno a priezvisko</td><td>Ondrej Broska</td></tr>
+      <tr><td><code>Pozícia</code></td><td>Aktuálna pozícia</td><td>MD, SM, EM, TL, SC, C, TR, VIP I-IV</td></tr>
+      <tr><td><code>Manažér</code></td><td>Priamy nadriadený</td><td>Erik Lehocký</td></tr>
+      <tr><td><code>Vlastné: Body</code></td><td>FJ vlastná produkcia</td><td>823.84</td></tr>
+      <tr><td><code>Skupinové: Body</code></td><td>FJ skupiny</td><td>13903.27</td></tr>
+      <tr><td><code>Historické: Body</code></td><td>Historické FJ</td><td>516.26</td></tr>
+    </tbody></table></div>
+  </div>
+</div>
+<div class="page" id="page-ludia">
+  <div class="page-header"><h2>Ľudia</h2><p>Zoznam všetkých spolupracovníkov</p></div>
+  <div class="search-bar">
+    <input type="text" id="search-ludia" placeholder="Hľadať meno..." oninput="renderLudia()">
+    <select id="filter-pozicia" onchange="renderLudia()">
+      <option value="">Všetky pozície</option>
+      <option>MD</option><option>SD</option><option>SM</option><option>EM</option>
+      <option>TL</option><option>SC</option><option>C</option><option>TR</option>
+      <option>VIP I</option><option>VIP II</option><option>VIP III</option>
+    </select>
+    <select id="filter-cesta" onchange="renderLudia()">
+      <option value="">Všetky cesty</option>
+      <option value="manazerska">Manažérska</option>
+      <option value="obchodna">Obchodná</option>
+    </select>
+  </div>
+  <div class="card"><div class="table-wrap"><div id="ludia-table"><div class="empty"><div class="big">👥</div>Žiadne dáta.</div></div></div></div>
+</div>
+<div class="page" id="page-vyhodnotenie">
+  <div class="page-header"><h2>Vyhodnotenie</h2><p>Prehľad štatútov, napomenutí a podmienok povýšenia</p></div>
+  <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center">
+    <button class="btn btn-primary" onclick="runEvaluation()">▶ Spustiť vyhodnotenie</button>
+    <button class="btn btn-secondary" onclick="exportReport()">⬇ Exportovať CSV</button>
+    <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+      <input type="text" id="eval-search" placeholder="Hľadať meno..." oninput="renderEvaluation()" style="padding:7px 12px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:12px;width:180px">
+      <select id="eval-filter-pos" onchange="renderEvaluation()" style="padding:7px 10px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:12px">
+        <option value="">Všetky pozície</option>
+        <option>MD</option><option>SD</option><option>SM</option><option>EM</option>
+        <option>TL</option><option>SC</option><option>C</option><option>TR</option>
+        <option>VIP I</option><option>VIP II</option><option>VIP III</option>
+      </select>
+      <select id="eval-filter-status" onchange="renderEvaluation()" style="padding:7px 10px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:12px">
+        <option value="">Všetci</option>
+        <option value="ok">Len OK</option>
+        <option value="fail">Len nesplnené</option>
+        <option value="promo">Môžu byť povýšení</option>
+      </select>
+    </div>
+  </div>
+  <div id="eval-alerts" style="margin-bottom:14px"></div>
+  <div class="card" style="padding:0;overflow:hidden"><div id="eval-main-table"><div class="empty" style="padding:48px"><div class="big">⚡</div>Spustite vyhodnotenie.</div></div></div>
+</div>
+<div class="page" id="page-napomenutia">
+  <div class="page-header"><h2>Evidencia napomenutí</h2><p>História napomenutí, aktívne prípady, zrušenia</p></div>
+  <div style="display:flex;gap:10px;margin-bottom:20px">
+    <button class="btn btn-primary" onclick="openAddWarnModal()">+ Pridať napomenutie</button>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchWarnTab('aktivne',this)">Aktívne</div>
+    <div class="tab" onclick="switchWarnTab('vsetky',this)">Všetky</div>
+  </div>
+  <div id="warn-tab-aktivne"><div id="warn-aktivne"></div></div>
+  <div id="warn-tab-vsetky" style="display:none"><div id="warn-vsetky"></div></div>
+</div>
+<div class="page" id="page-kariera">
+  <div class="page-header"><h2>Kariérna tabuľka</h2><p>Podmienky udržania štatútu a povýšenia</p></div>
+  <div class="card"><div class="table-wrap">
+    <table><thead><tr><th>Pozícia</th><th>Sadzba</th><th>Udržanie štatútu</th><th>Povýšenie – FJ</th><th>Povýšenie – PB</th><th>Poznámka</th></tr></thead>
+    <tbody id="kariera-table-body"></tbody></table>
+  </div></div>
+</div>
+</main>
+</div>
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-warn">
+  <div class="modal">
+    <h3>Pridať napomenutie</h3>
+    <div class="form-group"><label>Spolupracovník</label><select id="warn-person-sel" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px"></select></div>
+    <div class="form-group"><label>Dátum napomenutia</label><input type="date" id="warn-date"></div>
+    <div class="form-group"><label>Dôvod</label><select id="warn-reason" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px"><option value="fj">Nesplnenie minimálnych FJ</option><option value="pb">Nesplnenie podmienky PB</option><option value="obe">Nesplnenie FJ aj PB</option></select></div>
+    <div class="form-group"><label>Poznámka</label><textarea id="warn-note" rows="2" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px;resize:vertical"></textarea></div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('modal-warn')">Zrušiť</button><button class="btn btn-primary" onclick="saveWarning()">Uložiť</button></div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-resolve">
+  <div class="modal">
+    <h3>Zrušiť napomenutie</h3>
+    <p style="font-size:13px;color:var(--gray3);margin-bottom:16px">Napomenutie bude označené ako vyriešené.</p>
+    <div class="form-group"><label>Dátum zrušenia</label><input type="date" id="resolve-date"></div>
+    <div class="form-group"><label>Poznámka</label><textarea id="resolve-note" rows="2" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px;resize:vertical"></textarea></div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('modal-resolve')">Späť</button><button class="btn btn-primary" onclick="confirmResolve()">Potvrdiť zrušenie</button></div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-cesta">
+  <div class="modal">
+    <h3 id="cesta-modal-title">Kariérna cesta</h3>
+    <p style="font-size:13px;color:var(--gray3);margin-bottom:6px" id="cesta-modal-sub"></p>
+    <div id="cesta-warning-box" style="display:none;background:var(--orange-pale);border:1px solid var(--orange);border-radius:8px;padding:12px;margin-bottom:16px;font-size:12px;color:var(--orange)"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0">
+      <div id="cesta-btn-manazerska" onclick="selectCesta('manazerska')" style="border:2px solid var(--gray2);border-radius:10px;padding:18px;cursor:pointer;text-align:center;transition:all .2s">
+        <div style="font-size:24px;margin-bottom:8px">🏢</div>
+        <div style="font-family:var(--font-head);font-weight:700;font-size:14px;margin-bottom:4px">Manažérska</div>
+        <div style="font-size:11px;color:var(--gray3)">SC → TL → EM → SM → MD → SD → P</div>
+      </div>
+      <div id="cesta-btn-obchodna" onclick="selectCesta('obchodna')" style="border:2px solid var(--gray2);border-radius:10px;padding:18px;cursor:pointer;text-align:center;transition:all .2s">
+        <div style="font-size:24px;margin-bottom:8px">💼</div>
+        <div style="font-family:var(--font-head);font-weight:700;font-size:14px;margin-bottom:4px">Obchodná</div>
+        <div style="font-size:11px;color:var(--gray3)">SC → VIP I → VIP II → VIP III → VIP IV</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--gray3);margin-bottom:16px">Zmena kariérnej cesty je možná maximálne 1× ročne.</div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('modal-cesta')">Zrušiť</button><button class="btn btn-primary" id="cesta-save-btn" onclick="saveCesta()" disabled style="opacity:0.4">Uložiť</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const KARIERA=[
+  {pos:'TR',name:'Trainee',rate:3,maintainFJ:null,maintainPB:0,promoteFJ:null,promotePB:0,promoteHistFJ:null,promoteNote:'Úspešné absolvovanie CC'},
+  {pos:'C',name:'Consultant',rate:4,maintainFJ:450,maintainPB:0,promoteFJ:400,promotePB:0,promoteHistFJ:null,promoteNote:'400 FJ BRUTTO hist.',firstPromoNote:'BRUTTO'},
+  {pos:'SC',name:'Senior Consultant',rate:5,maintainFJ:900,maintainPB:0,promoteFJ:900,promotePB:0,promoteHistFJ:1500,promoteNote:'900 FJ os. prod./kv + 1 500 FJ hist.'},
+  {pos:'TL',name:'Team Leader',rate:5.5,maintainFJ:1350,maintainPB:1,promoteFJ:1350,promotePB:1,promoteHistFJ:null,promoteNote:'Spln. SC + 1 350 FJ/kv + 1 PB',maintainSCcondition:true},
+  {pos:'EM',name:'Executive Manager',rate:6,maintainFJ:3150,maintainPB:3,promoteFJ:3150,promotePB:3,promoteHistFJ:null,promoteNote:'Spln. SC + 3 150 FJ/kv + 3 PB'},
+  {pos:'SM',name:'Senior Manager',rate:6.5,maintainFJ:6300,maintainPB:6,promoteFJ:6300,promotePB:6,promoteHistFJ:null,promoteNote:'6 300 FJ/kv + 6 PB'},
+  {pos:'MD',name:'Managing Director',rate:7,maintainFJ:11700,maintainPB:12,promoteFJ:11700,promotePB:12,promoteHistFJ:null,promoteNote:'11 700 FJ/kv + 12 PB'},
+  {pos:'SD',name:'Senior Director',rate:7.5,maintainFJ:22500,maintainPB:24,promoteFJ:22500,promotePB:24,promoteHistFJ:null,promoteNote:'22 500 FJ/kv + 24 PB'},
+  {pos:'P',name:'Partner',rate:8,maintainFJ:43200,maintainPB:48,promoteFJ:43200,promotePB:48,promoteHistFJ:null,promoteNote:'43 200 FJ/kv + 48 PB'},
+  {pos:'VIP I',name:'VIP Consultant I.',rate:5.5,maintainFJ:1800,maintainPB:0,promoteFJ:1800,promotePB:0,promoteHistFJ:6000,promoteNote:'1 800 FJ/kv + 6 000 FJ hist.'},
+  {pos:'VIP II',name:'VIP Consultant II.',rate:6,maintainFJ:2100,maintainPB:0,promoteFJ:2100,promotePB:0,promoteHistFJ:6000,promoteNote:'2 100 FJ/kv + 6 000 FJ hist.'},
+  {pos:'VIP III',name:'VIP Consultant III.',rate:6.5,maintainFJ:2400,maintainPB:0,promoteFJ:2400,promotePB:0,promoteHistFJ:6000,promoteNote:'2 400 FJ/kv + 6 000 FJ hist.'},
+  {pos:'VIP IV',name:'VIP Consultant IV.',rate:7,maintainFJ:2700,maintainPB:0,promoteFJ:2700,promotePB:0,promoteHistFJ:6000,promoteNote:'2 700 FJ/kv + 6 000 FJ hist.'},
+];
+const PB_VALUES={TR:0,C:1,SC:1,TL:2,EM:3,SM:6,MD:12,SD:24,P:48,'VIP I':1,'VIP II':1,'VIP III':1,'VIP IV':1};
+const HIST_PROTECTION=18000,HIST_DISCOUNT_80=24000,HIST_DISCOUNT_60=36000;
+function isVIP(pos){return pos&&pos.startsWith('VIP')}
+function isManazerska(pos){return['TL','EM','SM','MD','SD','P'].includes(pos)}
+function getDiscountCoef(h){if(h>=HIST_DISCOUNT_60)return 0.6;if(h>=HIST_DISCOUNT_80)return 0.8;return 1}
+function effectiveMaintainFJ(k,h){if(!k.maintainFJ)return null;return Math.ceil(k.maintainFJ*getDiscountCoef(h))}
+function hasHistProtection(h){return h>=HIST_PROTECTION}
+function getKariera(pos){return KARIERA.find(k=>k.pos===pos)}
+function posClass(pos){const m={'MD':'pos-md','SD':'pos-md','P':'pos-md','SM':'pos-sm','EM':'pos-em','TL':'pos-tl','SC':'pos-sc','C':'pos-c','TR':'pos-tr'};if(pos&&pos.startsWith('VIP'))return'pos-vip';return m[pos]||'pos-tr'}
+function getActiveWarning(name){return warnings.find(w=>w.person===name&&w.status==='active')}
+function monthsSince(d){const dt=new Date(d),now=new Date();return(now.getFullYear()-dt.getFullYear())*12+(now.getMonth()-dt.getMonth())}
+
+let people=[];
+let warnings=JSON.parse(localStorage.getItem('tf_warnings')||'[]');
+let cestaData=JSON.parse(localStorage.getItem('tf_cesta')||'{}');
+let lastImportDate=localStorage.getItem('tf_lastImport')||'';
+let importedPeople=JSON.parse(localStorage.getItem('tf_people')||'[]');
+let currentWarnId=null,resolveTarget=null,cestaTarget=null,selectedCestaValue=null;
+if(importedPeople.length){people=importedPeople;renderAll();}
+
+function showPage(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  el.classList.add('active');
+  if(id==='napomenutia')renderWarnings();
+  if(id==='kariera')renderKarieraTable();
+  if(id==='ludia')renderLudia();
+  if(id==='dashboard')renderDashboard();
+  if(id==='vyhodnotenie')renderEvaluation();
+}
+function switchWarnTab(name,el){
+  document.querySelectorAll('#page-napomenutia .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('warn-tab-aktivne').style.display=name==='aktivne'?'block':'none';
+  document.getElementById('warn-tab-vsetky').style.display=name==='vsetky'?'block':'none';
+}
+function handleFile(file){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      processImport(XLSX.utils.sheet_to_json(ws,{defval:''}));
+    }catch(err){showToast('Chyba: '+err.message,'error');}
+  };
+  reader.readAsArrayBuffer(file);
+}
+function processImport(rows){
+  const parsed=[];
+  for(const r of rows){
+    const name=r['meno sprostredkovateľa']||r['Meno']||r['meno']||'';
+    const pos=(r['Pozícia']||r['Pozicia']||r['pozicia']||'').trim();
+    const manager=r['Manažér']||r['Manazer']||r['manager']||'';
+    const ownFJ=parseFloat(r['Vlastné: Body']||r['Vlastne: Body']||0)||0;
+    const groupFJ=parseFloat(r['Skupinové: Body']||r['Skupinove: Body']||0)||0;
+    const histFJ=parseFloat(r['Historické: Body']||r['Historicke: Body']||0)||0;
+    if(!name||!pos)continue;
+    parsed.push({name,pos,manager,ownFJ,groupFJ,histFJ,pb:0});
+  }
+  if(!parsed.length){showToast('Žiadne platné dáta.','error');return;}
+  parsed.forEach(p=>{
+    const directs=parsed.filter(x=>x.manager===p.name);
+    p.pb=directs.reduce((s,x)=>{
+      if(hasHistProtection(x.histFJ)){
+        const kC=getKariera('C');
+        if(x.ownFJ<effectiveMaintainFJ(kC,x.histFJ))return s;
+      }
+      return s+(PB_VALUES[x.pos]||0);
+    },0);
+  });
+  people=parsed;importedPeople=parsed;
+  lastImportDate=new Date().toLocaleDateString('sk-SK');
+  localStorage.setItem('tf_people',JSON.stringify(people));
+  localStorage.setItem('tf_lastImport',lastImportDate);
+  const st=document.getElementById('import-status');
+  st.style.display='block';
+  st.innerHTML=`<span class="badge badge-green">✓ Importovaných ${people.length} ľudí · ${lastImportDate}</span>`;
+  showToast(`Importovaných ${people.length} ľudí.`,'success');
+  renderAll();
+}
+const dz=document.getElementById('drop-zone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragover')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover');if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0])});
+
+function checkStatus(p){
+  const k=getKariera(p.pos);if(!k)return{ok:true,msg:'',type:''};
+  const h=p.histFJ||0,coef=getDiscountCoef(h),issues=[];
+  if(k.maintainSCcondition){
+    const kSC=getKariera('SC'),scEff=effectiveMaintainFJ(kSC,h);
+    if(p.ownFJ<scEff)issues.push(`SC FJ: ${p.ownFJ.toFixed(0)}/${scEff}`);
+  }
+  if(k.maintainFJ){
+    const eff=effectiveMaintainFJ(k,h);
+    if(p.ownFJ<eff)issues.push(`FJ: ${p.ownFJ.toFixed(0)}/${eff}${coef<1?' (zľava '+Math.round((1-coef)*100)+'%)':''}`);
+  }
+  if(k.maintainPB&&p.pb<k.maintainPB)issues.push(`PB: ${p.pb}/${k.maintainPB}`);
+  const type=issues.length===0?'ok':issues[0].startsWith('PB')?'pb':'fj';
+  return{ok:issues.length===0,msg:issues.join(' · '),type,issues};
+}
+function checkPromotion(p){
+  const posM=['TR','C','SC','TL','EM','SM','MD','SD','P'];
+  const posV=['TR','C','SC','VIP I','VIP II','VIP III','VIP IV'];
+  let nextPos=null;
+  if(isManazerska(p.pos)){const i=posM.indexOf(p.pos);if(i<posM.length-1)nextPos=posM[i+1];}
+  else if(isVIP(p.pos)){const i=posV.indexOf(p.pos);if(i<posV.length-1)nextPos=posV[i+1];}
+  else if(p.pos==='SC')return checkPromotionSC(p);
+  else{const i=posM.indexOf(p.pos);if(i<posM.length-1)nextPos=posM[i+1];}
+  if(!nextPos)return{canPromote:false,msg:'Najvyššia pozícia'};
+  return evalPromoTo(p,nextPos);
+}
+function checkPromotionSC(p){
+  const cesta=getPersonCesta(p.name);
+  if(cesta==='manazerska')return{...evalPromoTo(p,'TL'),cestaFixed:true};
+  if(cesta==='obchodna')return{...evalPromoTo(p,'VIP I'),cestaFixed:true};
+  const toTL=evalPromoTo(p,'TL'),toV1=evalPromoTo(p,'VIP I');
+  if(toTL.canPromote||toV1.canPromote)return{canPromote:true,multiPath:true,paths:[toTL,toV1].filter(x=>x.canPromote),allPaths:[toTL,toV1],noCestaWarning:true};
+  return{canPromote:false,multiPath:true,allPaths:[toTL,toV1],noCestaWarning:true};
+}
+function evalPromoTo(p,nextPos){
+  const nk=getKariera(nextPos);if(!nk)return{canPromote:false,nextPos};
+  if(nextPos==='C')return{canPromote:null,nextPos,brutoCheck:true,msg:'⚠ Manuálna kontrola BRUTTO FJ'};
+  const issues=[];
+  if(nextPos==='TL'){const kSC=getKariera('SC');if(p.ownFJ<kSC.promoteFJ)issues.push(`SC FJ: ${p.ownFJ.toFixed(0)}/${kSC.promoteFJ}`);if(p.histFJ<kSC.promoteHistFJ)issues.push(`SC Hist: ${p.histFJ.toFixed(0)}/${kSC.promoteHistFJ}`);}
+  if(nk.promoteFJ&&p.ownFJ<nk.promoteFJ)issues.push(`FJ: ${p.ownFJ.toFixed(0)}/${nk.promoteFJ}`);
+  if(nk.promotePB&&p.pb<nk.promotePB)issues.push(`PB: ${p.pb}/${nk.promotePB}`);
+  if(nk.promoteHistFJ&&p.histFJ<nk.promoteHistFJ)issues.push(`Hist: ${p.histFJ.toFixed(0)}/${nk.promoteHistFJ}`);
+  return{canPromote:issues.length===0,nextPos,issues,note:nk.promoteNote};
+}
+function getPersonCesta(name){const h=cestaData[name];if(!h||!h.length)return null;return h[h.length-1].cesta;}
+function getCestaHistory(name){return cestaData[name]||[];}
+function canChangeCesta(name){const h=getCestaHistory(name);if(!h.length)return true;return(new Date()-new Date(h[h.length-1].date))/(1000*60*60*24)>=365;}
+function renderAll(){renderDashboard();renderLudia();renderEvaluation();renderWarnings();}
+</script>
+<script>
+function fjCell(v,threshold,label,extra){
+  if(threshold===null||threshold===undefined)return`<span class="fj-cell fj-neutral">${v.toFixed(0)}</span>`;
+  if(v>=threshold)return`<span class="fj-cell fj-ok">${v.toFixed(0)}</span>`;
+  const tip=`Potrebné: ${threshold.toFixed(0)} | Aktuálne: ${v.toFixed(0)} | Rozdiel: −${(threshold-v).toFixed(0)}${extra?' | '+extra:''}`;
+  return`<span class="fj-cell fj-fail">${v.toFixed(0)}<span class="tip-wrap"><span class="tip-icon">i</span><span class="tip-box">${label}: ${tip}</span></span></span>`;
+}
+function pbCell(v,threshold){
+  if(!threshold)return`<span class="fj-cell fj-neutral">${v}</span>`;
+  if(v>=threshold)return`<span class="fj-cell fj-ok">${v}</span>`;
+  return`<span class="fj-cell fj-fail">${v}<span class="tip-wrap"><span class="tip-icon">i</span><span class="tip-box">PB: Potrebné ${threshold} | Aktuálne ${v} | Rozdiel −${threshold-v}</span></span></span>`;
+}
+function runEvaluation(){renderEvaluation();showToast('Vyhodnotenie dokončené.','success');}
+function renderEvaluation(){
+  if(!people.length)return;
+  const q=(document.getElementById('eval-search')?.value||'').toLowerCase();
+  const fp=document.getElementById('eval-filter-pos')?.value||'';
+  const fs=document.getElementById('eval-filter-status')?.value||'';
+  const trainee=people.filter(p=>p.pos==='TR');
+  const scBez=people.filter(p=>p.pos==='SC'&&!getPersonCesta(p.name));
+  let alerts='';
+  if(trainee.length)alerts+=`<div style="background:var(--orange-pale);border:1px solid var(--orange);border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:var(--orange)">⚠ <strong>Trainee → Consultant: manuálna kontrola BRUTTO FJ</strong> (${trainee.map(p=>p.name).join(', ')})</div>`;
+  if(scBez.length)alerts+=`<div style="background:var(--orange-pale);border:1px solid var(--orange);border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:var(--orange)">⚠ <strong>${scBez.map(p=>p.name).join(', ')}</strong> – SC bez nastavenej kariérnej cesty.</div>`;
+  document.getElementById('eval-alerts').innerHTML=alerts;
+  let filtered=people.filter(p=>{
+    if(q&&!p.name.toLowerCase().includes(q))return false;
+    if(fp&&p.pos!==fp)return false;
+    if(fs==='ok'&&!checkStatus(p).ok)return false;
+    if(fs==='fail'&&checkStatus(p).ok)return false;
+    if(fs==='promo'){const pr=checkPromotion(p);if(!(pr.canPromote===true||(pr.multiPath&&pr.paths?.length)))return false;}
+    return true;
+  });
+  if(!filtered.length){document.getElementById('eval-main-table').innerHTML='<div class="empty" style="padding:48px"><div class="big">🎉</div>Žiadne záznamy.</div>';return;}
+  filtered.sort((a,b)=>{
+    const wa=getActiveWarning(a.name),wb=getActiveWarning(b.name);
+    const ma=wa?monthsSince(wa.date):0,mb=wb?monthsSince(wb.date):0;
+    const sa=checkStatus(a).ok,sb=checkStatus(b).ok;
+    if(!sa&&!sb)return mb-ma;if(!sa)return-1;if(!sb)return 1;return 0;
+  });
+  let html=`<div class="table-wrap"><table><thead><tr><th class="eval-name-cell">Meno</th><th>Pozícia</th><th>Manažér</th><th style="text-align:right">Vlastné FJ</th><th style="text-align:right">Hist. FJ</th><th style="text-align:right">Skupin. FJ</th><th style="text-align:right">PB</th><th>Štatút</th><th>Napomenutie</th><th>Povýšenie</th><th>Akcia</th></tr></thead><tbody>`;
+  filtered.forEach(p=>{
+    const k=getKariera(p.pos),s=checkStatus(p),pr=checkPromotion(p),aw=getActiveWarning(p.name);
+    const ms=aw?monthsSince(aw.date):0,coef=getDiscountCoef(p.histFJ);
+    const effFJ=k?.maintainFJ?effectiveMaintainFJ(k,p.histFJ):null;
+    const pbThresh=k?.maintainPB||0;
+    const extras=[];
+    if(hasHistProtection(p.histFJ))extras.push(`<span style="font-size:9px;color:var(--blue);font-weight:700">≥18k</span>`);
+    if(coef<1)extras.push(`<span style="font-size:9px;color:var(--blue);font-weight:700">${Math.round((1-coef)*100)}%↓</span>`);
+    let napomCell='<span style="font-size:11px;color:var(--gray3)">–</span>';
+    if(aw){
+      const dots=[0,1,2].map(i=>`<span class="napom-m ${i<ms?'used':'free'}"></span>`).join('');
+      napomCell=`<div style="display:flex;flex-direction:column;gap:3px"><span class="badge ${ms>=3?'badge-red':ms>=2?'badge-red':'badge-orange'}" style="font-size:10px">${ms}/3 mes.</span><span class="napom-dot">${dots}</span>${ms>=3?'<span class="badge badge-red" style="font-size:9px">⚠ ZNÍŽIŤ</span>':''}</div>`;
+    }
+    let promoCell='<span style="color:var(--gray3);font-size:11px">–</span>';
+    if(pr.brutoCheck)promoCell='<span class="badge badge-orange" style="font-size:9px">C – brutto ⚠</span>';
+    else if(pr.canPromote===true)promoCell=`<span class="badge badge-blue" style="font-size:10px">→ ${pr.nextPos} ✓</span>`;
+    else if(pr.multiPath&&pr.paths?.length)promoCell=pr.paths.map(x=>`<span class="badge badge-blue" style="font-size:10px">→ ${x.nextPos} ✓</span>`).join('<br>');
+    else if(pr.multiPath&&pr.allPaths){const best=pr.allPaths.sort((a,b)=>(a.issues?.length||0)-(b.issues?.length||0))[0];promoCell=`<span style="font-size:10px;color:var(--gray3)">${best.nextPos}: ${(best.issues||[]).slice(0,1).join(', ')}</span>`;}
+    else if(pr.issues?.length)promoCell=`<span style="font-size:10px;color:var(--gray3)">${pr.issues.slice(0,1).join(', ')}</span>`;
+    let statusBadge=s.ok?'<span class="badge badge-green">OK</span>':aw&&ms>=3?'<span class="badge badge-red">⚠ Znížiť</span>':aw?'<span class="badge badge-red">Napomenutý</span>':'<span class="badge badge-orange">Nesplnené</span>';
+    let actionCell='';
+    if(!s.ok&&!aw)actionCell=`<button class="btn btn-sm btn-primary" onclick="quickWarn('${p.name.replace(/'/g,"\\'")}','${s.type||'fj'}')">Napomenúť</button>`;
+    else if(aw)actionCell=`<button class="btn btn-sm btn-secondary" onclick="openResolveModal('${p.name.replace(/'/g,"\\'")}')">Zrušiť nap.</button>`;
+    const rowCls=!s.ok&&aw&&ms>=3?'eval-row-fail':!s.ok&&aw?'eval-row-warn':!s.ok?'eval-row-fail':(pr.canPromote===true||(pr.multiPath&&pr.paths?.length))?'eval-row-promo':'eval-row-ok';
+    html+=`<tr class="${rowCls}"><td class="eval-name-cell"><div style="font-weight:700;font-family:var(--font-head)">${p.name}</div><div style="display:flex;gap:4px;margin-top:3px">${extras.join('')}</div></td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td style="font-size:11px;color:var(--gray3)">${p.manager||'–'}</td><td style="text-align:right">${fjCell(p.ownFJ,effFJ,'Vlastné FJ',coef<1?`po zľave ${Math.round(coef*100)}%`:'')}</td><td style="text-align:right">${fjCell(p.histFJ,null,'Hist. FJ','')}</td><td style="text-align:right"><span class="fj-cell fj-neutral">${p.groupFJ.toFixed(0)}</span></td><td style="text-align:right">${pbCell(p.pb,pbThresh)}</td><td>${statusBadge}</td><td>${napomCell}</td><td>${promoCell}</td><td>${actionCell}</td></tr>`;
+  });
+  html+=`</tbody></table></div><div style="display:flex;gap:20px;padding:12px 16px;background:var(--gray);border-top:1px solid var(--gray2);font-size:11px;color:var(--gray3);flex-wrap:wrap"><span><span class="fj-cell fj-ok">1234</span> = splnené</span><span><span class="fj-cell fj-fail" style="pointer-events:none">1234</span> = nesplnené (hover pre detail)</span><span style="background:#fff8f8;padding:2px 6px;border-radius:4px">červený = nesplnený</span><span style="background:#fffbf0;padding:2px 6px;border-radius:4px">žltý = napomenutie</span><span style="background:#f0fbff;padding:2px 6px;border-radius:4px">modrý = povýšenie</span></div>`;
+  document.getElementById('eval-main-table').innerHTML=html;
+}
+function renderDashboard(){
+  if(!people.length)return;
+  document.getElementById('dash-period').textContent=`Posledný import: ${lastImportDate} · ${people.length} spolupracovníkov`;
+  let ok=0,promoCount=0;
+  people.forEach(p=>{if(checkStatus(p).ok)ok++;const pr=checkPromotion(p);if(pr.canPromote===true||(pr.multiPath&&pr.paths?.length))promoCount++;});
+  document.getElementById('stat-total').textContent=people.length;
+  document.getElementById('stat-ok').textContent=ok;
+  document.getElementById('stat-warn').textContent=warnings.filter(w=>w.status==='active').length;
+  document.getElementById('stat-promo').textContent=promoCount;
+  const issues=people.filter(p=>!checkStatus(p).ok);
+  let html=issues.length?`<div class="table-wrap"><table><thead><tr><th>Meno</th><th>Pozícia</th><th>Vlastné FJ</th><th>Hist. FJ</th><th>PB</th><th>Problém</th><th>Napomenutie</th></tr></thead><tbody>${issues.map(p=>{const s=checkStatus(p),aw=getActiveWarning(p.name),ms=aw?monthsSince(aw.date):0;return`<tr class="${aw&&ms>=3?'danger-row':aw?'warning-row':''}"><td><strong>${p.name}</strong></td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td>${p.ownFJ.toFixed(0)}</td><td>${p.histFJ.toFixed(0)}</td><td>${p.pb}</td><td><span class="badge badge-orange" style="font-size:10px">${s.msg}</span></td><td>${aw?`<span class="badge badge-red">${ms}/3 mes.</span>`:'<span class="badge badge-gray">–</span>'}</td></tr>`;}).join('')}</tbody></table></div>`:'<div class="empty"><div class="big">✅</div>Všetci spĺňajú štatút!</div>';
+  document.getElementById('dash-table').innerHTML=html;
+}
+function renderLudia(){
+  const q=(document.getElementById('search-ludia')?.value||'').toLowerCase();
+  const fp=document.getElementById('filter-pozicia')?.value||'';
+  const fc=document.getElementById('filter-cesta')?.value||'';
+  const filtered=people.filter(p=>{
+    if(q&&!p.name.toLowerCase().includes(q))return false;
+    if(fp&&p.pos!==fp)return false;
+    if(fc){const pc=getPersonCesta(p.name);if(fc==='manazerska'&&pc!=='manazerska')return false;if(fc==='obchodna'&&pc!=='obchodna')return false;}
+    return true;
+  });
+  const bezCesty=people.filter(p=>['TR','C','SC'].includes(p.pos)&&!getPersonCesta(p.name));
+  let warn=bezCesty.length?`<div style="background:var(--orange-pale);border:1px solid var(--orange);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--orange)">⚠ <strong>${bezCesty.length} SP</strong> bez nastavenej kariérnej cesty.</div>`:'';
+  if(!filtered.length){document.getElementById('ludia-table').innerHTML=warn+'<div class="empty"><div class="big">👥</div>Žiadni ľudia.</div>';return;}
+  let html=`<table><thead><tr><th>Meno</th><th>Pozícia</th><th>Kariérna cesta</th><th>Manažér</th><th>Vlastné FJ</th><th>Hist. FJ</th><th>PB</th><th>Skupin. FJ</th><th>Zľava</th><th>Štatút</th></tr></thead><tbody>`;
+  filtered.forEach(p=>{
+    const s=checkStatus(p),aw=getActiveWarning(p.name),coef=getDiscountCoef(p.histFJ);
+    const cesta=getPersonCesta(p.name);
+    let cestaCell=isManazerska(p.pos)?'<span class="badge badge-gray">🏢 Manažérska</span>':isVIP(p.pos)?'<span class="badge badge-gray">💼 Obchodná</span>':cesta?`<span class="badge ${cesta==='manazerska'?'badge-blue':'badge-green'}">${cesta==='manazerska'?'🏢':'💼'} ${cesta==='manazerska'?'Manažérska':'Obchodná'}</span> <button class="btn btn-sm btn-secondary" style="font-size:10px" onclick="openCestaModal('${p.name.replace(/'/g,"\\'")}')">Zmeniť</button>`:`<button class="btn btn-sm btn-secondary" onclick="openCestaModal('${p.name.replace(/'/g,"\\'")}')">Nastaviť</button>`;
+    html+=`<tr><td><strong>${p.name}</strong>${hasHistProtection(p.histFJ)?'<br><span style="font-size:9px;color:var(--blue)">≥18k</span>':''}</td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td>${cestaCell}</td><td style="color:var(--gray3);font-size:11px">${p.manager||'–'}</td><td>${p.ownFJ.toFixed(2)}</td><td>${p.histFJ.toFixed(2)}</td><td>${p.pb}</td><td>${p.groupFJ.toFixed(2)}</td><td>${coef<1?Math.round((1-coef)*100)+'%':'–'}</td><td>${s.ok?'<span class="badge badge-green">OK</span>':aw?'<span class="badge badge-red">Napomenutý</span>':'<span class="badge badge-orange">Nesplnené</span>'}</td></tr>`;
+  });
+  document.getElementById('ludia-table').innerHTML=warn+html+'</tbody></table>';
+}
+function renderWarnings(){
+  const active=warnings.filter(w=>w.status==='active').sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const all=[...warnings].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  document.getElementById('warn-aktivne').innerHTML=active.length?renderWarnList(active):'<div class="empty"><div class="big">✅</div>Žiadne aktívne napomenutia.</div>';
+  document.getElementById('warn-vsetky').innerHTML=all.length?renderWarnList(all):'<div class="empty"><div class="big">📋</div>Zatiaľ žiadne napomenutia.</div>';
+}
+function renderWarnList(list){
+  return'<div class="warn-timeline">'+list.map(w=>{
+    const ms=monthsSince(w.date);
+    const dots=[0,1,2].map(i=>`<div class="month-dot ${i<ms?'used':''}">`).join('');
+    return`<div class="warn-item ${w.status==='active'?'active-warn':'resolved'}"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="person">${w.person}</div><div class="meta">${w.date} · ${w.reason==='fj'?'Nesplnenie FJ':w.reason==='pb'?'Nesplnenie PB':'Nesplnenie FJ+PB'}${w.note?' · '+w.note:''}</div>${w.status==='active'?`<div class="month-warn">${dots}</div>`:''}${w.status==='resolved'?`<div class="meta" style="color:var(--green-dark)">✓ Zrušené ${w.resolvedDate||''}</div>`:''}</div><span class="badge ${w.status==='active'?ms>=2?'badge-red':'badge-orange':'badge-green'}">${w.status==='active'?'Aktívne':'Vyriešené'}</span></div>${w.status==='active'?`<div class="actions"><button class="btn btn-sm btn-primary" onclick="openResolveModal('${w.person.replace(/'/g,"\\'")}')">Zrušiť napomenutie</button><button class="btn btn-sm btn-danger" onclick="deleteWarning('${w.id}')">Odstrániť</button></div>`:''}</div>`;
+  }).join('')+'</div>';
+}
+function renderKarieraTable(){
+  const groups=[{label:'Spoločné',positions:['TR','C','SC']},{label:'Manažérska cesta',positions:['TL','EM','SM','MD','SD','P']},{label:'Obchodná cesta (VIP)',positions:['VIP I','VIP II','VIP III','VIP IV']}];
+  let rows='';
+  groups.forEach(g=>{
+    rows+=`<tr><td colspan="6" style="background:var(--gray);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray3)">${g.label}</td></tr>`;
+    g.positions.forEach(pos=>{
+      const k=KARIERA.find(x=>x.pos===pos);if(!k)return;
+      rows+=`<tr><td><span class="pos ${posClass(pos)}">${pos}</span> <span style="font-size:11px;color:var(--gray3)">${k.name}</span></td><td>${k.rate}€/FJ</td><td>${k.maintainFJ?k.maintainFJ+' FJ/kv'+(k.maintainPB?' + '+k.maintainPB+' PB':'')+(k.maintainSCcondition?' + SC podmienky':''):'–'}</td><td>${k.promoteFJ?k.promoteFJ+' FJ/kv':'–'}${k.promoteHistFJ?'<br><span style="font-size:10px;color:var(--gray3)">+ '+k.promoteHistFJ+' hist.</span>':''}</td><td>${k.promotePB||'–'}</td><td style="font-size:10px;color:var(--gray3)">${k.promoteNote||'–'}</td></tr>`;
+    });
+  });
+  rows+=`<tr><td colspan="6" style="background:#fff3e0;font-size:11px;color:var(--orange);padding:10px 12px"><strong>Historické zľavy (len udržanie):</strong> ≥18 000 FJ → ochrana (neklesne pod SC) · ≥24 000 FJ → 80% štatútu · ≥36 000 FJ → 60% štatútu</td></tr>`;
+  document.getElementById('kariera-table-body').innerHTML=rows;
+}
+function openAddWarnModal(){
+  const sel=document.getElementById('warn-person-sel');
+  sel.innerHTML=people.length?people.map(p=>`<option value="${p.name}">${p.name} (${p.pos})</option>`).join(''):'<option>Najprv importujte dáta</option>';
+  document.getElementById('warn-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('warn-note').value='';
+  document.getElementById('modal-warn').classList.add('open');
+}
+function quickWarn(name,reason){
+  const sel=document.getElementById('warn-person-sel');
+  sel.innerHTML=people.map(p=>`<option value="${p.name}"${p.name===name?' selected':''}>${p.name} (${p.pos})</option>`).join('');
+  document.getElementById('warn-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('warn-reason').value=reason;
+  document.getElementById('warn-note').value='';
+  document.getElementById('modal-warn').classList.add('open');
+}
+function saveWarning(){
+  const person=document.getElementById('warn-person-sel').value;
+  const date=document.getElementById('warn-date').value;
+  const reason=document.getElementById('warn-reason').value;
+  const note=document.getElementById('warn-note').value;
+  if(!person||!date){showToast('Vyplňte všetky polia.','error');return;}
+  if(getActiveWarning(person)){showToast('Táto osoba už má aktívne napomenutie.','error');return;}
+  warnings.push({id:Date.now().toString(),person,date,reason,note,status:'active',createdAt:new Date().toISOString()});
+  localStorage.setItem('tf_warnings',JSON.stringify(warnings));
+  closeModal('modal-warn');renderWarnings();renderDashboard();renderEvaluation();
+  showToast('Napomenutie uložené.','success');
+}
+function openResolveModal(name){
+  resolveTarget=name;
+  document.getElementById('resolve-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('resolve-note').value='';
+  document.getElementById('modal-resolve').classList.add('open');
+}
+function confirmResolve(){
+  const w=warnings.find(x=>x.person===resolveTarget&&x.status==='active');
+  if(!w){closeModal('modal-resolve');return;}
+  w.status='resolved';w.resolvedDate=document.getElementById('resolve-date').value;w.resolvedNote=document.getElementById('resolve-note').value;
+  localStorage.setItem('tf_warnings',JSON.stringify(warnings));
+  closeModal('modal-resolve');renderWarnings();renderDashboard();renderEvaluation();
+  showToast('Napomenutie zrušené.','success');
+}
+function deleteWarning(id){
+  warnings=warnings.filter(w=>w.id!==id);
+  localStorage.setItem('tf_warnings',JSON.stringify(warnings));
+  renderWarnings();renderDashboard();
+  showToast('Záznam odstránený.','success');
+}
+function openCestaModal(name){
+  cestaTarget=name;selectedCestaValue=null;
+  const current=getPersonCesta(name),hist=getCestaHistory(name),canChange=canChangeCesta(name);
+  document.getElementById('cesta-modal-title').textContent=name;
+  document.getElementById('cesta-modal-sub').textContent=current?`Aktuálna cesta: ${current==='manazerska'?'Manažérska':'Obchodná'}`:'Kariérna cesta zatiaľ nie je nastavená.';
+  const wb=document.getElementById('cesta-warning-box');
+  if(!canChange&&current){wb.style.display='block';wb.textContent=`⚠ Posledná zmena: ${hist[hist.length-1].date}. Od zmeny neuplynul rok.`;}else{wb.style.display='none';}
+  highlightCestaBtn(current);
+  const sb=document.getElementById('cesta-save-btn');sb.disabled=true;sb.style.opacity='0.4';
+  document.getElementById('modal-cesta').classList.add('open');
+}
+function highlightCestaBtn(sel){
+  const m=document.getElementById('cesta-btn-manazerska'),o=document.getElementById('cesta-btn-obchodna');
+  m.style.borderColor=sel==='manazerska'?'var(--blue)':'var(--gray2)';m.style.background=sel==='manazerska'?'var(--blue-pale)':'';
+  o.style.borderColor=sel==='obchodna'?'var(--green)':'var(--gray2)';o.style.background=sel==='obchodna'?'var(--green-pale)':'';
+}
+function selectCesta(val){
+  selectedCestaValue=val;highlightCestaBtn(val);
+  const current=getPersonCesta(cestaTarget),sb=document.getElementById('cesta-save-btn');
+  if(val!==current){sb.disabled=false;sb.style.opacity='1';}else{sb.disabled=true;sb.style.opacity='0.4';}
+}
+function saveCesta(){
+  if(!cestaTarget||!selectedCestaValue)return;
+  if(!canChangeCesta(cestaTarget)&&getPersonCesta(cestaTarget)){if(!confirm('Od poslednej zmeny neuplynul rok. Naozaj zmeniť?'))return;}
+  if(!cestaData[cestaTarget])cestaData[cestaTarget]=[];
+  cestaData[cestaTarget].push({cesta:selectedCestaValue,date:new Date().toISOString().split('T')[0],note:''});
+  localStorage.setItem('tf_cesta',JSON.stringify(cestaData));
+  closeModal('modal-cesta');renderLudia();renderEvaluation();
+  showToast(`Kariérna cesta: ${selectedCestaValue==='manazerska'?'Manažérska':'Obchodná'}`,'success');
+}
+function exportReport(){
+  if(!people.length){showToast('Žiadne dáta.','error');return;}
+  let csv='Meno,Pozícia,Kariérna cesta,Manažér,Vlastné FJ,Hist FJ,Skupin. FJ,PB,Zľava %,Hist. ochrana,Štatút,Povýšenie,Napomenutie\n';
+  people.forEach(p=>{
+    const s=checkStatus(p),pr=checkPromotion(p),aw=getActiveWarning(p.name),coef=getDiscountCoef(p.histFJ);
+    const promoStr=pr.canPromote?pr.nextPos:pr.multiPath&&pr.paths?.length?pr.paths.map(x=>x.nextPos).join('/'):'–';
+    csv+=`"${p.name}","${p.pos}","${getPersonCesta(p.name)||'neurčená'}","${p.manager}",${p.ownFJ.toFixed(2)},${p.histFJ.toFixed(2)},${p.groupFJ.toFixed(2)},${p.pb},${coef<1?Math.round((1-coef)*100):0},"${hasHistProtection(p.histFJ)?'Áno':'Nie'}","${s.ok?'OK':'Nesplnené'}","${promoStr}","${aw?'Áno':'Nie'}"\n`;
+  });
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));a.download=`TF_report_${new Date().toISOString().split('T')[0]}.csv`;a.click();
+  showToast('Report exportovaný.','success');
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}));
+function showToast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';setTimeout(()=>t.classList.remove('show'),3000);}
+renderKarieraTable();renderWarnings();renderDashboard();
+</script>
+</body>
+</html>
