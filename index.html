@@ -126,17 +126,11 @@ tr.danger-row td{background:#fff5f5}
     <div class="sub">Kariérny systém</div>
   </div>
   <nav class="nav">
-    <div class="nav-item active" onclick="showPage('dashboard',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard
+    <div class="nav-item active" onclick="showPage('vyhodnotenie',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Vyhodnotenie
     </div>
     <div class="nav-item" onclick="showPage('import',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import dát
-    </div>
-    <div class="nav-item" onclick="showPage('ludia',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Ľudia
-    </div>
-    <div class="nav-item" onclick="showPage('vyhodnotenie',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Vyhodnotenie
     </div>
     <div class="nav-item" onclick="showPage('napomenutia',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Napomenutia
@@ -147,16 +141,7 @@ tr.danger-row td{background:#fff5f5}
   </nav>
 </aside>
 <main class="main">
-<div class="page active" id="page-dashboard">
-  <div class="page-header"><h2>Dashboard</h2><p id="dash-period">Načítajte dáta importom</p></div>
-  <div class="stats-grid">
-    <div class="stat-card"><div class="val" id="stat-total">–</div><div class="lbl">Celkom ľudí</div></div>
-    <div class="stat-card accent-green"><div class="val" id="stat-ok">–</div><div class="lbl">Spĺňajú štatút</div></div>
-    <div class="stat-card accent-red"><div class="val" id="stat-warn">–</div><div class="lbl">Aktívne napomenutia</div></div>
-    <div class="stat-card accent-orange"><div class="val" id="stat-promo">–</div><div class="lbl">Môžu byť povýšení</div></div>
-  </div>
-  <div class="card"><div class="card-title">Nesplnené štatúty – prehľad</div><div id="dash-table"><div class="empty"><div class="big">📂</div>Načítajte dáta cez Import dát.</div></div></div>
-</div>
+
 <div class="page" id="page-import">
   <div class="page-header"><h2>Import dát</h2><p>Nahrajte mesačný Excel export s FJ spolupracovníkov</p></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
@@ -193,26 +178,14 @@ tr.danger-row td{background:#fff5f5}
     </tbody></table></div>
   </div>
 </div>
-<div class="page" id="page-ludia">
-  <div class="page-header"><h2>Ľudia</h2><p id="ludia-period">Zobrazený mesiac: –</p></div>
-  <div class="search-bar">
-    <input type="text" id="search-ludia" placeholder="Hľadať meno..." oninput="renderLudia()">
-    <select id="filter-pozicia" onchange="renderLudia()">
-      <option value="">Všetky pozície</option>
-      <option>MD</option><option>SD</option><option>SM</option><option>EM</option>
-      <option>TL</option><option>SC</option><option>C</option><option>TR</option>
-      <option>VIP I</option><option>VIP II</option><option>VIP III</option><option>VIP IV</option>
-    </select>
-    <select id="filter-cesta" onchange="renderLudia()">
-      <option value="">Všetky cesty</option>
-      <option value="manazerska">Manažérska</option>
-      <option value="obchodna">Obchodná</option>
-    </select>
+<div class="page active" id="page-vyhodnotenie">
+  <div class="page-header"><h2>Vyhodnotenie</h2><p id="dash-period">Načítajte dáta importom</p></div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="val" id="stat-total">–</div><div class="lbl">Celkom ľudí</div></div>
+    <div class="stat-card accent-green"><div class="val" id="stat-ok">–</div><div class="lbl">Spĺňajú štatút</div></div>
+    <div class="stat-card accent-red"><div class="val" id="stat-warn">–</div><div class="lbl">Aktívne napomenutia</div></div>
+    <div class="stat-card accent-orange"><div class="val" id="stat-promo">–</div><div class="lbl">Môžu byť povýšení</div></div>
   </div>
-  <div class="card"><div class="table-wrap"><div id="ludia-table"><div class="empty"><div class="big">👥</div>Žiadne dáta.</div></div></div></div>
-</div>
-<div class="page" id="page-vyhodnotenie">
-  <div class="page-header"><h2>Vyhodnotenie</h2><p>Plávajúci kvartál – posledné 3 mesiace</p></div>
   <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center">
     <button class="btn btn-primary" onclick="runEvaluation()">▶ Spustiť vyhodnotenie</button>
     <button class="btn btn-secondary" onclick="exportReport()">⬇ Exportovať CSV</button>
@@ -408,8 +381,6 @@ function showPage(id,el){
   el.classList.add('active');
   if(id==='napomenutia')renderWarnings();
   if(id==='kariera')renderKarieraTable();
-  if(id==='ludia')renderLudia();
-  if(id==='dashboard')renderDashboard();
   if(id==='vyhodnotenie')renderEvaluation();
   if(id==='import')renderImportSelector();
 }
@@ -532,7 +503,7 @@ function getPersonCesta(name){const h=cestaData[name];if(!h||!h.length)return nu
 function getCestaHistory(name){return cestaData[name]||[];}
 function canChangeCesta(name){const h=getCestaHistory(name);if(!h.length)return true;return(new Date()-new Date(h[h.length-1].date))/(1000*60*60*24)>=365;}
 
-function renderAll(){renderDashboard();renderLudia();renderEvaluation();renderWarnings();}
+function renderAll(){renderEvaluation();renderWarnings();}
 
 function renderDashboard(){
   if(!evalPeople.length)return;
@@ -569,6 +540,12 @@ function renderEvaluation(){
   const sorted2=[...imports].sort((a,b)=>b.key.localeCompare(a.key));
   const last3=sorted2.slice(0,3);
   const periodLabel=last3.length>1?`${last3[last3.length-1].label} – ${last3[0].label}`:last3[0]?.label||'';
+  let _ok=0,_promo=0;evalPeople.forEach(p=>{if(checkStatus(p).ok)_ok++;const _pr=checkPromotion(p);if(_pr.canPromote===true||(_pr.multiPath&&_pr.paths?.length))_promo++;});
+  const _statTotal=document.getElementById('stat-total');if(_statTotal)_statTotal.textContent=evalPeople.length;
+  const _statOk=document.getElementById('stat-ok');if(_statOk)_statOk.textContent=_ok;
+  const _statWarn=document.getElementById('stat-warn');if(_statWarn)_statWarn.textContent=warnings.filter(w=>w.status==='active').length;
+  const _statPromo=document.getElementById('stat-promo');if(_statPromo)_statPromo.textContent=_promo;
+  const _dashPeriod=document.getElementById('dash-period');if(_dashPeriod)_dashPeriod.textContent='Plávajúci kvartál: '+periodLabel+' ('+last3.length+' mes.) · '+evalPeople.length+' ľudí';
   const trainee=evalPeople.filter(p=>p.pos==='TR');
   const scBezCesty=evalPeople.filter(p=>p.pos==='SC'&&!getPersonCesta(p.name));
   let alerts=`<div style="background:var(--blue-pale);border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:var(--blue)">📅 Plávajúci kvartál: <strong>${periodLabel}</strong> · FJ = súčet za ${last3.length} mesiac${last3.length>1?'e':''}</div>`;
@@ -588,11 +565,14 @@ function renderEvaluation(){
   });
   if(!filtered.length){document.getElementById('eval-main-table').innerHTML='<div class="empty" style="padding:48px"><div class="big">🎉</div>Žiadne záznamy.</div>';return;}
   filtered.sort((a,b)=>{const o=["P","SD","MD","SM","EM","TL","VIP IV","VIP III","VIP II","VIP I","SC","C","TR"];const pa=o.indexOf(a.pos)<0?99:o.indexOf(a.pos),pb2=o.indexOf(b.pos)<0?99:o.indexOf(b.pos);if(pa!==pb2)return pa-pb2;return b.ownFJ-a.ownFJ;});
-  let html=`<div class="table-wrap"><table><thead><tr><th class="eval-name-cell">Meno</th><th>Pozícia</th><th>Manažér</th><th style="text-align:right">Vlastné FJ (${last3.length}m)</th><th style="text-align:right">Skupinové FJ</th><th style="text-align:right">Hist.FJ</th><th style="text-align:right">PB</th><th>Štatút</th><th>Napomenutie</th><th>Spļňa štatút na</th><th>Akcia</th></tr></thead><tbody>`;
+  let html=`<div class="table-wrap"><table><thead><tr><th class="eval-name-cell">Meno</th><th>Pozícia</th><th>Manažér</th><th>Kariérna cesta</th><th>Hist.ochrana</th><th style="text-align:right">Vlastné FJ (${last3.length}m)</th><th style="text-align:right">Skupinové FJ</th><th style="text-align:right">Hist.FJ</th><th style="text-align:right">PB</th><th>Štatút</th><th>Napomenutie</th><th>Spļňa štatút na</th><th>Akcia</th></tr></thead><tbody>`;
   filtered.forEach(p=>{
     const k=getKariera(p.pos),s=checkStatus(p),pr=checkPromotion(p),aw=getActiveWarning(p.name),ms=aw?monthsSince(aw.date):0;
     const coef=getDiscountCoef(p.histFJ,p.name,p.pos),effFJ=k?.maintainFJ?effectiveMaintainFJ(k,p.histFJ,p.name,p.pos):null,pbThresh=k?.maintainPB||0;
     const extras=[];
+    const _cestaSafe=p.name.replace(/'/g,"\'");
+    const _cesta=isManazerska(p.pos)?'manazerska':isVIP(p.pos)?'obchodna':(getPersonCesta(p.name)||null);
+    let cestaCell=isManazerska(p.pos)?'<span class="badge badge-gray">🏢 Man.</span>':isVIP(p.pos)?'<span class="badge badge-gray">💼 Obch.</span>':_cesta?('<span class="badge '+(_cesta==='manazerska'?'badge-blue':'badge-green')+'">'+(  _cesta==='manazerska'?'🏢 Man.':'💼 Obch.')+'</span> <button class="btn btn-sm btn-secondary" style="font-size:10px" onclick="openCestaModal(''+_cestaSafe+'')">Zmeniť</button>'):('<button class="btn btn-sm btn-secondary" onclick="openCestaModal(''+_cestaSafe+'')">Nastaviť</button>');
     if(hasHistProtection(p.histFJ))extras.push(`<span style="font-size:9px;color:var(--blue);font-weight:700">≥18k</span>`);
     if(coef<1)extras.push(`<span style="font-size:9px;color:var(--blue);font-weight:700">${Math.round((1-coef)*100)}%↓</span>`);
     let napomCell='<span style="font-size:11px;color:var(--gray3)">–</span>';
@@ -619,7 +599,7 @@ function renderEvaluation(){
     const _safePoz=p.name.replace(/'/g,"\\'");actionCell+='<br><button class="btn btn-sm btn-secondary" onclick="openPoziciaModal(\''+_safePoz+'\',\''+p.pos+'\',\'povysenie\')">Povýšiť</button> <button class="btn btn-sm btn-secondary" onclick="openPoziciaModal(\''+_safePoz+'\',\''+p.pos+'\',\'znizenie\')">Znížiť</button>';
     const rowCls=!s.ok&&aw&&ms>=3?'eval-row-fail':!s.ok&&aw?'eval-row-warn':!s.ok?'eval-row-fail':(pr.canPromote===true||(pr.multiPath&&pr.paths?.length))?'eval-row-promo':'eval-row-ok';
     const useGroupFJ=['EM','SM','MD','SD','P'].includes(p.pos);
-    html+=`<tr class="${rowCls}"><td class="eval-name-cell"><div style="font-weight:700;font-family:var(--font-head)">${p.name}</div><div style="display:flex;gap:4px;margin-top:3px">${extras.join('')}</div></td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td style="font-size:11px;color:var(--gray3)">${p.manager||'–'}</td><td style="text-align:right">${fjCell(p.ownFJ,useGroupFJ?null:effFJ,'Vlastné FJ',coef<1?`zľava ${Math.round(coef*100)}%`:'')}</td><td style="text-align:right">${useGroupFJ?fjCell(p.groupFJ,effFJ,'Skupinové FJ',coef<1?`zľava ${Math.round(coef*100)}%`:''):`<span class="fj-cell fj-neutral">${p.groupFJ.toFixed(0)}</span>`}</td><td style="text-align:right">${fjCell(p.histFJ,null,'Hist.FJ','')}</td><td style="text-align:right">${pbCell(p.pb,pbThresh)}</td><td>${statusBadge}</td><td>${napomCell}</td><td>${splnaStatutCell}</td><td>${actionCell}</td></tr>`;
+    html+=`<tr class="${rowCls}"><td class="eval-name-cell"><div style="font-weight:700;font-family:var(--font-head)">${p.name}</div><div style="display:flex;gap:4px;margin-top:3px">${extras.join('')}</div></td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td style="font-size:11px;color:var(--gray3)">${p.manager||'–'}</td><td style="font-size:11px">${cestaCell}</td><td style="text-align:center">${hasHistProtection(p.histFJ)?'<span class="badge badge-blue" style="font-size:9px">≥18k</span>':'<span style="color:var(--gray3)">–</span>'}</td><td style="text-align:right">${fjCell(p.ownFJ,useGroupFJ?null:effFJ,'Vlastné FJ',coef<1?`zľava ${Math.round(coef*100)}%`:'')}</td><td style="text-align:right">${useGroupFJ?fjCell(p.groupFJ,effFJ,'Skupinové FJ',coef<1?`zľava ${Math.round(coef*100)}%`:''):`<span class="fj-cell fj-neutral">${p.groupFJ.toFixed(0)}</span>`}</td><td style="text-align:right">${fjCell(p.histFJ,null,'Hist.FJ','')}</td><td style="text-align:right">${pbCell(p.pb,pbThresh)}</td><td>${statusBadge}</td><td>${napomCell}</td><td>${splnaStatutCell}</td><td>${actionCell}</td></tr>`;
   });
   html+=`</tbody></table></div><div style="display:flex;gap:20px;padding:12px 16px;background:var(--gray);border-top:1px solid var(--gray2);font-size:11px;color:var(--gray3);flex-wrap:wrap"><span><span class="fj-cell fj-ok">1234</span>=splnené</span><span><span class="fj-cell fj-fail">1234</span>=nesplnené(hover=detail)</span><span style="background:#fff8f8;padding:2px 6px;border-radius:4px">červený=nesplnený</span><span style="background:#fffbf0;padding:2px 6px;border-radius:4px">žltý=napomenutie</span><span style="background:#f0fbff;padding:2px 6px;border-radius:4px">modrý=povýšenie</span></div>`;
   document.getElementById('eval-main-table').innerHTML=html;
