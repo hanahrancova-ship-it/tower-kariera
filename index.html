@@ -236,7 +236,7 @@ tr.danger-row td{background:#fff5f5}
 <!-- MODALS -->
 <div class="modal-overlay" id="modal-warn">
   <div class="modal">
-    <h3>Pridať napomenutie</h3>
+    (()=>{const <h3 id="warn-modal-title">Pridať napomenutie</h3><input type="hidden" id="warn-edit-id" value="">d=new Date();d.setDate(1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01'})()
     <div class="form-group"><label>Spolupracovník</label><select id="warn-person-sel" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px"></select></div>
     <div class="form-group"><label>Dátum napomenutia</label><input type="date" id="warn-date"></div>
     <div class="form-group"><label>Dôvod</label><select id="warn-reason" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px"><option value="fj">Nesplnenie FJ</option><option value="pb">Nesplnenie PB</option><option value="obe">Nesplnenie FJ aj PB</option></select></div>
@@ -601,7 +601,7 @@ function renderEvaluation(){
     const splnaStatutCell=s.ok?p.pos:(_ci>=0&&_ci<_path.length-1?_path[_ci+1]:"");
     let actionCell='';
     if(!s.ok&&!aw)actionCell=`<button class="btn btn-sm btn-primary" onclick="quickWarn('${p.name.replace(/'/g,"\\'")}','${s.type||'fj'}')">Napomenúť</button>`;
-    else if(aw)actionCell=`<button class="btn btn-sm btn-secondary" onclick="openResolveModal('${p.name.replace(/'/g,"\\'")}')">Zrušiť nap.</button>`;
+    else if(aw)actionCell=`<button class="btn btn-sm btn-secondary" onclick="openResolveModal('${p.name.replace(/'/g,"\\'")}')">Zrušiť nap.</button><button class="btn btn-sm btn-secondary" style="font-size:10px" onclick="openEditWarnModal('${aw.id}')">Upraviť nap.</button>`;
     if(['TR','C'].includes(p.pos)){const _br=brutoResults[p.name]||null;const _brBadge=_br?'<br><span class="badge badge-'+_br.cls+'">'+_br.label+'</span>':'';const _safe=p.name.replace(/'/g,"\\'");actionCell+=_brBadge+'<br><button class="btn btn-sm btn-secondary" onclick="openBrutoModal(\''+_safe+'\',\''+p.pos+'\')">Manuálna kontrola BRUTTO</button>';}
     const _safePoz=p.name.replace(/'/g,"\\'");actionCell+='<br><button class="btn btn-sm btn-secondary" onclick="openPoziciaModal(\''+_safePoz+'\',\''+p.pos+'\',\'povysenie\')">Povýšiť</button> <button class="btn btn-sm btn-secondary" onclick="openPoziciaModal(\''+_safePoz+'\',\''+p.pos+'\',\'znizenie\')">Znížiť</button>';
     const rowCls=!s.ok&&aw&&ms>=3?'eval-row-fail':!s.ok&&aw?'eval-row-warn':!s.ok?'eval-row-fail':(pr.canPromote===true||(pr.multiPath&&pr.paths?.length))?'eval-row-promo':'eval-row-ok';
@@ -736,24 +736,24 @@ function openAddWarnModal(){
   const src=evalPeople.length?evalPeople:people;
   const sel=document.getElementById('warn-person-sel');
   sel.innerHTML=src.length?src.map(p=>`<option value="${p.name}">${p.name} (${p.pos})</option>`).join(''):'<option>Najprv importujte dáta</option>';
-  document.getElementById('warn-date').value=(()=>{const _d=new Date();return new Date(_d.getFullYear(),_d.getMonth(),1).toISOString().split('T')[0];})();
-  document.getElementById('warn-note').value='';
+  document.getElementById('warn-date').value=(()=>{const _d=new Date();return (()=>{const d=new Date();d.setDate(1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01'})();})();
+  document.getElementById('warn-note').value='';document.getElementById('warn-edit-id').value='';document.getElementById('warn-modal-title').textContent='Pridať napomenutie';
   document.getElementById('modal-warn').classList.add('open');
 }
 function quickWarn(name,reason){
   const src=evalPeople.length?evalPeople:people;
   const sel=document.getElementById('warn-person-sel');
   sel.innerHTML=src.map(p=>`<option value="${p.name}"${p.name===name?' selected':''}>${p.name} (${p.pos})</option>`).join('');
-  document.getElementById('warn-date').value=(()=>{const _d=new Date();return new Date(_d.getFullYear(),_d.getMonth(),1).toISOString().split('T')[0];})();
+  document.getElementById('warn-date').value=(()=>{const _d=new Date();return (()=>{const d=new Date();d.setDate(1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01'})();})();
   document.getElementById('warn-reason').value=reason;
-  document.getElementById('warn-note').value='';
+  document.getElementById('warn-note').value='';document.getElementById('warn-edit-id').value='';document.getElementById('warn-modal-title').textContent='Pridať napomenutie';
   document.getElementById('modal-warn').classList.add('open');
 }
-function saveWarning(){
+function openEditWarnModal(warnId){const w=warnings.find(x=>x.id===warnId);if(!w)return;const src=evalPeople.length?evalPeople:people;const sel=document.getElementById('warn-person-sel');sel.innerHTML=src.map(p=>`<option value="${p.name}"${p.name===w.person?' selected':''} >${p.name} (${p.pos})</option>`).join('');document.getElementById('warn-date').value=w.date;document.getElementById('warn-reason').value=w.reason;document.getElementById('warn-note').value=w.note||'';document.getElementById('warn-edit-id').value=warnId;document.getElementById('warn-modal-title').textContent='Upravi\u0165 napomenutie';document.getElementById('modal-warn').classList.add('open');}function saveWarning(){<h3 id="warn-modal-title">Pridať napomenutie</h3><input type="hidden" id="warn-edit-id" value="">d=new Date();d.setDate(1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01'})()(warnId){const w=warnings.find(x=>x.id===warnId);if(!w)return;const src=evalPeople.length?evalPeople:people;const sel=document.getElementById('warn-person-sel');sel.innerHTML=src.map(p=>`<option value="${p.name}"${p.name===w.person?' selected':''} >${p.name} (${p.pos})</option>`).join('');document.getElementById('warn-date').value=w.date;document.getElementById('warn-reason').value=w.reason;document.getElementById('warn-note').value=w.note||'';document.getElementById('warn-edit-id').value=warnId;document.getElementById('warn-modal-title').textContent='Upravi\u0165 napomenutie';document.getElementById('modal-warn').classList.add('open');}function saveWarning(){<h3 id="warn-modal-title">Pridať napomenutie</h3><input type="hidden" id="warn-edit-id" value="">d=new Date();d.setDate(1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01'})()
   const person=document.getElementById('warn-person-sel').value,date=document.getElementById('warn-date').value,reason=document.getElementById('warn-reason').value,note=document.getElementById('warn-note').value;
   if(!person||!date){showToast('Vyplňte všetky polia.','error');return;}
-  if(getActiveWarning(person)){showToast('Táto osoba už má aktívne napomenutie.','error');return;}
-  warnings.push({id:Date.now().toString(),person,date,reason,note,status:'active',createdAt:new Date().toISOString()});
+  const editId=document.getElementById('warn-edit-id').value;if(editId){const idx=warnings.findIndex(x=>x.id===editId);if(idx>=0){warnings[idx]={...warnings[idx],person,date,reason,note};}}else{if(getActiveWarning(person)){showToast('Táto osoba už má aktívne napomenutie.','error');return;}
+  }}else{warnings.push({id:Date.now().toString(),person,date,reason,note,status:'active',createdAt:new Date().toISOString()});}
   localStorage.setItem('tf_warnings',JSON.stringify(warnings));
   closeModal('modal-warn');renderEvidencia();renderEvaluation();
   showToast('Napomenutie uložené.','success');
@@ -812,7 +812,7 @@ function saveBrutoResult(name,result){
 }
 function openResolveModal(name){
   resolveTarget=name;
-  document.getElementById('resolve-date').value=(()=>{const _d=new Date();return new Date(_d.getFullYear(),_d.getMonth(),1).toISOString().split('T')[0];})();
+  document.getElementById('resolve-date').value=(()=>{const _d=new Date();return (()=>{const d=new Date();d.setDate(1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01'})();})();
   document.getElementById('resolve-note').value='';
   document.getElementById('modal-resolve').classList.add('open');
 }
