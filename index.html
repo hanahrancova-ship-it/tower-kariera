@@ -133,7 +133,7 @@ tr.danger-row td{background:#fff5f5}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import dát
     </div>
     <div class="nav-item" onclick="showPage('napomenutia',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Napomenutia
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Evidencia
     </div>
     <div class="nav-item" onclick="showPage('kariera',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Kariéra
@@ -209,14 +209,20 @@ tr.danger-row td{background:#fff5f5}
   <div class="card" style="padding:0;overflow:hidden"><div id="eval-main-table"><div class="empty" style="padding:48px"><div class="big">⚡</div>Spustite vyhodnotenie.</div></div></div>
 </div>
 <div class="page" id="page-napomenutia">
-  <div class="page-header"><h2>Evidencia napomenutí</h2><p>História napomenutí, aktívne prípady, zrušenia</p></div>
-  <div style="margin-bottom:20px"><button class="btn btn-primary" onclick="openAddWarnModal()">+ Pridať napomenutie</button></div>
-  <div class="tabs">
-    <div class="tab active" onclick="switchWarnTab('aktivne',this)">Aktívne</div>
-    <div class="tab" onclick="switchWarnTab('vsetky',this)">Všetky</div>
+  <div class="page-header"><h2>Evidencia</h2><p>Povýšenia, zníženia, napomenutia, mesačné vyhodnotenie</p></div>
+  <div class="tabs" id="ev-tabs">
+    <div class="tab active" onclick="switchEvidenciaTab('povysenia',this)">Povýšenia</div>
+    <div class="tab" onclick="switchEvidenciaTab('znizenia',this)">Zníženia</div>
+    <div class="tab" onclick="switchEvidenciaTab('napomenutia',this)">Napomenutia</div>
+    <div class="tab" onclick="switchEvidenciaTab('mesiac',this)">Vyhodnotenie mesiaca</div>
   </div>
-  <div id="warn-tab-aktivne"><div id="warn-aktivne"></div></div>
-  <div id="warn-tab-vsetky" style="display:none"><div id="warn-vsetky"></div></div>
+  <div id="ev-tab-povysenia"><div id="ev-povysenia"></div></div>
+  <div id="ev-tab-znizenia" style="display:none"><div id="ev-znizenia"></div></div>
+  <div id="ev-tab-napomenutia" style="display:none">
+    <div style="margin:16px 0"><button class="btn btn-primary" onclick="openAddWarnModal()">+ Pridť napomenutie</button></div>
+    <div id="ev-napomenutia"></div>
+  </div>
+  <div id="ev-tab-mesiac" style="display:none"><div id="ev-mesiac"></div></div>
 </div>
 <div class="page" id="page-kariera">
   <div class="page-header"><h2>Kariérna tabuľka</h2><p>Podmienky udržania štatútu a povýšenia</p></div>
@@ -332,6 +338,7 @@ let resolveTarget=null,cestaTarget=null,selectedCestaValue=null;
 let brutoResults=JSON.parse(localStorage.getItem('tf_bruto')||'{}');
 let pozicieHistory=JSON.parse(localStorage.getItem('tf_pozicie')||'{}');
 let poznamkyData=JSON.parse(localStorage.getItem('tf_poznamky')||'{}');
+let evidenciaPoznamky=JSON.parse(localStorage.getItem('tf_ev_poznamky')||'{}');
 
 function computeEvalPeople(){
   if(!imports.length){evalPeople=[];return;}
@@ -380,18 +387,13 @@ function showPage(id,el){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   el.classList.add('active');
-  if(id==='napomenutia')renderWarnings();
+  if(id==='napomenutia')renderEvidencia();
   if(id==='kariera')renderKarieraTable();
   if(id==='vyhodnotenie')renderEvaluation();
   if(id==='import')renderImportSelector();
 }
 
-function switchWarnTab(name,el){
-  document.querySelectorAll('#page-napomenutia .tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('warn-tab-aktivne').style.display=name==='aktivne'?'block':'none';
-  document.getElementById('warn-tab-vsetky').style.display=name==='vsetky'?'block':'none';
-}
+
 
 function handleFile(file){
   if(!file)return;
@@ -504,7 +506,7 @@ function getPersonCesta(name){const h=cestaData[name];if(!h||!h.length)return nu
 function getCestaHistory(name){return cestaData[name]||[];}
 function canChangeCesta(name){const h=getCestaHistory(name);if(!h.length)return true;return(new Date()-new Date(h[h.length-1].date))/(1000*60*60*24)>=365;}
 
-function renderAll(){renderEvaluation();renderWarnings();}
+function renderAll(){renderEvaluation();renderEvidencia();}
 
 function renderDashboard(){
   if(!evalPeople.length)return;
@@ -627,15 +629,83 @@ function renderLudia(){
   });
   document.getElementById('ludia-table').innerHTML=warn+html+'</tbody></table>';
 }
-function renderWarnings(){
-  const active=warnings.filter(w=>w.status==='active').sort((a,b)=>new Date(b.date)-new Date(a.date));
-  const all=[...warnings].sort((a,b)=>new Date(b.date)-new Date(a.date));
-  document.getElementById('warn-aktivne').innerHTML=active.length?renderWarnList(active):'<div class="empty"><div class="big">✅</div>Žiadne aktívne napomenutia.</div>';
-  document.getElementById('warn-vsetky').innerHTML=all.length?renderWarnList(all):'<div class="empty"><div class="big">📋</div>Žiadne napomenutia.</div>';
-}
+
 function formatWarnDate(d){if(!d)return'';const p=d.split('-');if(p.length<3)return d;const m=['janár','február','marec','apríl','máj','jún','júl','august','september','október','november','december'];return'k 1. '+m[parseInt(p[1],10)-1]+' '+p[0];}
-function renderWarnList(list){
-  return'<div class="warn-timeline">'+list.map(w=>{const ms=monthsSince(w.date);const dots=[0,1,2].map(i=>`<div class="month-dot ${i<ms?'used':''}">`).join('');return`<div class="warn-item ${w.status==='active'?'active-warn':'resolved'}"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="person">${w.person}</div><div class="meta">${formatWarnDate(w.date)} · ${w.reason==='fj'?'Nesplnenie FJ':w.reason==='pb'?'Nesplnenie PB':'Nesplnenie FJ+PB'}${w.note?' · '+w.note:''}</div>${w.status==='resolved'?`<div class="meta" style="color:var(--green-dark)">✓ Zrušené ${w.resolvedDate||''}</div>`:''}</div><span class="badge ${w.status==='active'?ms>=2?'badge-red':'badge-orange':'badge-green'}">${w.status==='active'?'Aktívne':'Vyriešené'}</span></div>${w.status==='active'?`<div class="actions"><button class="btn btn-sm btn-primary" onclick="openResolveModal('${w.person.replace(/'/g,"\\'")}')">Zrušiť napomenutie</button><button class="btn btn-sm btn-danger" onclick="deleteWarning('${w.id}')">Odstrániť</button></div>`:''}</div>`;}).join('')+'</div>';
+function renderWarnings(){renderEvidenciaNapomenutia();}
+function renderEvidencia(){
+  renderEvidenciaPovysenia();
+  renderEvidenciaZnizenia();
+  renderEvidenciaNapomenutia();
+  renderEvidenciaMesiaca();
+}
+function switchEvidenciaTab(name,el){
+  document.querySelectorAll('#ev-tabs .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['povysenia','znizenia','napomenutia','mesiac'].forEach(t=>{
+    const d=document.getElementById('ev-tab-'+t);
+    if(d)d.style.display=(t===name)?'block':'none';
+  });
+}
+function renderEvidenciaPovysenia(){
+  const el=document.getElementById('ev-povysenia');if(!el)return;
+  const rows=[];
+  Object.entries(pozicieHistory).forEach(([name,hist])=>{
+    hist.forEach((h,i)=>{
+      if(h.type!=='povysenie')return;
+      const _safe=name.replace(/'/g,"\'");
+      const _key='pov_'+name+'_'+i;
+      const _note=(evidenciaPoznamky[_key]||'').replace(/"/g,'&quot;');
+      rows.push(`<tr><td>${name}</td><td>${h.date}</td><td><span class="pos ${posClass(h.fromPos)}">${h.fromPos}</span></td><td><span class="pos ${posClass(h.toPos)}">${h.toPos}</span></td><td><input type="text" value="${_note}" onchange="saveEvPoznamka('${_key}',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-size:11px;background:transparent"></td><td><button class="btn btn-sm btn-danger" onclick="deletePoziciaRow('${_safe}',${i})">✕</button></td></tr>`);
+    });
+  });
+  el.innerHTML=rows.length?'<div class="table-wrap"><table><thead><tr><th>Meno</th><th>Dátum</th><th>Z poz.</th><th>Na poz.</th><th>Poznámka</th><th></th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>':'<div class="empty"><div class="big">📈</div>Žiadne povýšenia.</div>';
+}
+function renderEvidenciaZnizenia(){
+  const el=document.getElementById('ev-znizenia');if(!el)return;
+  const rows=[];
+  Object.entries(pozicieHistory).forEach(([name,hist])=>{
+    hist.forEach((h,i)=>{
+      if(h.type!=='znizenie')return;
+      const _safe=name.replace(/'/g,"\'");
+      const _key='zni_'+name+'_'+i;
+      const _note=(evidenciaPoznamky[_key]||'').replace(/"/g,'&quot;');
+      rows.push(`<tr><td>${name}</td><td>${h.date}</td><td><span class="pos ${posClass(h.fromPos)}">${h.fromPos}</span></td><td><span class="pos ${posClass(h.toPos)}">${h.toPos}</span></td><td><input type="text" value="${_note}" onchange="saveEvPoznamka('${_key}',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-size:11px;background:transparent"></td><td><button class="btn btn-sm btn-danger" onclick="deletePoziciaRow('${_safe}',${i})">✕</button></td></tr>`);
+    });
+  });
+  el.innerHTML=rows.length?'<div class="table-wrap"><table><thead><tr><th>Meno</th><th>Dátum</th><th>Z poz.</th><th>Na poz.</th><th>Poznámka</th><th></th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>':'<div class="empty"><div class="big">📉</div>Žiadne zníženia.</div>';
+}
+function renderEvidenciaNapomenutia(){
+  const el=document.getElementById('ev-napomenutia');if(!el)return;
+  const sorted=[...warnings].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(!sorted.length){el.innerHTML='<div class="empty"><div class="big">✅</div>Žiadne napomenutia.</div>';return;}
+  const rows=sorted.map(w=>{
+    const ms=monthsSince(w.date);
+    const _safe=w.person.replace(/'/g,"\'");
+    const _note=(evidenciaPoznamky['nap_'+w.id]||w.note||'').replace(/"/g,'&quot;');
+    const _zrus=w.status==='resolved'?(w.resolvedDate||'–'):'–';
+    const _wpos=w.pos||'–';
+    return`<tr class="${w.status==='active'&&ms>=3?'eval-row-fail':w.status==='active'?'eval-row-warn':''}"><td><strong>${w.person}</strong></td><td>${formatWarnDate(w.date)}</td><td>${_wpos}</td><td>${w.reason==='fj'?'Nesplnenie FJ':w.reason==='pb'?'Nesplnenie PB':'Nesplnenie FJ+PB'}</td><td>${_zrus}${w.status==='active'?'<br><button class="btn btn-sm btn-secondary" style="font-size:10px" onclick="openResolveModal(''+_safe+'')">Zrušiť</button>':''}</td><td><input type="text" value="${_note}" onchange="saveEvPoznamka('nap_${w.id}',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-size:11px;background:transparent"></td><td><button class="btn btn-sm btn-danger" onclick="deleteWarning('${w.id}')">✕</button></td></tr>`;
+  });
+  el.innerHTML='<div class="table-wrap"><table><thead><tr><th>Meno</th><th>Dátum</th><th>Poz.</th><th>Za čo</th><th>Zrušené k</th><th>Poznámka</th><th></th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>';
+}
+function renderEvidenciaMesiaca(){
+  const el=document.getElementById('ev-mesiac');if(!el)return;
+  if(!imports.length){el.innerHTML='<div class="empty"><div class="big">📊</div>Žiadne importy.</div>';return;}
+  const sorted=[...imports].sort((a,b)=>b.key.localeCompare(a.key));
+  const rows=sorted.map(imp=>{
+    const best=imp.people.reduce((mx,p)=>(!mx||p.ownFJ>mx.ownFJ)?p:mx,null);
+    return best?`<tr><td>${imp.label}</td><td><strong>${best.name}</strong> <span class="pos ${posClass(best.pos)}">${best.pos}</span></td><td style="text-align:right">${best.ownFJ.toFixed(0)} FJ</td></tr>`:'';
+  }).filter(Boolean);
+  el.innerHTML=rows.length?'<div class="table-wrap"><table><thead><tr><th>Mesiac</th><th>Meno vítąza</th><th style="text-align:right">Vlastné FJ</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>':'<div class="empty">Žiadne dáta.</div>';
+}
+function saveEvPoznamka(key,val){evidenciaPoznamky[key]=val;localStorage.setItem('tf_ev_poznamky',JSON.stringify(evidenciaPoznamky));}
+function deletePoziciaRow(name,idx){
+  if(!pozicieHistory[name])return;
+  pozicieHistory[name].splice(idx,1);
+  if(!pozicieHistory[name].length)delete pozicieHistory[name];
+  localStorage.setItem('tf_pozicie',JSON.stringify(pozicieHistory));
+  renderEvidencia();renderEvaluation();
+  showToast('Záznam odstránený.','success');
 }
 function renderKarieraTable(){
   const groups=[{label:'Spoločné',positions:['TR','C','SC']},{label:'Manažérska cesta',positions:['TL','EM','SM','MD','SD','P']},{label:'Obchodná cesta (VIP)',positions:['VIP I','VIP II','VIP III','VIP IV']}];
@@ -681,7 +751,7 @@ function saveWarning(){
   if(getActiveWarning(person)){showToast('Táto osoba už má aktívne napomenutie.','error');return;}
   warnings.push({id:Date.now().toString(),person,date,reason,note,status:'active',createdAt:new Date().toISOString()});
   localStorage.setItem('tf_warnings',JSON.stringify(warnings));
-  closeModal('modal-warn');renderWarnings();renderDashboard();renderEvaluation();
+  closeModal('modal-warn');renderEvidencia();renderEvaluation();
   showToast('Napomenutie uložené.','success');
 }
 function openPoziciaModal(name,currentPos,type){
@@ -747,13 +817,13 @@ function confirmResolve(){
   if(!w){closeModal('modal-resolve');return;}
   w.status='resolved';w.resolvedDate=document.getElementById('resolve-date').value;w.resolvedNote=document.getElementById('resolve-note').value;
   localStorage.setItem('tf_warnings',JSON.stringify(warnings));
-  closeModal('modal-resolve');renderWarnings();renderDashboard();renderEvaluation();
+  closeModal('modal-resolve');renderEvidencia();renderEvaluation();
   showToast('Napomenutie zrušené.','success');
 }
 function deleteWarning(id){
   warnings=warnings.filter(w=>w.id!==id);
   localStorage.setItem('tf_warnings',JSON.stringify(warnings));
-  renderWarnings();renderDashboard();
+  renderEvidencia();
   showToast('Záznam odstránený.','success');
 }
 function openCestaModal(name){
@@ -812,7 +882,7 @@ if(imports.length){
   computeEvalPeople();
 }
 renderKarieraTable();
-renderWarnings();
+renderEvidencia();
 renderImportSelector();
 renderEvaluation();
 </script>
