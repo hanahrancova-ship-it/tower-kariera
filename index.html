@@ -221,7 +221,7 @@ tr.danger-row td{background:#fff5f5}
 <div class="page" id="page-kariera">
   <div class="page-header"><h2>Kariérna tabuľka</h2><p>Podmienky udržania štatútu a povýšenia</p></div>
   <div class="card"><div class="table-wrap">
-    <table><thead><tr><th>Pozícia</th><th>Sadzba</th><th>Udržanie štatútu</th><th>Povýšenie – FJ</th><th>Povýšenie – PB</th><th>Poznámka</th></tr></thead>
+    <table><thead><tr><th>Pozícia</th><th>Sadzba</th><th>Udržanie štatútu</th><th>Podmienky povýšenia</th><th>Poznámka</th></tr></thead>
     <tbody id="kariera-table-body"></tbody></table>
   </div></div>
 </div>
@@ -331,6 +331,7 @@ let evalPeople=[];
 let resolveTarget=null,cestaTarget=null,selectedCestaValue=null;
 let brutoResults=JSON.parse(localStorage.getItem('tf_bruto')||'{}');
 let pozicieHistory=JSON.parse(localStorage.getItem('tf_pozicie')||'{}');
+let poznamkyData=JSON.parse(localStorage.getItem('tf_poznamky')||'{}');
 
 function computeEvalPeople(){
   if(!imports.length){evalPeople=[];return;}
@@ -640,12 +641,23 @@ function renderKarieraTable(){
   const groups=[{label:'Spoločné',positions:['TR','C','SC']},{label:'Manažérska cesta',positions:['TL','EM','SM','MD','SD','P']},{label:'Obchodná cesta (VIP)',positions:['VIP I','VIP II','VIP III','VIP IV']}];
   let rows='';
   groups.forEach(g=>{
-    rows+=`<tr><td colspan="6" style="background:var(--gray);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray3)">${g.label}</td></tr>`;
-    g.positions.forEach(pos=>{const k=KARIERA.find(x=>x.pos===pos);if(!k)return;rows+=`<tr><td><span class="pos ${posClass(pos)}">${pos}</span> <span style="font-size:11px;color:var(--gray3)">${k.name}</span></td><td>${k.rate}€/FJ</td><td>${k.maintainFJ?k.maintainFJ+' FJ/kv'+(k.maintainPB?' + '+k.maintainPB+' PB':'')+(k.maintainSCcondition?' + SC podmienky':''):'–'}</td><td>${k.promoteFJ?k.promoteFJ+' FJ/kv':'–'}${k.promoteHistFJ?'<br><span style="font-size:10px;color:var(--gray3)">+ '+k.promoteHistFJ+' hist.</span>':''}</td><td>${k.promotePB||'–'}</td><td style="font-size:10px;color:var(--gray3)">${k.promoteNote||'–'}</td></tr>`;});
+    rows+=`<tr><td colspan="5" style="background:var(--gray);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray3)">${g.label}</td></tr>`;
+    g.positions.forEach(pos=>{const k=KARIERA.find(x=>x.pos===pos);if(!k)return;
+      const _maintainStr=pos==='TL'?'900 FJ vlastných + 1 350 FJ skupinových + 1 PB + SC podmienky':k.maintainFJ?(k.maintainFJ+' FJ/kv'+(k.maintainGroupFJ?' + '+k.maintainGroupFJ+' FJ skup.':'')+(k.maintainPB?' + '+k.maintainPB+' PB':'')+(k.maintainSCcondition?' + SC podmienky':'')):'–';
+      const _promoFJ=k.promoteFJ?k.promoteFJ+' FJ vlastných':'';
+      const _promoGrp=k.promoteGroupFJ?k.promoteGroupFJ+' FJ skupinových':'';
+      const _promoHist=k.promoteHistFJ?k.promoteHistFJ+' FJ hist.':'';
+      const _promoPB=k.promotePB?k.promotePB+' PB':'';
+      const _promoParts=[_promoFJ,_promoGrp,_promoHist,_promoPB].filter(Boolean);
+      const _promoStr=_promoParts.length?_promoParts.join(' + '):'–';
+      const _pNote=poznamkyData[pos]!==undefined?poznamkyData[pos]:(k.promoteNote||'');
+      rows+=`<tr><td><span class="pos ${posClass(pos)}">${pos}</span> <span style="font-size:11px;color:var(--gray3)">${k.name}</span></td><td>${k.rate}€/FJ</td><td style="font-size:11px">${_maintainStr}</td><td style="font-size:11px">${_promoStr}</td><td><input type="text" value="${_pNote.replace(/"/g,'&quot;')}" onchange="savePoznamka('${pos}',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr>`;
+    });
   });
-  rows+=`<tr><td colspan="6" style="background:#fff3e0;font-size:11px;color:var(--orange);padding:10px 12px"><strong>Historické zľavy (len udržanie):</strong> ≥18 000 FJ→ochrana (neklesne pod SC) · ≥24 000 FJ→80% štatútu · ≥36 000 FJ→60% štatútu</td></tr>`;
+  rows+=`<tr><td colspan="5" style="background:#fff3e0;font-size:11px;color:var(--orange);padding:10px 12px"><strong>Historické zľavy (len udržanie):</strong> ≥18 000 FJ→ochrana (neklesne pod SC) · ≥24 000 FJ→80% štatútu · ≥36 000 FJ→60% štatútu</td></tr>`;
   document.getElementById('kariera-table-body').innerHTML=rows;
 }
+function savePoznamka(pos,val){poznamkyData[pos]=val;localStorage.setItem('tf_poznamky',JSON.stringify(poznamkyData));}
 function openAddWarnModal(){
   const src=evalPeople.length?evalPeople:people;
   const sel=document.getElementById('warn-person-sel');
