@@ -376,7 +376,7 @@ function computeEvalPeople(){
     const directs=evalPeople.filter(x=>x.manager===p.name);
     p.pb=directs.reduce((s,x)=>{
       if(hasHistProtection(x.histFJ)){const kC=getKariera('C');if(x.ownFJ<effectiveMaintainFJ(kC,x.histFJ,x.name,x.pos))return s;}
-      return s+(PB_VALUES[x.pos]||0);
+      return s+(x.pos===p.pos?Math.floor((PB_VALUES[x.pos]||0)/2):(PB_VALUES[x.pos]||0));
     },0);
   });
 }
@@ -449,7 +449,7 @@ function processImport(rows,yearMonth){
     const directs=parsed.filter(x=>x.manager===p.name);
     p.pb=directs.reduce((s,x)=>{
       if(hasHistProtection(x.histFJ)){const kC=getKariera('C');if(x.ownFJ<effectiveMaintainFJ(kC,x.histFJ,x.name,x.pos))return s;}
-      return s+(PB_VALUES[x.pos]||0);
+      return s+(x.pos===p.pos?Math.floor((PB_VALUES[x.pos]||0)/2):(PB_VALUES[x.pos]||0));
     },0);
   });
   const [y,m]=yearMonth.split('-');
