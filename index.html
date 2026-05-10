@@ -736,7 +736,7 @@ function openAddWarnModal(){
   const src=evalPeople.length?evalPeople:people;
   const sel=document.getElementById('warn-person-sel');
   sel.innerHTML=src.length?src.map(p=>`<option value="${p.name}">${p.name} (${p.pos})</option>`).join(''):'<option>Najprv importujte dáta</option>';
-  document.getElementById('warn-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('warn-date').value=(()=>{const _d=new Date();return new Date(_d.getFullYear(),_d.getMonth(),1).toISOString().split('T')[0];})();
   document.getElementById('warn-note').value='';
   document.getElementById('modal-warn').classList.add('open');
 }
@@ -812,7 +812,7 @@ function saveBrutoResult(name,result){
 }
 function openResolveModal(name){
   resolveTarget=name;
-  document.getElementById('resolve-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('resolve-date').value=(()=>{const _d=new Date();return new Date(_d.getFullYear(),_d.getMonth(),1).toISOString().split('T')[0];})();
   document.getElementById('resolve-note').value='';
   document.getElementById('modal-resolve').classList.add('open');
 }
