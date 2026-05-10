@@ -378,6 +378,7 @@ function computeEvalPeople(){
       if(hasHistProtection(x.histFJ)){const kC=getKariera('C');if(x.ownFJ<effectiveMaintainFJ(kC,x.histFJ,x.name,x.pos))return s;}
       return s+(x.pos===p.pos?Math.floor((PB_VALUES[x.pos]||0)/2):(PB_VALUES[x.pos]||0));
     },0);
+    directs.forEach(x=>{if(x.pos===p.pos){const _maxC=p.groupFJ*0.5;if(x.groupFJ>_maxC)p.groupFJ=p.groupFJ-(x.groupFJ-_maxC);}});
   });
 }
 
