@@ -318,8 +318,14 @@ const MESACE=['Január','Február','Marec','Apríl','Máj','Jún','Júl','August
 const HIST_PROTECTION=18000,HIST_DISCOUNT_80=24000,HIST_DISCOUNT_60=36000;
 function isVIP(pos){return pos&&pos.startsWith('VIP')}
 function isManazerska(pos){return['TL','EM','SM','MD','SD','P'].includes(pos)}
-function getDiscountCoef(h){if(h>=HIST_DISCOUNT_60)return 0.6;if(h>=HIST_DISCOUNT_80)return 0.8;return 1}
-function effectiveMaintainFJ(k,h){if(!k.maintainFJ)return null;return Math.ceil(k.maintainFJ*getDiscountCoef(h))}
+function getDiscountCoef(h,name,pos){
+  const vipOrObchodna=isVIP(pos)||((['TR','C','SC'].includes(pos))&&getPersonCesta(name)==='obchodna');
+  if(!vipOrObchodna)return 1;
+  if(h>=HIST_DISCOUNT_60)return 0.6;
+  if(h>=HIST_DISCOUNT_80)return 0.8;
+  return 1;
+}
+function effectiveMaintainFJ(k,h,name,pos){if(!k.maintainFJ)return null;return Math.ceil(k.maintainFJ*getDiscountCoef(h,name,pos))}
 function hasHistProtection(h){return h>=HIST_PROTECTION}
 function getKariera(pos){return KARIERA.find(k=>k.pos===pos)}
 function posClass(pos){const m={'MD':'pos-md','SD':'pos-md','P':'pos-md','SM':'pos-sm','EM':'pos-em','TL':'pos-tl','SC':'pos-sc','C':'pos-c','TR':'pos-tr'};if(pos&&pos.startsWith('VIP'))return'pos-vip';return m[pos]||'pos-tr'}
@@ -351,7 +357,7 @@ function computeEvalPeople(){
   evalPeople.forEach(p=>{
     const directs=evalPeople.filter(x=>x.manager===p.name);
     p.pb=directs.reduce((s,x)=>{
-      if(hasHistProtection(x.histFJ)){const kC=getKariera('C');if(x.ownFJ<effectiveMaintainFJ(kC,x.histFJ))return s;}
+      if(hasHistProtection(x.histFJ)){const kC=getKariera('C');if(x.ownFJ<effectiveMaintainFJ(kC,x.histFJ,x.name,x.pos))return s;}
       return s+(PB_VALUES[x.pos]||0);
     },0);
   });
@@ -424,7 +430,7 @@ function processImport(rows,yearMonth){
   parsed.forEach(p=>{
     const directs=parsed.filter(x=>x.manager===p.name);
     p.pb=directs.reduce((s,x)=>{
-      if(hasHistProtection(x.histFJ)){const kC=getKariera('C');if(x.ownFJ<effectiveMaintainFJ(kC,x.histFJ))return s;}
+      if(hasHistProtection(x.histFJ)){const kC=getKariera('C');if(x.ownFJ<effectiveMaintainFJ(kC,x.histFJ,x.name,x.pos))return s;}
       return s+(PB_VALUES[x.pos]||0);
     },0);
   });
@@ -462,9 +468,9 @@ dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover'
 
 function checkStatus(p){
   const k=getKariera(p.pos);if(!k)return{ok:true,msg:'',type:'',issues:[]};
-  const h=p.histFJ||0,coef=getDiscountCoef(h),issues=[];
-  if(k.maintainSCcondition){const kSC=getKariera('SC'),scEff=effectiveMaintainFJ(kSC,h);if(p.ownFJ<scEff)issues.push(`SC FJ: ${p.ownFJ.toFixed(0)}/${scEff}`);}
-  if(k.maintainFJ){const useGroupFJ=['EM','SM','MD','SD','P'].includes(p.pos);const eff=effectiveMaintainFJ(k,h);if((useGroupFJ?p.groupFJ:p.ownFJ)<eff)issues.push(`FJ: ${(useGroupFJ?p.groupFJ:p.ownFJ).toFixed(0)}/${eff}${coef<1?' (zľava '+Math.round((1-coef)*100)+'%)':''}`);}
+  const h=p.histFJ||0,coef=getDiscountCoef(h,p.name,p.pos),issues=[];
+  if(k.maintainSCcondition){const kSC=getKariera('SC'),scEff=effectiveMaintainFJ(kSC,h,p.name,p.pos);if(p.ownFJ<scEff)issues.push(`SC FJ: ${p.ownFJ.toFixed(0)}/${scEff}`);}
+  if(k.maintainFJ){const useGroupFJ=['EM','SM','MD','SD','P'].includes(p.pos);const eff=effectiveMaintainFJ(k,h,p.name,p.pos);if((useGroupFJ?p.groupFJ:p.ownFJ)<eff)issues.push(`FJ: ${(useGroupFJ?p.groupFJ:p.ownFJ).toFixed(0)}/${eff}${coef<1?' (zľava '+Math.round((1-coef)*100)+'%)':''}`);}
   if(k.maintainPB&&p.pb<k.maintainPB)issues.push(`PB: ${p.pb}/${k.maintainPB}`);
   const type=issues.length===0?'ok':issues[0].startsWith('PB')?'pb':'fj';
   return{ok:issues.length===0,msg:issues.join(' · '),type,issues};
@@ -564,7 +570,7 @@ function renderEvaluation(){
   let html=`<div class="table-wrap"><table><thead><tr><th class="eval-name-cell">Meno</th><th>Pozícia</th><th>Manažér</th><th style="text-align:right">Vl. FJ (${last3.length}m)</th><th style="text-align:right">Hist.FJ</th><th style="text-align:right">Skup.FJ</th><th style="text-align:right">PB</th><th>Štatút</th><th>Napomenutie</th><th>Povýšenie</th><th>Akcia</th></tr></thead><tbody>`;
   filtered.forEach(p=>{
     const k=getKariera(p.pos),s=checkStatus(p),pr=checkPromotion(p),aw=getActiveWarning(p.name),ms=aw?monthsSince(aw.date):0;
-    const coef=getDiscountCoef(p.histFJ),effFJ=k?.maintainFJ?effectiveMaintainFJ(k,p.histFJ):null,pbThresh=k?.maintainPB||0;
+    const coef=getDiscountCoef(p.histFJ,p.name,p.pos),effFJ=k?.maintainFJ?effectiveMaintainFJ(k,p.histFJ,p.name,p.pos):null,pbThresh=k?.maintainPB||0;
     const extras=[];
     if(hasHistProtection(p.histFJ))extras.push(`<span style="font-size:9px;color:var(--blue);font-weight:700">≥18k</span>`);
     if(coef<1)extras.push(`<span style="font-size:9px;color:var(--blue);font-weight:700">${Math.round((1-coef)*100)}%↓</span>`);
@@ -598,7 +604,7 @@ function renderLudia(){
   if(!filtered.length){document.getElementById('ludia-table').innerHTML=warn+'<div class="empty"><div class="big">👥</div>Žiadni ľudia.</div>';return;}
   let html=`<table><thead><tr><th>Meno</th><th>Pozícia</th><th>Kariérna cesta</th><th>Manažér</th><th>Vlastné FJ</th><th>Hist.FJ</th><th>PB</th><th>Skupin.FJ</th><th>Zľava</th><th>Štatút</th></tr></thead><tbody>`;
   filtered.forEach(p=>{
-    const s=checkStatus(p),aw=getActiveWarning(p.name),coef=getDiscountCoef(p.histFJ);
+    const s=checkStatus(p),aw=getActiveWarning(p.name),coef=getDiscountCoef(p.histFJ,p.name,p.pos);
     const cesta=getPersonCesta(p.name);
     let cestaCell=isManazerska(p.pos)?'<span class="badge badge-gray">🏢 Manažérska</span>':isVIP(p.pos)?'<span class="badge badge-gray">💼 Obchodná</span>':cesta?`<span class="badge ${cesta==='manazerska'?'badge-blue':'badge-green'}">${cesta==='manazerska'?'🏢':'💼'} ${cesta==='manazerska'?'Manažérska':'Obchodná'}</span> <button class="btn btn-sm btn-secondary" style="font-size:10px" onclick="openCestaModal('${p.name.replace(/'/g,"\\'")}')">Zmeniť</button>`:`<button class="btn btn-sm btn-secondary" onclick="openCestaModal('${p.name.replace(/'/g,"\\'")}')">Nastaviť</button>`;
     html+=`<tr><td><strong>${p.name}</strong>${hasHistProtection(p.histFJ)?'<br><span style="font-size:9px;color:var(--blue)">≥18k</span>':''}</td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td>${cestaCell}</td><td style="color:var(--gray3);font-size:11px">${p.manager||'–'}</td><td>${p.ownFJ.toFixed(2)}</td><td>${p.histFJ.toFixed(2)}</td><td>${p.pb}</td><td>${p.groupFJ.toFixed(2)}</td><td>${coef<1?Math.round((1-coef)*100)+'%':'–'}</td><td>${s.ok?'<span class="badge badge-green">OK</span>':aw?'<span class="badge badge-red">Napomenutý</span>':'<span class="badge badge-orange">Nesplnené</span>'}</td></tr>`;
@@ -707,7 +713,7 @@ function exportReport(){
   const period=last3.length>1?`${last3[last3.length-1].label}-${last3[0].label}`:last3[0]?.label||'';
   let csv=`Meno,Pozícia,Kariérna cesta,Manažér,Vlastné FJ (${last3.length}m),Hist FJ,Skupin.FJ,PB,Zľava %,Hist.ochrana,Štatút,Povýšenie,Napomenutie\n`;
   evalPeople.forEach(p=>{
-    const s=checkStatus(p),pr=checkPromotion(p),aw=getActiveWarning(p.name),coef=getDiscountCoef(p.histFJ);
+    const s=checkStatus(p),pr=checkPromotion(p),aw=getActiveWarning(p.name),coef=getDiscountCoef(p.histFJ,p.name,p.pos);
     const promoStr=pr.canPromote?pr.nextPos:pr.multiPath&&pr.paths?.length?pr.paths.map(x=>x.nextPos).join('/'):'–';
     csv+=`"${p.name}","${p.pos}","${getPersonCesta(p.name)||'neurčená'}","${p.manager}",${p.ownFJ.toFixed(2)},${p.histFJ.toFixed(2)},${p.groupFJ.toFixed(2)},${p.pb},${coef<1?Math.round((1-coef)*100):0},"${hasHistProtection(p.histFJ)?'Áno':'Nie'}","${s.ok?'OK':'Nesplnené'}","${promoStr}","${aw?'Áno':'Nie'}"\n`;
   });
