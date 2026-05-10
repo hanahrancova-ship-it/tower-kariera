@@ -568,7 +568,7 @@ function renderEvaluation(){
   if(!filtered.length){document.getElementById('eval-main-table').innerHTML='<div class="empty" style="padding:48px"><div class="big">🎉</div>Žiadne záznamy.</div>';return;}
   filtered.sort((a,b)=>{const wa=getActiveWarning(a.name),wb=getActiveWarning(b.name),ma=wa?monthsSince(wa.date):0,mb=wb?monthsSince(wb.date):0,sa=checkStatus(a).ok,sb=checkStatus(b).ok;if(!sa&&!sb)return mb-ma;if(!sa)return-1;if(!sb)return 1;return 0;});
   let html=`<div class="table-wrap"><table><thead><tr><th class="eval-name-cell">Meno</th><th>Pozícia</th><th>Manažér</th><th style="text-align:right">Vl. FJ (${last3.length}m)</th><th style="text-align:right">Hist.FJ</th><th style="text-align:right">Skup.FJ</th><th style="text-align:right">PB</th><th>Štatút</th><th>Napomenutie</th><th>Povýšenie</th><th>Akcia</th></tr></thead><tbody>`;
-  filtered.forEach(p=>{
+  filtered.sort((a,b)=>{const o=["P","SD","MD","SM","EM","TL","VIP IV","VIP III","VIP II","VIP I","SC","C","TR"];return(o.indexOf(a.pos)<0?99:o.indexOf(a.pos))-(o.indexOf(b.pos)<0?99:o.indexOf(b.pos));}).forEach(p=>{
     const k=getKariera(p.pos),s=checkStatus(p),pr=checkPromotion(p),aw=getActiveWarning(p.name),ms=aw?monthsSince(aw.date):0;
     const coef=getDiscountCoef(p.histFJ,p.name,p.pos),effFJ=k?.maintainFJ?effectiveMaintainFJ(k,p.histFJ,p.name,p.pos):null,pbThresh=k?.maintainPB||0;
     const extras=[];
