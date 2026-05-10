@@ -576,10 +576,10 @@ function renderEvaluation(){
     const _cestaSafe=p.name.replace(/'/g,"\\'");
     const _cesta=isManazerska(p.pos)?'manazerska':isVIP(p.pos)?'obchodna':(getPersonCesta(p.name)||null);
     let cestaCell;
-    if(isManazerska(p.pos)){cestaCell='<span class="badge badge-gray">🏢 Man.</span>';}
-    else if(isVIP(p.pos)){cestaCell='<span class="badge badge-gray">💼 Obch.</span>';}
-    else if(_cesta){cestaCell='<span class="badge '+(_cesta==='manazerska'?'badge-blue':'badge-green')+'">'+(  _cesta==='manazerska'?'🏢 Man.':'💼 Obch.')+'</span> <button class="btn btn-sm btn-secondary" style="font-size:10px" onclick="openCestaModal(\''+ _cestaSafe +'\')">Zmeniť</button>';}
-    else{cestaCell='<button class="btn btn-sm btn-secondary" onclick="openCestaModal(\''+ _cestaSafe +'\')">Nastaviť</button>';}
+    if(isManazerska(p.pos)){cestaCell='<span class="badge badge-gray">🏢 Man.</span> <button class="btn btn-sm btn-secondary" style="font-size:10px" onclick="openCestaModal(\''+ _cestaSafe +'\')">Zmeniť</button>';}
+    else if(isVIP(p.pos)){cestaCell='<span class="badge badge-gray">💼 Obch.</span> <button class="btn btn-sm btn-secondary" style="font-size:10px" onclick="openCestaModal(\''+ _cestaSafe +'\')">Zmeniť</button>';}
+    else if(_cesta){cestaCell='<span class="badge '+(_cesta==='manazerska'?'badge-blue':'badge-green')+'">'+(_cesta==='manazerska'?'🏢 Man.':'💼 Obch.')+'</span> <button class="btn btn-sm btn-secondary" style="font-size:10px" onclick="openCestaModal(\''+ _cestaSafe +'\')">Zmeniť</button>';}
+    else{cestaCell='<button class="btn btn-sm btn-secondary" onclick="openCestaModal(\''+ _cestaSafe +'\')">📍 Nastaviť</button>';}
     if(hasHistProtection(p.histFJ))extras.push(`<span style="font-size:9px;color:var(--blue);font-weight:700">≥18k</span>`);
     if(coef<1)extras.push(`<span style="font-size:9px;color:var(--blue);font-weight:700">${Math.round((1-coef)*100)}%↓</span>`);
     let napomCell='<span style="font-size:11px;color:var(--gray3)">–</span>';
