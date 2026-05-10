@@ -10,7 +10,7 @@
 :root{
   --green:#1db954;--green-dark:#158a3e;--green-pale:#e8f8ee;
   --black:#0a0a0a;--white:#ffffff;--gray:#f4f4f4;--gray2:#e8e8e8;--gray3:#999;--gray4:#555;
-  --red:#e53935;--red-pale:#ffeaea;--orange:#f57c00;--orange-pale:#fff3e0;--blue:#1565c0;--blue-pale:#e3f0ff;
+  --red:#e53935;--red-pale:#ffeaea;--orange:#f57c00;--orange-pal:#fff3e0;--blue:#1565c0;--blue-pale:#e3f0ff;
   --font-head:'Syne',sans-serif;--font-mono:'DM Mono',monospace;
   --radius:10px;--shadow:0 2px 12px rgba(0,0,0,0.08);
 }
@@ -402,7 +402,7 @@ function handleFile(file){
   if(!ym){showToast('Vyberte mesiac importu.','error');return;}
   const reader=new FileReader();
   reader.onload=e=>{
-    try{const wb=XLSX.read(e.target.result,{type:'array'});processImport(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''}),ym);}
+    try{const wb=XLSX.read(e.target.result,{type:'array', codepage: 65001});processImport(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''}),ym);}
     catch(err){showToast('Chyba: '+err.message,'error');}
   };
   reader.readAsArrayBuffer(file);
