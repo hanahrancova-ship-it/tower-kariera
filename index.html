@@ -680,11 +680,15 @@ function renderEvidenciaNapomenutia(){
   if(!sorted.length){el.innerHTML='<div class="empty"><div class="big">✅</div>Žiadne napomenutia.</div>';return;}
   const rows=sorted.map(w=>{
     const ms=monthsSince(w.date);
-    const _safe=w.person.replace(/'/g,"\'");
+    const _safe=w.person.replace(/'/g,"\\'");
     const _note=(evidenciaPoznamky['nap_'+w.id]||w.note||'').replace(/"/g,'&quot;');
     const _zrus=w.status==='resolved'?(w.resolvedDate||'–'):'–';
     const _wpos=w.pos||'–';
-    return`<tr class="${w.status==='active'&&ms>=3?'eval-row-fail':w.status==='active'?'eval-row-warn':''}"><td><strong>${w.person}</strong></td><td>${formatWarnDate(w.date)}</td><td>${_wpos}</td><td>${w.reason==='fj'?'Nesplnenie FJ':w.reason==='pb'?'Nesplnenie PB':'Nesplnenie FJ+PB'}</td><td>${_zrus}${w.status==='active'?'<br><button class="btn btn-sm btn-secondary" style="font-size:10px" onclick="openResolveModal(''+_safe+'')">Zrušiť</button>':''}</td><td><input type="text" value="${_note}" onchange="saveEvPoznamka('nap_${w.id}',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-size:11px;background:transparent"></td><td><button class="btn btn-sm btn-danger" onclick="deleteWarning('${w.id}')">✕</button></td></tr>`;
+    const _rowClass=w.status==='active'&&ms>=3?'eval-row-fail':w.status==='active'?'eval-row-warn':'';
+    const _reason=w.reason==='fj'?'Nesplnenie FJ':w.reason==='pb'?'Nesplnenie PB':'Nesplnenie FJ+PB';
+    let _zrusCell=_zrus;
+    if(w.status==='active')_zrusCell+='<br><button class="btn btn-sm btn-secondary" style="font-size:10px" onclick="openResolveModal(\'' +_safe+ '\')">Zrušiť</button>';
+    return`<tr class="${_rowClass}"><td><strong>${w.person}</strong></td><td>${formatWarnDate(w.date)}</td><td>${_wpos}</td><td>${_reason}</td><td>${_zrusCell}</td><td><input type="text" value="${_note}" onchange="saveEvPoznamka('nap_${w.id}',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-size:11px;background:transparent"></td><td><button class="btn btn-sm btn-danger" onclick="deleteWarning('${w.id}')">&#x2715;</button></td></tr>`;
   });
   el.innerHTML='<div class="table-wrap"><table><thead><tr><th>Meno</th><th>Dátum</th><th>Poz.</th><th>Za čo</th><th>Zrušené k</th><th>Poznámka</th><th></th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>';
 }
