@@ -295,6 +295,14 @@ tr.danger-row td{background:#fff5f5}
     <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('modal-cesta')">Zrušiť</button><button class="btn btn-primary" id="cesta-save-btn" onclick="saveCesta()" disabled style="opacity:0.4">Uložiť</button></div>
   </div>
 </div>
+<div class="modal-overlay" id="modal-bruto">
+  <div class="modal" style="max-width:420px">
+    <h3 id="bruto-modal-title" style="margin-bottom:8px">Manuálna kontrola BRUTTO</h3>
+    <p style="font-size:12px;color:var(--gray3);margin-bottom:16px">Manuálna kontrola plnenia BRUTTO podmienok</p>
+    <div id="bruto-modal-btns" style="display:flex;flex-direction:column;gap:0"></div>
+    <div style="margin-top:14px;text-align:right"><button class="btn btn-secondary btn-sm" onclick="closeModal('modal-bruto')">Zrušiť</button></div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -340,6 +348,7 @@ let selectedImportKey=null;
 let people=[];
 let evalPeople=[];
 let resolveTarget=null,cestaTarget=null,selectedCestaValue=null;
+let brutoResults=JSON.parse(localStorage.getItem('tf_bruto')||'{}');
 
 function computeEvalPeople(){
   if(!imports.length){evalPeople=[];return;}
@@ -587,6 +596,7 @@ function renderEvaluation(){
     let actionCell='';
     if(!s.ok&&!aw)actionCell=`<button class="btn btn-sm btn-primary" onclick="quickWarn('${p.name.replace(/'/g,"\\'")}','${s.type||'fj'}')">Napomenúť</button>`;
     else if(aw)actionCell=`<button class="btn btn-sm btn-secondary" onclick="openResolveModal('${p.name.replace(/'/g,"\\'")}')">Zrušiť nap.</button>`;
+    if(['TR','C'].includes(p.pos)){const _br=brutoResults[p.name]||null;const _brBadge=_br?'<br><span class="badge badge-'+_br.cls+'">'+_br.label+'</span>':'';const _safe=p.name.replace(/'/g,"\\'");actionCell+=_brBadge+'<br><button class="btn btn-sm btn-secondary" onclick="openBrutoModal(\''+_safe+'\',\''+p.pos+'\')">Manuálna kontrola BRUTTO</button>';}
     const rowCls=!s.ok&&aw&&ms>=3?'eval-row-fail':!s.ok&&aw?'eval-row-warn':!s.ok?'eval-row-fail':(pr.canPromote===true||(pr.multiPath&&pr.paths?.length))?'eval-row-promo':'eval-row-ok';
     const useGroupFJ=['EM','SM','MD','SD','P'].includes(p.pos);
     html+=`<tr class="${rowCls}"><td class="eval-name-cell"><div style="font-weight:700;font-family:var(--font-head)">${p.name}</div><div style="display:flex;gap:4px;margin-top:3px">${extras.join('')}</div></td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td style="font-size:11px;color:var(--gray3)">${p.manager||'–'}</td><td style="text-align:right">${fjCell(useGroupFJ?p.groupFJ:p.ownFJ,effFJ,useGroupFJ?'Skupinové FJ':'Vlastné FJ',coef<1?`zľava ${Math.round(coef*100)}%`:'')}</td><td style="text-align:right">${fjCell(p.histFJ,null,'Hist.FJ','')}</td><td style="text-align:right"><span class="fj-cell fj-neutral">${p.groupFJ.toFixed(0)}</span></td><td style="text-align:right">${pbCell(p.pb,pbThresh)}</td><td>${statusBadge}</td><td>${napomCell}</td><td>${promoCell}</td><td>${splnaStatutCell}</td><td>${actionCell}</td></tr>`;
@@ -656,6 +666,28 @@ function saveWarning(){
   localStorage.setItem('tf_warnings',JSON.stringify(warnings));
   closeModal('modal-warn');renderWarnings();renderDashboard();renderEvaluation();
   showToast('Napomenutie uložené.','success');
+}
+function openBrutoModal(name,pos){
+  window._brutoName=name;window._brutoPos=pos;
+  document.getElementById('bruto-modal-title').textContent=name;
+  const btns=document.getElementById('bruto-modal-btns');
+  btns.innerHTML='';
+  const safe=name.replace(/'/g,"\\'");
+  if(pos==='TR'){
+    btns.innerHTML=`<button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="saveBrutoResult('${safe}','splnil_tr')">Splnil 400 FJ brutto – odporučiť povýšenie na C</button><button class="btn btn-danger" style="width:100%" onclick="saveBrutoResult('${safe}','nesplnil_tr')">Nesplnil – napomenuť</button>`;
+  } else if(pos==='C'){
+    btns.innerHTML=`<button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="saveBrutoResult('${safe}','splnil_c')">Splnil štatút – zostáva na C</button><button class="btn btn-danger" style="width:100%;margin-bottom:8px" onclick="saveBrutoResult('${safe}','nesplnil_c')">Nesplnil štatút – napomenuť</button><button class="btn btn-secondary" style="width:100%" onclick="saveBrutoResult('${safe}','promo_sc')">Splnil podmienky na SC – odporučiť povýšenie</button>`;
+  }
+  document.getElementById('modal-bruto').classList.add('open');
+}
+function saveBrutoResult(name,result){
+  const labels={splnil_tr:'Odporučeň na C',nesplnil_tr:'Napomenutý (BRUTTO)',splnil_c:'Spĺňa štatút C',nesplnil_c:'Napomenutý (BRUTTO)',promo_sc:'Odporučeň na SC'};
+  const clss={splnil_tr:'green',nesplnil_tr:'red',splnil_c:'green',nesplnil_c:'red',promo_sc:'blue'};
+  brutoResults[name]={result,label:labels[result],cls:clss[result],date:new Date().toISOString().split('T')[0]};
+  localStorage.setItem('tf_bruto',JSON.stringify(brutoResults));
+  closeModal('modal-bruto');
+  renderDashboard();renderEvaluation();
+  showToast('Výsledok uložený.','success');
 }
 function openResolveModal(name){
   resolveTarget=name;
