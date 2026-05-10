@@ -857,7 +857,7 @@ function saveCesta(){
   if(!cestaData[cestaTarget])cestaData[cestaTarget]=[];
   cestaData[cestaTarget].push({cesta:selectedCestaValue,date:new Date().toISOString().split('T')[0],note:''});
   localStorage.setItem('tf_cesta',JSON.stringify(cestaData));
-  closeModal('modal-cesta');renderLudia();renderEvaluation();
+  closeModal('modal-cesta');renderEvaluation();
   showToast(`Kariérna cesta: ${selectedCestaValue==='manazerska'?'Manažérska':'Obchodná'}`,'success');
 }
 function exportReport(){
