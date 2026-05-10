@@ -4,20 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tower Finance – Kariérny systém</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800:wght@400;500&&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --green:#1db954;--green-dark:#158a3e;--green-pale:#e8f8ee;
+  --green:#3ddc57;--green-dark:#0d3320;--green-pale:#e8f4ec;
   --black:#0a0a0a;--white:#ffffff;--gray:#f4f4f4;--gray2:#e8e8e8;--gray3:#999;--gray4:#555;
   --red:#e53935;--red-pale:#ffeaea;--orange:#f57c00;--orange-pal:#fff3e0;--blue:#1565c0;--blue-pale:#e3f0ff;
-  --font-head:'Syne',sans-serif;--font-mono:'DM Mono',monospace;
+  --font-head:'Archivo',sans-serif;--font-mono:'Archivo',sans-serif;
   --radius:10px;--shadow:0 2px 12px rgba(0,0,0,0.08);
 }
 body{font-family:var(--font-mono);background:#f7f7f5;color:var(--black);min-height:100vh}
 h1,h2,h3,h4{font-family:var(--font-head)}
 .app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
-.sidebar{background:var(--black);color:var(--white);padding:0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar{background:#0d3320;color:var(--white);padding:0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
 .sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid #222}
 .sidebar-logo .brand{font-family:var(--font-head);font-weight:800;font-size:16px;color:var(--green);letter-spacing:0.5px}
 .sidebar-logo .sub{font-size:10px;color:#666;margin-top:2px;text-transform:uppercase;letter-spacing:1px}
@@ -73,7 +73,7 @@ tr.danger-row td{background:#fff5f5}
 .form-group label{display:block;font-size:11px;font-weight:600;font-family:var(--font-head);text-transform:uppercase;letter-spacing:0.5px;color:var(--gray4);margin-bottom:5px}
 .form-group input,.form-group select,.form-group textarea{width:100%;padding:9px 12px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:13px;color:var(--black);background:var(--white);outline:none;transition:border .15s}
 .form-group input:focus,.form-group select:focus{border-color:var(--green)}
-.toast{position:fixed;bottom:24px;right:24px;background:var(--black);color:var(--white);padding:12px 20px;border-radius:8px;font-size:13px;font-family:var(--font-head);font-weight:600;z-index:2000;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none}
+.toast{position:fixed;bottom:24px;right:24px;background:#0d3320;color:var(--white);padding:12px 20px;border-radius:8px;font-size:13px;font-family:var(--font-head);font-weight:600;z-index:2000;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none}
 .toast.show{transform:translateY(0);opacity:1}
 .toast.success{background:var(--green-dark)}.toast.error{background:var(--red)}
 .pos{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-family:var(--font-head);font-weight:700}
@@ -100,7 +100,7 @@ tr.danger-row td{background:#fff5f5}
 .tip-wrap{position:relative;display:inline-flex;align-items:center}
 .tip-icon{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:var(--red);color:#fff;font-size:9px;font-weight:700;cursor:pointer;margin-left:3px;font-family:var(--font-head)}
 .tip-icon:hover+.tip-box{display:block}
-.tip-box{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--black);color:#fff;font-size:11px;padding:8px 12px;border-radius:6px;white-space:nowrap;z-index:100;font-family:var(--font-mono);line-height:1.6;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,0.2)}
+.tip-box{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#0d3320;color:#fff;font-size:11px;padding:8px 12px;border-radius:6px;white-space:nowrap;z-index:100;font-family:var(--font-mono);line-height:1.6;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,0.2)}
 .tip-box::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--black)}
 #eval-main-table table{font-size:12px}
 #eval-main-table th{position:sticky;top:0;z-index:5;background:var(--gray)}
