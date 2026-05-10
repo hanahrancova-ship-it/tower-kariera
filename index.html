@@ -592,7 +592,14 @@ function renderEvaluation(){
     else if(pr.multiPath&&pr.allPaths){const best=pr.allPaths.sort((a,b)=>(a.issues?.length||0)-(b.issues?.length||0))[0];promoCell=`<span style="font-size:10px;color:var(--gray3)">${best.nextPos}:${(best.issues||[]).slice(0,1).join(',')}</span>`;}
     else if(pr.issues?.length)promoCell=`<span style="font-size:10px;color:var(--gray3)">${pr.issues.slice(0,1).join(',')}</span>`;
     let statusBadge=s.ok?'<span class="badge badge-green">OK</span>':aw&&ms>=3?'<span class="badge badge-red">⚠Znížiť</span>':aw?'<span class="badge badge-red">Napomenutý</span>':'<span class="badge badge-orange">Nesplnené</span>';
-    const _po=["P","SD","MD","SM","EM","TL","VIP IV","VIP III","VIP II","VIP I","SC","C","TR"];const _pi=_po.indexOf(p.pos);const splnaStatutCell=s.ok?p.pos:(_pi>=0&&_pi<_po.length-1?_po[_pi+1]:"");
+    const _mPath=["P","SD","MD","SM","EM","TL","SC","C","TR"];
+    const _oPath=["VIP IV","VIP III","VIP II","VIP I","SC","C","TR"];
+    const _manPos=["TL","EM","SM","MD","SD","P"];
+    const _vipPos=["VIP I","VIP II","VIP III","VIP IV"];
+    const _sCesta=_manPos.includes(p.pos)?"manazerska":_vipPos.includes(p.pos)?"obchodna":(getPersonCesta(p.name)||"manazerska");
+    const _path=_sCesta==="obchodna"?_oPath:_mPath;
+    const _ci=_path.indexOf(p.pos);
+    const splnaStatutCell=s.ok?p.pos:(_ci>=0&&_ci<_path.length-1?_path[_ci+1]:"");
     let actionCell='';
     if(!s.ok&&!aw)actionCell=`<button class="btn btn-sm btn-primary" onclick="quickWarn('${p.name.replace(/'/g,"\\'")}','${s.type||'fj'}')">Napomenúť</button>`;
     else if(aw)actionCell=`<button class="btn btn-sm btn-secondary" onclick="openResolveModal('${p.name.replace(/'/g,"\\'")}')">Zrušiť nap.</button>`;
