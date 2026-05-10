@@ -534,7 +534,7 @@ function pbCell(v,threshold){
   if(v>=threshold)return`<span class="fj-cell fj-ok">${v}</span>`;
   return`<span class="fj-cell fj-fail">${v}<span class="tip-wrap"><span class="tip-icon">i</span><span class="tip-box">PB: Potrebné ${threshold} | Aktuálne ${v} | Rozdiel −${threshold-v}</span></span></span>`;
 }
-function runEvaluation(){renderEvaluation();showToast('Vyhodnotenie dokončené.','success');}
+function runEvaluation(){computeEvalPeople();renderEvaluation();showToast('Vyhodnotenie dokončené.','success');}
 function renderEvaluation(){
   if(!evalPeople.length){document.getElementById('eval-main-table').innerHTML='<div class="empty" style="padding:48px"><div class="big">📂</div>Najprv importujte dáta.</div>';return;}
   const sorted2=[...imports].sort((a,b)=>b.key.localeCompare(a.key));
@@ -798,7 +798,7 @@ if(imports.length){
 renderKarieraTable();
 renderWarnings();
 renderImportSelector();
-if(evalPeople.length)renderAll();
+renderEvaluation();
 </script>
 </body>
 </html>
