@@ -1,29 +1,28 @@
-
 <html lang="sk"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tower Finance – Kariérny systém</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&amp;family=Syne:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --green:#1db954;--green-dark:#158a3e;--green-pale:#e8f8ee;
-  --black:#0a0a0a;--white:#ffffff;--gray:#f4f4f4;--gray2:#e8e8e8;--gray3:#999;--gray4:#555;
+  --green:#3CD64E;--green-dark:#0E3318;--green-pale:#e8f8ee;
+  --black:#0E3318;--white:#ffffff;--gray:#f4f4f4;--gray2:#e8e8e8;--gray3:#999;--gray4:#555;
   --red:#e53935;--red-pale:#ffeaea;--orange:#f57c00;--orange-pal:#fff3e0;--blue:#1565c0;--blue-pale:#e3f0ff;
-  --font-head:'Syne',sans-serif;--font-mono:'DM Mono',monospace;
+  --font-head:'Archivo',sans-serif;--font-mono:'Archivo',sans-serif;
   --radius:10px;--shadow:0 2px 12px rgba(0,0,0,0.08);
 }
 body{font-family:var(--font-mono);background:#f7f7f5;color:var(--black);min-height:100vh}
 h1,h2,h3,h4{font-family:var(--font-head)}
 .app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
 .sidebar{background:var(--black);color:var(--white);padding:0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
-.sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid #222}
-.sidebar-logo .brand{font-family:var(--font-head);font-weight:800;font-size:16px;color:var(--green);letter-spacing:0.5px}
-.sidebar-logo .sub{font-size:10px;color:#666;margin-top:2px;text-transform:uppercase;letter-spacing:1px}
+.sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid #1a4128;text-align:center}
+.sidebar-logo img{display:block;width:100%;max-width:140px;height:auto;max-height:60px;object-fit:contain;margin:0 auto}
+.sidebar-logo .sub{font-size:10px;color:#7aa388;margin-top:10px;text-transform:uppercase;letter-spacing:1px;font-weight:600}
 .nav{padding:16px 0;flex:1}
-.nav-item{display:flex;align-items:center;gap:10px;padding:11px 20px;cursor:pointer;font-size:12px;color:#aaa;transition:all .15s;border-left:3px solid transparent;font-family:var(--font-head);font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
-.nav-item:hover{color:var(--white);background:#111}
-.nav-item.active{color:var(--green);border-left-color:var(--green);background:#111}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 20px;cursor:pointer;font-size:12px;color:#9ab8a4;transition:all .15s;border-left:3px solid transparent;font-family:var(--font-head);font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
+.nav-item:hover{color:var(--white);background:#15431f}
+.nav-item.active{color:var(--green);border-left-color:var(--green);background:#15431f}
 .nav-item svg{width:16px;height:16px;flex-shrink:0}
 .main{padding:32px;overflow-y:auto;min-height:100vh}
 .page{display:none}.page.active{display:block}
@@ -76,7 +75,7 @@ tr.danger-row td{background:#fff5f5}
 .toast.show{transform:translateY(0);opacity:1}
 .toast.success{background:var(--green-dark)}.toast.error{background:var(--red)}
 .pos{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-family:var(--font-head);font-weight:700}
-.pos-md,.pos-sd,.pos-p{background:#0a0a0a;color:#fff}.pos-sm{background:#1db954;color:#fff}
+.pos-md,.pos-sd,.pos-p{background:#0E3318;color:#fff}.pos-sm{background:#3CD64E;color:#0E3318}
 .pos-em{background:#1565c0;color:#fff}.pos-tl{background:#6a1b9a;color:#fff}
 .pos-sc{background:#f57c00;color:#fff}.pos-c{background:#78909c;color:#fff}
 .pos-tr{background:#bdbdbd;color:#333}.pos-vip{background:#c62828;color:#fff}
@@ -121,7 +120,7 @@ tr.danger-row td{background:#fff5f5}
 <div class="app">
 <aside class="sidebar">
   <div class="sidebar-logo">
-    <div class="brand">TOWER FINANCE</div>
+    <img src="5_TF_2025_rgb.png" alt="Tower Finance">
     <div class="sub">Kariérny systém</div>
   </div>
   <nav class="nav">
@@ -235,7 +234,7 @@ tr.danger-row td{background:#fff5f5}
 <!-- MODALS -->
 <div class="modal-overlay" id="modal-warn">
   <div class="modal">
-    <h3>Pridať napomenutie</h3>
+    <h3 id="warn-modal-title">Pridať napomenutie</h3>
     <div class="form-group"><label>Spolupracovník</label><select id="warn-person-sel" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px"></select></div>
     <div class="form-group"><label>Dátum napomenutia</label><input type="date" id="warn-date"></div>
     <div class="form-group"><label>Dôvod</label><select id="warn-reason" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px"><option value="fj">Nesplnenie FJ</option><option value="pb">Nesplnenie PB</option><option value="obe">Nesplnenie FJ aj PB</option></select></div>
@@ -325,6 +324,7 @@ function getKariera(pos){return KARIERA.find(k=>k.pos===pos)}
 function posClass(pos){const m={'MD':'pos-md','SD':'pos-md','P':'pos-md','SM':'pos-sm','EM':'pos-em','TL':'pos-tl','SC':'pos-sc','C':'pos-c','TR':'pos-tr'};if(pos&&pos.startsWith('VIP'))return'pos-vip';return m[pos]||'pos-tr'}
 function getActiveWarning(name){return warnings.find(w=>w.person===name&&w.status==='active')}
 function monthsSince(d){const dt=new Date(d),now=new Date();return(now.getFullYear()-dt.getFullYear())*12+(now.getMonth()-dt.getMonth())}
+function firstOfMonth(){const d=new Date();d.setDate(1);const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0');return y+'-'+m+'-01';}
 function importLabel(y,m){return`${MESACE[m]} ${y}`}
 
 let imports=JSON.parse(localStorage.getItem('tf_imports')||'[]');
@@ -517,11 +517,11 @@ function renderDashboard(){
   evalPeople.forEach(p=>{if(checkStatus(p).ok)ok++;const pr=checkPromotion(p);if(pr.canPromote===true||(pr.multiPath&&pr.paths?.length))promoCount++;});
   document.getElementById('stat-total').textContent=evalPeople.length;
   document.getElementById('stat-ok').textContent=ok;
-  document.getElementById('stat-warn').textContent=warnings.filter(w=>w.status==='active').length;
-  document.getElementById('stat-promo').textContent=promoCount;
+  const _sw=document.getElementById('stat-warn');if(_sw)_sw.textContent=warnings.filter(w=>w.status==='active').length;
+  const _sp=document.getElementById('stat-promo');if(_sp)_sp.textContent=promoCount;
   const issues=evalPeople.filter(p=>!checkStatus(p).ok);
   let html=issues.length?`<div class="table-wrap"><table><thead><tr><th>Meno</th><th>Pozícia</th><th>Vlastné FJ (${last3.length}m)</th><th>Hist.FJ</th><th>PB</th><th>Problém</th><th>Napomenutie</th></tr></thead><tbody>${[...issues].sort((a,b)=>{const o=["P","SD","MD","SM","EM","TL","VIP IV","VIP III","VIP II","VIP I","SC","C","TR"];return(o.indexOf(a.pos)<0?99:o.indexOf(a.pos))-(o.indexOf(b.pos)<0?99:o.indexOf(b.pos));}).map(p=>{const s=checkStatus(p),aw=getActiveWarning(p.name),ms=aw?monthsSince(aw.date):0;return`<tr class="${aw&&ms>=3?'danger-row':aw?'warning-row':''}"><td><strong>${p.name}</strong></td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td>${p.ownFJ.toFixed(0)}</td><td>${p.histFJ.toFixed(0)}</td><td>${p.pb}</td><td><span class="badge badge-orange" style="font-size:10px">${s.msg}</span></td><td>${aw?`<span class="badge badge-red">${ms}/3 mes.</span>`:'<span class="badge badge-gray">–</span>'}</td></tr>`;}).join('')}</tbody></table></div>`:'<div class="empty"><div class="big">✅</div>Všetci spĺňajú štatút!</div>';
-  document.getElementById('dash-table').innerHTML=html;
+  const _dt=document.getElementById('dash-table');if(_dt)_dt.innerHTML=html;
 }
 </script>
 <script>
@@ -600,7 +600,7 @@ function renderEvaluation(){
     const splnaStatutCell=s.ok?p.pos:(_ci>=0&&_ci<_path.length-1?_path[_ci+1]:"");
     let actionCell='';
     if(!s.ok&&!aw)actionCell=`<button class="btn btn-sm btn-primary" onclick="quickWarn('${p.name.replace(/'/g,"\\'")}','${s.type||'fj'}')">Napomenúť</button>`;
-    else if(aw)actionCell=`<button class="btn btn-sm btn-secondary" onclick="openResolveModal('${p.name.replace(/'/g,"\\'")}')">Zrušiť nap.</button>`;
+    else if(aw)actionCell=`<button class="btn btn-sm btn-secondary" onclick="editWarning('${aw.id}')">Upraviť nap.</button> <button class="btn btn-sm btn-secondary" onclick="openResolveModal('${p.name.replace(/'/g,"\\'")}')">Zrušiť nap.</button>`;
     if(['TR','C'].includes(p.pos)){const _br=brutoResults[p.name]||null;const _brBadge=_br?'<br><span class="badge badge-'+_br.cls+'">'+_br.label+'</span>':'';const _safe=p.name.replace(/'/g,"\\'");actionCell+=_brBadge+'<br><button class="btn btn-sm btn-secondary" onclick="openBrutoModal(\''+_safe+'\',\''+p.pos+'\')">Manuálna kontrola BRUTTO</button>';}
     const _safePoz=p.name.replace(/'/g,"\\'");actionCell+='<br><button class="btn btn-sm btn-secondary" onclick="openPoziciaModal(\''+_safePoz+'\',\''+p.pos+'\',\'povysenie\')">Povýšiť</button> <button class="btn btn-sm btn-secondary" onclick="openPoziciaModal(\''+_safePoz+'\',\''+p.pos+'\',\'znizenie\')">Znížiť</button>';
     const rowCls=!s.ok&&aw&&ms>=3?'eval-row-fail':!s.ok&&aw?'eval-row-warn':!s.ok?'eval-row-fail':(pr.canPromote===true||(pr.multiPath&&pr.paths?.length))?'eval-row-promo':'eval-row-ok';
@@ -687,7 +687,7 @@ function renderEvidenciaNapomenutia(){
     const _reason=w.reason==='fj'?'Nesplnenie FJ':w.reason==='pb'?'Nesplnenie PB':'Nesplnenie FJ+PB';
     let _zrusCell=_zrus;
     if(w.status==='active')_zrusCell+='<br><button class="btn btn-sm btn-secondary" style="font-size:10px" onclick="openResolveModal(\'' +_safe+ '\')">Zrušiť</button>';
-    return`<tr class="${_rowClass}"><td><strong>${w.person}</strong></td><td>${formatWarnDate(w.date)}</td><td>${_wpos}</td><td>${_reason}</td><td>${_zrusCell}</td><td><input type="text" value="${_note}" onchange="saveEvPoznamka('nap_${w.id}',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-size:11px;background:transparent"></td><td><button class="btn btn-sm btn-danger" onclick="deleteWarning('${w.id}')">&#x2715;</button></td></tr>`;
+    return`<tr class="${_rowClass}"><td><strong>${w.person}</strong></td><td>${formatWarnDate(w.date)}</td><td>${_wpos}</td><td>${_reason}</td><td>${_zrusCell}</td><td><input type="text" value="${_note}" onchange="saveEvPoznamka('nap_${w.id}',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-size:11px;background:transparent"></td><td style="white-space:nowrap"><button class="btn btn-sm btn-secondary" onclick="editWarning('${w.id}')" style="margin-right:4px">Upraviť</button><button class="btn btn-sm btn-danger" onclick="deleteWarning('${w.id}')">&#x2715;</button></td></tr>`;
   });
   el.innerHTML='<div class="table-wrap"><table><thead><tr><th>Meno</th><th>Dátum</th><th>Poz.</th><th>Za čo</th><th>Zrušené k</th><th>Poznámka</th><th></th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>';
 }
@@ -732,25 +732,54 @@ function renderKarieraTable(){
 }
 function savePoznamka(pos,val){poznamkyData[pos]=val;localStorage.setItem('tf_poznamky',JSON.stringify(poznamkyData));}
 function openAddWarnModal(){
+  window._editingWarnId=null;
+  document.getElementById('warn-modal-title').textContent='Pridať napomenutie';
   const src=evalPeople.length?evalPeople:people;
   const sel=document.getElementById('warn-person-sel');
   sel.innerHTML=src.length?src.map(p=>`<option value="${p.name}">${p.name} (${p.pos})</option>`).join(''):'<option>Najprv importujte dáta</option>';
-  document.getElementById('warn-date').value=(()=>{const _d=new Date();return new Date(_d.getFullYear(),_d.getMonth(),1).toISOString().split('T')[0];})();
+  sel.disabled=false;
+  document.getElementById('warn-date').value=firstOfMonth();
   document.getElementById('warn-note').value='';
   document.getElementById('modal-warn').classList.add('open');
 }
 function quickWarn(name,reason){
+  window._editingWarnId=null;
+  document.getElementById('warn-modal-title').textContent='Pridať napomenutie';
   const src=evalPeople.length?evalPeople:people;
   const sel=document.getElementById('warn-person-sel');
   sel.innerHTML=src.map(p=>`<option value="${p.name}"${p.name===name?' selected':''}>${p.name} (${p.pos})</option>`).join('');
-  document.getElementById('warn-date').value=(()=>{const _d=new Date();return new Date(_d.getFullYear(),_d.getMonth(),1).toISOString().split('T')[0];})();
+  sel.disabled=false;
+  document.getElementById('warn-date').value=firstOfMonth();
   document.getElementById('warn-reason').value=reason;
   document.getElementById('warn-note').value='';
+  document.getElementById('modal-warn').classList.add('open');
+}
+function editWarning(id){
+  const w=warnings.find(x=>x.id===id);
+  if(!w){showToast('Napomenutie sa nenašlo.','error');return;}
+  window._editingWarnId=id;
+  document.getElementById('warn-modal-title').textContent='Upraviť napomenutie';
+  const sel=document.getElementById('warn-person-sel');
+  sel.innerHTML=`<option value="${w.person}" selected>${w.person}</option>`;
+  sel.disabled=true;
+  document.getElementById('warn-date').value=w.date;
+  document.getElementById('warn-reason').value=w.reason;
+  document.getElementById('warn-note').value=w.note||'';
   document.getElementById('modal-warn').classList.add('open');
 }
 function saveWarning(){
   const person=document.getElementById('warn-person-sel').value,date=document.getElementById('warn-date').value,reason=document.getElementById('warn-reason').value,note=document.getElementById('warn-note').value;
   if(!person||!date){showToast('Vyplňte všetky polia.','error');return;}
+  if(window._editingWarnId){
+    const idx=warnings.findIndex(w=>w.id===window._editingWarnId);
+    if(idx<0){showToast('Záznam sa nenašiel.','error');return;}
+    warnings[idx]={...warnings[idx],person,date,reason,note};
+    localStorage.setItem('tf_warnings',JSON.stringify(warnings));
+    window._editingWarnId=null;
+    closeModal('modal-warn');renderEvidencia();renderEvaluation();
+    showToast('Napomenutie upravené.','success');
+    return;
+  }
   if(getActiveWarning(person)){showToast('Táto osoba už má aktívne napomenutie.','error');return;}
   warnings.push({id:Date.now().toString(),person,date,reason,note,status:'active',createdAt:new Date().toISOString()});
   localStorage.setItem('tf_warnings',JSON.stringify(warnings));
@@ -763,8 +792,7 @@ function openPoziciaModal(name,currentPos,type){
   const ALL_POS=["P","SD","MD","SM","EM","TL","VIP IV","VIP III","VIP II","VIP I","SC","C","TR"];
   const sel=document.getElementById('poz-new-pos');
   sel.innerHTML=ALL_POS.filter(p=>p!==currentPos).map(p=>`<option value="${p}">${p}</option>`).join('');
-  const d=new Date();
-  document.getElementById('poz-date').value=new Date(d.getFullYear(),d.getMonth(),1).toISOString().split('T')[0];
+  document.getElementById('poz-date').value=firstOfMonth();
   document.getElementById('modal-pozicia').classList.add('open');
 }
 function savePozicia(){
@@ -811,7 +839,7 @@ function saveBrutoResult(name,result){
 }
 function openResolveModal(name){
   resolveTarget=name;
-  document.getElementById('resolve-date').value=(()=>{const _d=new Date();return new Date(_d.getFullYear(),_d.getMonth(),1).toISOString().split('T')[0];})();
+  document.getElementById('resolve-date').value=firstOfMonth();
   document.getElementById('resolve-note').value='';
   document.getElementById('modal-resolve').classList.add('open');
 }
