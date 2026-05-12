@@ -688,6 +688,8 @@ function renderEvaluation(){
   document.getElementById('eval-main-table').innerHTML=html;
 }
 function renderLudia(){
+  const _lt=document.getElementById('ludia-table');
+  if(!_lt)return;
   const q=(document.getElementById('search-ludia')?.value||'').toLowerCase();
   const fp=document.getElementById('filter-pozicia')?.value||'';
   const fc=document.getElementById('filter-cesta')?.value||'';
@@ -695,7 +697,7 @@ function renderLudia(){
   const filtered=src.filter(p=>{if(q&&!p.name.toLowerCase().includes(q))return false;if(fp&&p.pos!==fp)return false;if(fc){const pc=getPersonCesta(p.name);if(fc==='manazerska'&&pc!=='manazerska')return false;if(fc==='obchodna'&&pc!=='obchodna')return false;}return true;});
   const bezCesty=src.filter(p=>['TR','C','SC'].includes(p.pos)&&!getPersonCesta(p.name));
   let warn=bezCesty.length?`<div style="background:var(--orange-pale);border:1px solid var(--orange);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--orange)">⚠ <strong>${bezCesty.length} SP</strong> bez nastavenej kariérnej cesty.</div>`:'';
-  if(!filtered.length){document.getElementById('ludia-table').innerHTML=warn+'<div class="empty"><div class="big">👥</div>Žiadni ľudia.</div>';return;}
+  if(!filtered.length){_lt.innerHTML=warn+'<div class="empty"><div class="big">👥</div>Žiadni ľudia.</div>';return;}
   let html=`<table><thead><tr><th>Meno</th><th>Pozícia</th><th>Kariérna cesta</th><th>Manažér</th><th>Vlastné FJ</th><th>Skupin.FJ</th><th>Hist.FJ</th><th>PB</th><th>Zľava</th><th>Štatút</th></tr></thead><tbody>`;
   filtered.forEach(p=>{
     const s=checkStatus(p),aw=getActiveWarning(p.name),coef=getDiscountCoef(p.histFJ,p.name,p.pos);
@@ -703,7 +705,7 @@ function renderLudia(){
     let cestaCell=isManazerska(p.pos)?'<span class="badge badge-gray">🏢 Manažérska</span>':isVIP(p.pos)?'<span class="badge badge-gray">💼 Obchodná</span>':cesta?`<span class="badge ${cesta==='manazerska'?'badge-blue':'badge-green'}">${cesta==='manazerska'?'🏢':'💼'} ${cesta==='manazerska'?'Manažérska':'Obchodná'}</span> <button class="btn btn-sm btn-secondary" style="font-size:10px" onclick="openCestaModal('${p.name.replace(/'/g,"\\'")}')">Zmeniť</button>`:`<button class="btn btn-sm btn-secondary" onclick="openCestaModal('${p.name.replace(/'/g,"\\'")}')">Nastaviť</button>`;
     html+=`<tr><td><strong>${p.name}</strong>${hasHistProtection(p.histFJ)?'<br><span style="font-size:9px;color:var(--blue)">≥18k</span>':''}</td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td>${cestaCell}</td><td style="color:var(--gray3);font-size:11px">${p.manager||'–'}</td><td>${p.ownFJ.toFixed(2)}</td><td>${p.groupFJ.toFixed(2)}</td><td>${p.histFJ.toFixed(2)}</td><td>${p.pb}</td><td>${coef<1?Math.round((1-coef)*100)+'%':'–'}</td><td>${s.ok?'<span class="badge badge-green">OK</span>':aw?'<span class="badge badge-red">Napomenutý</span>':'<span class="badge badge-orange">Nesplnené</span>'}</td>${(()=>{const _ph=pozicieHistory[p.name]||[];if(!_ph.length)return '';return '<td colspan="2"><small style="color:var(--gray3)">Hist. poz.: '+_ph.map(h=>h.date+' '+h.fromPos+'→'+h.toPos).join(', ')+'</small></td>';})()}</tr>`;
   });
-  document.getElementById('ludia-table').innerHTML=warn+html+'</tbody></table>';
+  _lt.innerHTML=warn+html+'</tbody></table>';
 }
 
 function formatWarnDate(d){if(!d)return'';const p=d.split('-');if(p.length<3)return d;const m=['janár','február','marec','apríl','máj','jún','júl','august','september','október','november','december'];return'k 1. '+m[parseInt(p[1],10)-1]+' '+p[0];}
