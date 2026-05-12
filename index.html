@@ -322,7 +322,7 @@ function effectiveMaintainFJ(k,h,name,pos){if(!k.maintainFJ)return null;return M
 function hasHistProtection(h){return h>=HIST_PROTECTION}
 function getKariera(pos){return KARIERA.find(k=>k.pos===pos)}
 function posClass(pos){const m={'MD':'pos-md','SD':'pos-md','P':'pos-md','SM':'pos-sm','EM':'pos-em','TL':'pos-tl','SC':'pos-sc','C':'pos-c','TR':'pos-tr'};if(pos&&pos.startsWith('VIP'))return'pos-vip';return m[pos]||'pos-tr'}
-  function getActiveWarning(name){return warnings.find(w=>w.person===name&&w.status==='active')}
+function getActiveWarning(name){return warnings.find(w=>w.person===name&&w.status==='active')}
 function monthsSince(d){const dt=new Date(d),now=new Date();return(now.getFullYear()-dt.getFullYear())*12+(now.getMonth()-dt.getMonth())}
 function firstOfMonth(){const d=new Date();d.setDate(1);const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0');return y+'-'+m+'-01';}
 function importLabel(y,m){return`${MESACE[m]} ${y}`}
@@ -537,9 +537,9 @@ function pbCell(v,threshold){
   return`<span class="fj-cell fj-fail">${v}<span class="tip-wrap"><span class="tip-icon">i</span><span class="tip-box">PB: Potrebné ${threshold} | Aktuálne ${v} | Rozdiel −${threshold-v}</span></span></span>`;
 }
 function runEvaluation(){computeEvalPeople();renderEvaluation();showToast('Vyhodnotenie dokončené.','success');}
-function getPbRiskForManager(managerName){
-  // Vráti zoznam podriadených, ktorí ak by spadli o stupeň, manažér by stratil PB pod prah.
-  // Používa sa na zobrazenie odporúčania pri nadriadenom vo vyhodnotení.
+function getPbRiskAcute(managerName){
+  // ČERVENÝ (akútny): manažér má UŽ napomenutých podriadených a pri ich páde na dno cesty
+  // by stratil PB pod prah. Vráti zoznam napomenutých podriadených, inak [].
   if(!managerName)return [];
   const mgr=evalPeople.find(p=>p.name===managerName);
   if(!mgr)return [];
@@ -547,24 +547,77 @@ function getPbRiskForManager(managerName){
   const pbThresh=k.maintainPB||0;
   if(pbThresh<=0)return [];
   const currentPB=mgr.pb||0;
-  if(currentPB<pbThresh)return []; // už teraz pod prahom – nemá zmysel varovať
-  const CESTA_MAN=["TR","C","SC","TL","EM","SM","MD","SD","P"];
-  const CESTA_VIP=["TR","C","SC","VIP I","VIP II","VIP III","VIP IV"];
+  if(currentPB<pbThresh)return []; // už teraz pod prahom – netreba dodatočne za PB
   const VIP_POS=["VIP I","VIP II","VIP III","VIP IV"];
-  const risky=[];
   const directs=evalPeople.filter(x=>x.manager===managerName);
-  directs.forEach(d=>{
-    const cesta=getPersonCesta(d.name);
-    let arr=CESTA_MAN;
-    if(cesta==='obchodna'||VIP_POS.includes(d.pos))arr=CESTA_VIP;
-    const idx=arr.indexOf(d.pos);
-    if(idx<=0)return; // nie je kam padať (TR), alebo neznáme
-    const lowerPos=arr[idx-1];
-    const lost=(PB_VALUES[d.pos]||0)-(PB_VALUES[lowerPos]||0);
-    if(lost<=0)return;
-    if((currentPB-lost)<pbThresh)risky.push({name:d.name,pos:d.pos,lowerPos,lost});
+  const warned=directs.filter(d=>!!getActiveWarning(d.name));
+  if(!warned.length)return [];
+  let totalLost=0;
+  const list=[];
+  warned.forEach(d=>{
+    const isVip=VIP_POS.includes(d.pos);
+    const bottomPos=isVip?'VIP I':'TR';
+    const lost=(PB_VALUES[d.pos]||0)-(PB_VALUES[bottomPos]||0);
+    if(lost>0){totalLost+=lost;list.push({name:d.name,pos:d.pos,bottomPos,lost});}
   });
-  return risky;
+  if((currentPB-totalLost)>=pbThresh)return [];
+  return list;
+}
+function getPbRiskPreventive(managerName){
+  // ŽLTÝ (preventívny): manažér má NEnapomenutých podriadených, ktorých prípadné napomenutie
+  // (+pesimistický pád na dno cesty) by spolu s už napomenutými potopil pod prah.
+  // Vráti zoznam nenapomenutých podriadených v riziku, inak [].
+  if(!managerName)return [];
+  const mgr=evalPeople.find(p=>p.name===managerName);
+  if(!mgr)return [];
+  const k=getKariera(mgr.pos);if(!k)return [];
+  const pbThresh=k.maintainPB||0;
+  if(pbThresh<=0)return [];
+  const currentPB=mgr.pb||0;
+  if(currentPB<pbThresh)return [];
+  const VIP_POS=["VIP I","VIP II","VIP III","VIP IV"];
+  const directs=evalPeople.filter(x=>x.manager===managerName);
+  if(!directs.length)return [];
+  // Najprv odpočítaj straty od už napomenutých
+  let lostFromWarned=0;
+  directs.forEach(d=>{
+    if(!getActiveWarning(d.name))return;
+    const isVip=VIP_POS.includes(d.pos);
+    const bottomPos=isVip?'VIP I':'TR';
+    const lost=(PB_VALUES[d.pos]||0)-(PB_VALUES[bottomPos]||0);
+    if(lost>0)lostFromWarned+=lost;
+  });
+  const pbAfterWarned=currentPB-lostFromWarned;
+  // Pre každého nenapomenutého podriadeného: ak by sme aj jeho napomenuli a padol, dostali by sme sa pod prah?
+  const list=[];
+  directs.forEach(d=>{
+    if(getActiveWarning(d.name))return; // už napomenutý je v akútnom
+    const isVip=VIP_POS.includes(d.pos);
+    const bottomPos=isVip?'VIP I':'TR';
+    const lost=(PB_VALUES[d.pos]||0)-(PB_VALUES[bottomPos]||0);
+    if(lost<=0)return;
+    if((pbAfterWarned-lost)<pbThresh)list.push({name:d.name,pos:d.pos,bottomPos,lost});
+  });
+  return list;
+}
+let pbAlertDismissed=JSON.parse(localStorage.getItem('tf_pb_dismissed')||'{}');
+function dismissPbAlert(name,type){
+  // type: 'acute' alebo 'preventive'. Uloží sa hash napomenutých podriadených v case zavretia,
+  // aby sa po novom napomenutí (zmena hashu) varovanie znova ukázalo.
+  const mgr=evalPeople.find(p=>p.name===name);
+  if(!mgr){renderEvaluation();return;}
+  const directs=evalPeople.filter(x=>x.manager===name);
+  const warnedIds=directs.filter(d=>!!getActiveWarning(d.name)).map(d=>getActiveWarning(d.name).id).sort().join(',');
+  const key=name+'|'+type+'|'+warnedIds;
+  pbAlertDismissed[key]=true;
+  localStorage.setItem('tf_pb_dismissed',JSON.stringify(pbAlertDismissed));
+  renderEvaluation();
+}
+function isPbAlertDismissed(name,type){
+  const directs=evalPeople.filter(x=>x.manager===name);
+  const warnedIds=directs.filter(d=>!!getActiveWarning(d.name)).map(d=>getActiveWarning(d.name).id).sort().join(',');
+  const key=name+'|'+type+'|'+warnedIds;
+  return !!pbAlertDismissed[key];
 }
 function renderEvaluation(){
   if(!evalPeople.length){document.getElementById('eval-main-table').innerHTML='<div class="empty" style="padding:48px"><div class="big">📂</div>Najprv importujte dáta.</div>';return;}
@@ -631,11 +684,17 @@ function renderEvaluation(){
     if(!s.ok&&!aw)actionCell=`<button class="btn btn-sm btn-primary" onclick="quickWarn('${p.name.replace(/'/g,"\\'")}','${s.type||'fj'}')">Napomenúť</button>`;
     else if(!aw)actionCell=`<button class="btn btn-sm btn-secondary" onclick="quickWarn('${p.name.replace(/'/g,"\\'")}','fj')">Napomenúť</button>`;
     else if(aw)actionCell=`<button class="btn btn-sm btn-secondary" onclick="editWarning('${aw.id}')">Upraviť nap.</button> <button class="btn btn-sm btn-secondary" onclick="openResolveModal('${p.name.replace(/'/g,"\\'")}')">Zrušiť nap.</button>`;
-    // Riziko PB: ak má táto osoba podriadených ktorých pád by ju potopil pod prah PB → varovanie
-    const _pbRisk=getPbRiskForManager(p.name);
-    if(_pbRisk.length){
-      const _names=_pbRisk.map(r=>r.name+' ('+r.pos+'→'+r.lowerPos+')').join(', ');
-      actionCell+=`<div style="margin-top:6px;padding:6px 8px;background:var(--orange-pale);border:1px solid var(--orange);border-radius:6px;font-size:10px;color:var(--orange);line-height:1.3"><strong>⚠ Riziko PB:</strong> ak padne ${_names}, treba napomenúť aj túto osobu za PB.</div>`;
+    // Riziko PB — dva indikátory: ČERVENÝ (akútny, napomenutí podriadení) a ŽLTÝ (preventívny, nenapomenutí v riziku)
+    const _safeName=p.name.replace(/'/g,"\\'");
+    const _pbAcute=getPbRiskAcute(p.name);
+    if(_pbAcute.length&&!isPbAlertDismissed(p.name,'acute')){
+      const _names=_pbAcute.map(r=>r.name).join(', ');
+      actionCell+=`<div style="margin-top:6px;padding:6px 24px 6px 8px;background:var(--red-pale);border:1px solid var(--red);border-radius:6px;font-size:10px;color:var(--red);line-height:1.3;position:relative"><span onclick="dismissPbAlert('${_safeName}','acute')" style="position:absolute;top:3px;right:5px;cursor:pointer;font-weight:700;font-size:12px;color:var(--red);padding:0 3px" title="Zatvoriť">&#x2715;</span><strong>⚠ Napomenúť za PB</strong><br>Podriadení s aktívnym napomenutím: ${_names}. Pri ich páde nesplní PB.</div>`;
+    }
+    const _pbPrev=getPbRiskPreventive(p.name);
+    if(_pbPrev.length&&!isPbAlertDismissed(p.name,'preventive')){
+      const _names=_pbPrev.map(r=>r.name).join(', ');
+      actionCell+=`<div style="margin-top:6px;padding:6px 24px 6px 8px;background:var(--orange-pale);border:1px solid var(--orange);border-radius:6px;font-size:10px;color:var(--orange);line-height:1.3;position:relative"><span onclick="dismissPbAlert('${_safeName}','preventive')" style="position:absolute;top:3px;right:5px;cursor:pointer;font-weight:700;font-size:12px;color:var(--orange);padding:0 3px" title="Zatvoriť">&#x2715;</span><strong>⚠ Riziko PB</strong><br>Ak napomeniete: ${_names}, môže byť potrebné napomenúť aj túto osobu za PB.</div>`;
     }
     if(['TR','C'].includes(p.pos)){const _br=brutoResults[p.name]||null;const _brBadge=_br?'<br><span class="badge badge-'+_br.cls+'">'+_br.label+'</span>':'';const _safe=p.name.replace(/'/g,"\\'");actionCell+=_brBadge+'<br><button class="btn btn-sm btn-secondary" onclick="openBrutoModal(\''+_safe+'\',\''+p.pos+'\')">Manuálna kontrola BRUTTO</button>';}
     const _safePoz=p.name.replace(/'/g,"\\'");actionCell+='<br><button class="btn btn-sm btn-secondary" onclick="openPoziciaModal(\''+_safePoz+'\',\''+p.pos+'\',\'povysenie\')">Povýšiť</button> <button class="btn btn-sm btn-secondary" onclick="openPoziciaModal(\''+_safePoz+'\',\''+p.pos+'\',\'znizenie\')">Znížiť</button>';
