@@ -110,6 +110,7 @@ tr.danger-row td{background:#fff5f5}
 .napom-dot{display:inline-flex;gap:3px;margin-left:4px;vertical-align:middle}
 .napom-m{width:10px;height:10px;border-radius:50%;display:inline-block}
 .napom-m.used{background:var(--red)}.napom-m.free{background:var(--gray2);border:1px solid #ccc}
+.napom-m.half{background:linear-gradient(to right,var(--red) 50%,var(--gray2) 50%);border:1px solid #ccc}
 .import-month-item{padding:10px 14px;cursor:pointer;border-radius:8px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;border:1px solid var(--gray2);background:var(--white);transition:all .15s}
 .import-month-item:hover{border-color:var(--green);background:var(--green-pale)}
 .import-month-item.active{border-color:var(--green);background:var(--green-pale)}
@@ -195,6 +196,11 @@ tr.danger-row td{background:#fff5f5}
         <option>MD</option><option>SD</option><option>SM</option><option>EM</option>
         <option>TL</option><option>SC</option><option>C</option><option>TR</option>
         <option>VIP I</option><option>VIP II</option><option>VIP III</option>
+      </select>
+      <select id="eval-filter-cesta" onchange="renderEvaluation()" style="padding:7px 10px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:12px">
+        <option value="">Všetky cesty</option>
+        <option value="manazerska">🏢 Manažérska</option>
+        <option value="obchodna">💼 Obchodná</option>
       </select>
       <select id="eval-filter-status" onchange="renderEvaluation()" style="padding:7px 10px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:12px">
         <option value="">Všetci</option>
@@ -308,6 +314,8 @@ const KARIERA=[
   {pos:'VIP IV',name:'VIP Consultant IV.',rate:7,maintainFJ:2700,maintainPB:0,promoteFJ:2700,promotePB:0,promoteHistFJ:6000,promoteNote:'2 700 FJ/kv + 6 000 FJ hist.'},
 ];
 const PB_VALUES={TR:0,C:1,SC:1,TL:2,EM:3,SM:6,MD:12,SD:24,P:48,'VIP I':1,'VIP II':1,'VIP III':1,'VIP IV':1};
+const OWNERS=['Mário Markech','Ondrej Broska']; // Vlastníci sa nevyhodnocujú (štatút, napomenutie, akcia, splna na = pomlčky)
+function isOwner(name){return OWNERS.includes(name);}
 const MESACE=['Január','Február','Marec','Apríl','Máj','Jún','Júl','August','September','Október','November','December'];
 const HIST_PROTECTION=18000,HIST_DISCOUNT_80=24000,HIST_DISCOUNT_60=36000;
 function isVIP(pos){return pos&&pos.startsWith('VIP')}
@@ -327,8 +335,9 @@ function getActiveWarning(name){return warnings.find(w=>w.person===name&&w.statu
 function monthsSince(d){const dt=new Date(d),now=new Date();return(now.getFullYear()-dt.getFullYear())*12+(now.getMonth()-dt.getMonth())}
 function firstOfMonth(){const d=new Date();d.setDate(1);const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0');return y+'-'+m+'-01';}
 function importLabel(y,m){return`${MESACE[m]} ${y}`}
-  let imports=JSON.parse(localStorage.getItem('tf_imports')||'[]');
-let warnings=JSON.parse(localStorage.getItem('tf_warnings')||'[]');
+
+let imports=JSON.parse(localStorage.getItem('tf_imports')||'[]');
+  let warnings=JSON.parse(localStorage.getItem('tf_warnings')||'[]');
 let cestaData=JSON.parse(localStorage.getItem('tf_cesta')||'{}');
 let selectedImportKey=null;
 let people=[];
@@ -519,8 +528,8 @@ function renderDashboard(){
   document.getElementById('stat-ok').textContent=ok;
   const _sw=document.getElementById('stat-warn');if(_sw)_sw.textContent=warnings.filter(w=>w.status==='active').length;
   const _sp=document.getElementById('stat-promo');if(_sp)_sp.textContent=promoCount;
-  const issues=evalPeople.filter(p=>!checkStatus(p).ok);
-  let html=issues.length?`<div class="table-wrap"><table><thead><tr><th>Meno</th><th>Pozícia</th><th>Vlastné FJ (${last3.length}m)</th><th>Hist.FJ</th><th>PB</th><th>Problém</th><th>Napomenutie</th><th>Dôvod</th></tr></thead><tbody>${[...issues].sort((a,b)=>{const o=["P","SD","MD","SM","EM","TL","VIP IV","VIP III","VIP II","VIP I","SC","C","TR"];return(o.indexOf(a.pos)<0?99:o.indexOf(a.pos))-(o.indexOf(b.pos)<0?99:o.indexOf(b.pos));}).map(p=>{const s=checkStatus(p),aw=getActiveWarning(p.name),ms=aw?monthsSince(aw.date):0;const _rText=aw?(aw.reason==='fj'?'Nesplnenie FJ':aw.reason==='pb'?'Nesplnenie PB':aw.reason==='pb_podriadeny'?'PB - podr.':'FJ+PB'):'–';return`<tr class="${aw&&ms>=3?'danger-row':aw?'warning-row':''}"><td><strong>${p.name}</strong></td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td>${p.ownFJ.toFixed(0)}</td><td>${p.histFJ.toFixed(0)}</td><td>${p.pb}</td><td><span class="badge badge-orange" style="font-size:10px">${s.msg}</span></td><td>${aw?`<span class="badge badge-red">${ms}/3 mes. (k ${formatWarnDateShort(aw.date)})</span>`:'<span class="badge badge-gray">–</span>'}</td><td style="font-size:11px;color:var(--gray4)">${_rText}</td></tr>`;}).join('')}</tbody></table></div>`:'<div class="empty"><div class="big">✅</div>Všetci spĺňajú štatút!</div>';
+  const issues=evalPeople.filter(p=>!checkStatus(p).ok&&!isOwner(p.name));
+  let html=issues.length?`<div class="table-wrap"><table><thead><tr><th>Meno</th><th>Pozícia</th><th>Vlastné FJ (${last3.length}m)</th><th>Hist.FJ</th><th>PB</th><th>Problém</th><th>Napomenutie</th><th>Dôvod</th></tr></thead><tbody>${[...issues].sort((a,b)=>{const o=["P","SD","MD","SM","EM","TL","VIP IV","VIP III","VIP II","VIP I","SC","C","TR"];return(o.indexOf(a.pos)<0?99:o.indexOf(a.pos))-(o.indexOf(b.pos)<0?99:o.indexOf(b.pos));}).map(p=>{const s=checkStatus(p),aw=getActiveWarning(p.name),ms=aw?monthsSince(aw.date):0;const _rText=aw?(aw.reason==='fj'?'Nesplnenie FJ':aw.reason==='pb'?'Nesplnenie PB':aw.reason==='pb_podriadeny'?'PB - podr.':'FJ+PB'):'–';return`<tr class="${aw&&ms>=3?'danger-row':aw?'warning-row':''}"><td><strong>${p.name}</strong></td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td>${p.ownFJ.toFixed(0)}</td><td>${p.histFJ.toFixed(0)}</td><td>${p.pb}</td><td><span class="badge badge-orange" style="font-size:10px">${s.msg}</span></td><td>${aw?`<span class="badge badge-red">${ms+1}/3 mes. (k ${formatWarnDateShort(aw.date)})</span>`:'<span class="badge badge-gray">–</span>'}</td><td style="font-size:11px;color:var(--gray4)">${_rText}</td></tr>`;}).join('')}</tbody></table></div>`:'<div class="empty"><div class="big">✅</div>Všetci spĺňajú štatút!</div>';
   const _dt=document.getElementById('dash-table');if(_dt)_dt.innerHTML=html;
 }
 </script>
@@ -600,12 +609,15 @@ function renderEvaluation(){
   const q=(document.getElementById('eval-search')?.value||'').toLowerCase();
   const fp=document.getElementById('eval-filter-pos')?.value||'';
   const fs=document.getElementById('eval-filter-status')?.value||'';
+  const fc=document.getElementById('eval-filter-cesta')?.value||'';
+  const VIP_POS=["VIP I","VIP II","VIP III","VIP IV"];
   let filtered=evalPeople.filter(p=>{
     if(q&&!p.name.toLowerCase().includes(q))return false;
     if(fp&&p.pos!==fp)return false;
     if(fs==='ok'&&!checkStatus(p).ok)return false;
     if(fs==='fail'&&checkStatus(p).ok)return false;
     if(fs==='promo'){const pr=checkPromotion(p);if(!(pr.canPromote===true||(pr.multiPath&&pr.paths?.length)))return false;}
+    if(fc){const isVip=VIP_POS.includes(p.pos);const pc=getPersonCesta(p.name);const cesta=isVip?'obchodna':(pc||(['TR','C','SC'].includes(p.pos)?null:'manazerska'));if(fc==='manazerska'&&cesta!=='manazerska')return false;if(fc==='obchodna'&&cesta!=='obchodna')return false;}
     return true;
   });
   if(!filtered.length){document.getElementById('eval-main-table').innerHTML='<div class="empty" style="padding:48px"><div class="big">🎉</div>Žiadne záznamy.</div>';return;}
@@ -628,7 +640,7 @@ function renderEvaluation(){
     if(hasHistProtection(p.histFJ))extras.push(`<span style="font-size:9px;color:var(--blue);font-weight:700">≥18k</span>`);
     if(coef<1)extras.push(`<span style="font-size:9px;color:var(--blue);font-weight:700">${Math.round((1-coef)*100)}%↓</span>`);
     let napomCell='<span style="font-size:11px;color:var(--gray3)">–</span>';
-    if(aw){const dots=[0,1,2].map(i=>`<span class="napom-m ${i<ms?'used':'free'}"></span>`).join('');const _rText=aw.reason==='fj'?'FJ':aw.reason==='pb'?'PB':aw.reason==='pb_podriadeny'?'PB (podr.)':'FJ+PB';napomCell=`<div style="display:flex;flex-direction:column;gap:3px"><span class="badge ${ms>=3?'badge-red':ms>=2?'badge-red':'badge-orange'}" style="font-size:10px">${ms}/3 mes.</span><span class="napom-dot">${dots}</span><span style="font-size:9px;color:var(--gray3)">Dôvod: ${_rText}</span>${ms>=3?'<span class="badge badge-red" style="font-size:9px">⚠ ZNÍŽIŤ</span>':''}</div>`;}
+    if(aw){const dots=[0,1,2].map(i=>{let cls='free';if(i<ms)cls='used';else if(i===ms&&ms<3)cls='half';return`<span class="napom-m ${cls}"></span>`;}).join('');const _rText=aw.reason==='fj'?'FJ':aw.reason==='pb'?'PB':aw.reason==='pb_podriadeny'?'PB (podr.)':'FJ+PB';napomCell=`<div style="display:flex;flex-direction:column;gap:3px"><span class="badge ${ms>=3?'badge-red':ms>=2?'badge-red':'badge-orange'}" style="font-size:10px">${ms+1}/3 mes.</span><span class="napom-dot">${dots}</span><span style="font-size:9px;color:var(--gray3)">Dôvod: ${_rText}</span>${ms>=3?'<span class="badge badge-red" style="font-size:9px">⚠ ZNÍŽIŤ</span>':''}</div>`;}
     let promoCell='<span style="color:var(--gray3);font-size:11px">–</span>';
     if(pr.brutoCheck)promoCell='<span class="badge badge-orange" style="font-size:9px">C–brutto⚠</span>';
     else if(pr.canPromote===true)promoCell=`<span class="badge badge-blue" style="font-size:10px">→${pr.nextPos}✓</span>`;
@@ -655,12 +667,22 @@ function renderEvaluation(){
       const _names=_pbAcute.map(r=>r.name).join(', ');
       actionCell+=`<div style="margin-top:6px;padding:6px 24px 6px 8px;background:var(--red-pale);border:1px solid var(--red);border-radius:6px;font-size:10px;color:var(--red);line-height:1.3;position:relative"><span onclick="dismissPbAlert('${_safeName}','acute')" style="position:absolute;top:3px;right:5px;cursor:pointer;font-weight:700;font-size:12px;color:var(--red);padding:0 3px" title="Zatvoriť">&#x2715;</span><strong>⚠ Napomenúť za PB</strong><br>Podriadení s aktívnym napomenutím: ${_names}. Pri ich páde nesplní PB.</div>`;
     }
-    if(['TR','C'].includes(p.pos)){const _br=brutoResults[p.name]||null;const _brBadge=_br?'<br><span class="badge badge-'+_br.cls+'">'+_br.label+'</span>':'';const _safe=p.name.replace(/'/g,"\\'");actionCell+=_brBadge+'<br><button class="btn btn-sm btn-secondary" onclick="openBrutoModal(\''+_safe+'\',\''+p.pos+'\')">Manuálna kontrola BRUTTO</button>';}
+    // BRUTTO len pri TR (nikdy pri C ani inde)
+    if(p.pos==='TR'){const _br=brutoResults[p.name]||null;const _brBadge=_br?'<br><span class="badge badge-'+_br.cls+'">'+_br.label+'</span>':'';const _safe=p.name.replace(/'/g,"\\'");actionCell+=_brBadge+'<br><button class="btn btn-sm btn-secondary" onclick="openBrutoModal(\''+_safe+'\',\''+p.pos+'\')">Manuálna kontrola BRUTTO</button>';}
     const _safePoz=p.name.replace(/'/g,"\\'");actionCell+='<br><button class="btn btn-sm btn-secondary" onclick="openPoziciaModal(\''+_safePoz+'\',\''+p.pos+'\',\'povysenie\')">Povýšiť</button> <button class="btn btn-sm btn-secondary" onclick="openPoziciaModal(\''+_safePoz+'\',\''+p.pos+'\',\'znizenie\')">Znížiť</button>';
     const rowCls=(!s.ok&&aw&&ms>=3?'eval-row-fail':!s.ok&&aw?'eval-row-warn':!s.ok?'eval-row-fail':(pr.canPromote===true||(pr.multiPath&&pr.paths?.length))?'eval-row-promo':'eval-row-ok')+(_posChanged?' pos-divider':'');
     const useGroupFJ=['EM','SM','MD','SD','P'].includes(p.pos);
     if(_posChanged)html+=`<tr class="pos-divider"><td colspan="13" style="padding:0;border:0;height:8px;background:var(--gray)"></td></tr>`;
-    html+=`<tr class="${rowCls}"><td class="eval-name-cell"><div style="font-weight:700;font-family:var(--font-head)">${p.name}</div><div style="display:flex;gap:4px;margin-top:3px">${extras.join('')}</div></td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td style="font-size:11px;color:var(--gray3)">${p.manager||'–'}</td><td style="font-size:11px">${cestaCell}</td><td style="text-align:center">${hasHistProtection(p.histFJ)?'<span class="badge badge-blue" style="font-size:9px">≥18k</span>':'<span style="color:var(--gray3)">–</span>'}</td><td style="text-align:right">${fjCell(p.ownFJ,useGroupFJ?null:effFJ,'Vlastné FJ',coef<1?`zľava ${Math.round(coef*100)}%`:'')}</td><td style="text-align:right">${useGroupFJ?fjCell(p.groupFJ,effFJ,'Skupinové FJ',coef<1?`zľava ${Math.round(coef*100)}%`:''):`<span class="fj-cell fj-neutral">${p.groupFJ.toFixed(0)}</span>`}</td><td style="text-align:right">${fjCell(p.histFJ,null,'Hist.FJ','')}</td><td style="text-align:right">${pbCell(p.pb,pbThresh)}</td><td>${statusBadge}</td><td>${napomCell}</td><td>${splnaStatutCell}</td><td>${actionCell}</td></tr>`;
+    // Vlastníci sa nevyhodnocujú — posledné 4 stĺpce ako pomlčky
+    let _statusBadgeFinal=statusBadge, _napomCellFinal=napomCell, _splnaFinal=splnaStatutCell, _actionFinal=actionCell, _rowClsFinal=rowCls;
+    if(isOwner(p.name)){
+      _statusBadgeFinal='<span style="color:var(--gray3)">–</span>';
+      _napomCellFinal='<span style="color:var(--gray3)">–</span>';
+      _splnaFinal='<span style="color:var(--gray3)">–</span>';
+      _actionFinal='<span style="color:var(--gray3)">–</span>';
+      _rowClsFinal='eval-row-ok'+(_posChanged?' pos-divider':'');
+    }
+    html+=`<tr class="${_rowClsFinal}"><td class="eval-name-cell"><div style="font-weight:700;font-family:var(--font-head)">${p.name}</div><div style="display:flex;gap:4px;margin-top:3px">${extras.join('')}</div></td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td style="font-size:11px;color:var(--gray3)">${p.manager||'–'}</td><td style="font-size:11px">${cestaCell}</td><td style="text-align:center">${hasHistProtection(p.histFJ)?'<span class="badge badge-blue" style="font-size:9px">≥18k</span>':'<span style="color:var(--gray3)">–</span>'}</td><td style="text-align:right">${fjCell(p.ownFJ,useGroupFJ?null:effFJ,'Vlastné FJ',coef<1?`zľava ${Math.round(coef*100)}%`:'')}</td><td style="text-align:right">${useGroupFJ?fjCell(p.groupFJ,effFJ,'Skupinové FJ',coef<1?`zľava ${Math.round(coef*100)}%`:''):`<span class="fj-cell fj-neutral">${p.groupFJ.toFixed(0)}</span>`}</td><td style="text-align:right">${fjCell(p.histFJ,null,'Hist.FJ','')}</td><td style="text-align:right">${pbCell(p.pb,pbThresh)}</td><td>${_statusBadgeFinal}</td><td>${_napomCellFinal}</td><td>${_splnaFinal}</td><td>${_actionFinal}</td></tr>`;
   });
   html+=`</tbody></table></div><div style="display:flex;gap:20px;padding:12px 16px;background:var(--gray);border-top:1px solid var(--gray2);font-size:11px;color:var(--gray3);flex-wrap:wrap"><span><span class="fj-cell fj-ok">1234</span>=splnené</span><span><span class="fj-cell fj-fail">1234</span>=nesplnené(hover=detail)</span><span style="background:#fff8f8;padding:2px 6px;border-radius:4px">červený=nesplnený</span><span style="background:#fffbf0;padding:2px 6px;border-radius:4px">žltý=napomenutie</span><span style="background:#f0fbff;padding:2px 6px;border-radius:4px">modrý=povýšenie</span></div>`;
   document.getElementById('eval-main-table').innerHTML=html;
@@ -985,4 +1007,6 @@ renderKarieraTable();
 renderEvidencia();
 renderImportSelector();
 renderEvaluation();
-</script>
+</script> 
+
+</body></html>
