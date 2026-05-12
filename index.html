@@ -16,8 +16,8 @@ body{font-family:var(--font-mono);background:#f7f7f5;color:var(--black);min-heig
 h1,h2,h3,h4{font-family:var(--font-head)}
 .app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
 .sidebar{background:var(--black);color:var(--white);padding:0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
-.sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid #1a4128;text-align:center}
-.sidebar-logo img{display:block;width:100%;max-width:140px;height:auto;max-height:60px;object-fit:contain;margin:0 auto}
+.sidebar-logo{padding:24px 16px 20px;border-bottom:1px solid #1a4128;text-align:center}
+.sidebar-logo img{display:block;width:100%;max-width:200px;height:auto;max-height:110px;object-fit:contain;margin:0 auto}
 .sidebar-logo .sub{font-size:10px;color:#7aa388;margin-top:10px;text-transform:uppercase;letter-spacing:1px;font-weight:600}
 .nav{padding:16px 0;flex:1}
 .nav-item{display:flex;align-items:center;gap:10px;padding:11px 20px;cursor:pointer;font-size:12px;color:#9ab8a4;transition:all .15s;border-left:3px solid transparent;font-family:var(--font-head);font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
@@ -237,7 +237,7 @@ tr.danger-row td{background:#fff5f5}
     <h3 id="warn-modal-title">Pridať napomenutie</h3>
     <div class="form-group"><label>Spolupracovník</label><select id="warn-person-sel" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px"></select></div>
     <div class="form-group"><label>Dátum napomenutia</label><input type="date" id="warn-date"></div>
-    <div class="form-group"><label>Dôvod</label><select id="warn-reason" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px"><option value="fj">Nesplnenie FJ</option><option value="pb">Nesplnenie PB</option><option value="obe">Nesplnenie FJ aj PB</option></select></div>
+    <div class="form-group"><label>Dôvod</label><select id="warn-reason" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px"><option value="fj">Nesplnenie FJ</option><option value="pb">Nesplnenie PB</option><option value="obe">Nesplnenie FJ aj PB</option><option value="pb_podriadeny">Napomenutie za PB (podriadený stratil pozíciu)</option></select></div>
     <div class="form-group"><label>Poznámka</label><textarea id="warn-note" rows="2" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px;resize:vertical"></textarea></div>
     <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('modal-warn')">Zrušiť</button><button class="btn btn-primary" onclick="saveWarning()">Uložiť</button></div>
   </div>
@@ -307,7 +307,7 @@ const KARIERA=[
   {pos:'VIP IV',name:'VIP Consultant IV.',rate:7,maintainFJ:2700,maintainPB:0,promoteFJ:2700,promotePB:0,promoteHistFJ:6000,promoteNote:'2 700 FJ/kv + 6 000 FJ hist.'},
 ];
 const PB_VALUES={TR:0,C:1,SC:1,TL:2,EM:3,SM:6,MD:12,SD:24,P:48,'VIP I':1,'VIP II':1,'VIP III':1,'VIP IV':1};
-  const MESACE=['Január','Február','Marec','Apríl','Máj','Jún','Júl','August','September','Október','November','December'];
+const MESACE=['Január','Február','Marec','Apríl','Máj','Jún','Júl','August','September','Október','November','December'];
 const HIST_PROTECTION=18000,HIST_DISCOUNT_80=24000,HIST_DISCOUNT_60=36000;
 function isVIP(pos){return pos&&pos.startsWith('VIP')}
 function isManazerska(pos){return['TL','EM','SM','MD','SD','P'].includes(pos)}
@@ -322,7 +322,7 @@ function effectiveMaintainFJ(k,h,name,pos){if(!k.maintainFJ)return null;return M
 function hasHistProtection(h){return h>=HIST_PROTECTION}
 function getKariera(pos){return KARIERA.find(k=>k.pos===pos)}
 function posClass(pos){const m={'MD':'pos-md','SD':'pos-md','P':'pos-md','SM':'pos-sm','EM':'pos-em','TL':'pos-tl','SC':'pos-sc','C':'pos-c','TR':'pos-tr'};if(pos&&pos.startsWith('VIP'))return'pos-vip';return m[pos]||'pos-tr'}
-function getActiveWarning(name){return warnings.find(w=>w.person===name&&w.status==='active')}
+  function getActiveWarning(name){return warnings.find(w=>w.person===name&&w.status==='active')}
 function monthsSince(d){const dt=new Date(d),now=new Date();return(now.getFullYear()-dt.getFullYear())*12+(now.getMonth()-dt.getMonth())}
 function firstOfMonth(){const d=new Date();d.setDate(1);const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0');return y+'-'+m+'-01';}
 function importLabel(y,m){return`${MESACE[m]} ${y}`}
@@ -537,6 +537,35 @@ function pbCell(v,threshold){
   return`<span class="fj-cell fj-fail">${v}<span class="tip-wrap"><span class="tip-icon">i</span><span class="tip-box">PB: Potrebné ${threshold} | Aktuálne ${v} | Rozdiel −${threshold-v}</span></span></span>`;
 }
 function runEvaluation(){computeEvalPeople();renderEvaluation();showToast('Vyhodnotenie dokončené.','success');}
+function getPbRiskForManager(managerName){
+  // Vráti zoznam podriadených, ktorí ak by spadli o stupeň, manažér by stratil PB pod prah.
+  // Používa sa na zobrazenie odporúčania pri nadriadenom vo vyhodnotení.
+  if(!managerName)return [];
+  const mgr=evalPeople.find(p=>p.name===managerName);
+  if(!mgr)return [];
+  const k=getKariera(mgr.pos);if(!k)return [];
+  const pbThresh=k.maintainPB||0;
+  if(pbThresh<=0)return [];
+  const currentPB=mgr.pb||0;
+  if(currentPB<pbThresh)return []; // už teraz pod prahom – nemá zmysel varovať
+  const CESTA_MAN=["TR","C","SC","TL","EM","SM","MD","SD","P"];
+  const CESTA_VIP=["TR","C","SC","VIP I","VIP II","VIP III","VIP IV"];
+  const VIP_POS=["VIP I","VIP II","VIP III","VIP IV"];
+  const risky=[];
+  const directs=evalPeople.filter(x=>x.manager===managerName);
+  directs.forEach(d=>{
+    const cesta=getPersonCesta(d.name);
+    let arr=CESTA_MAN;
+    if(cesta==='obchodna'||VIP_POS.includes(d.pos))arr=CESTA_VIP;
+    const idx=arr.indexOf(d.pos);
+    if(idx<=0)return; // nie je kam padať (TR), alebo neznáme
+    const lowerPos=arr[idx-1];
+    const lost=(PB_VALUES[d.pos]||0)-(PB_VALUES[lowerPos]||0);
+    if(lost<=0)return;
+    if((currentPB-lost)<pbThresh)risky.push({name:d.name,pos:d.pos,lowerPos,lost});
+  });
+  return risky;
+}
 function renderEvaluation(){
   if(!evalPeople.length){document.getElementById('eval-main-table').innerHTML='<div class="empty" style="padding:48px"><div class="big">📂</div>Najprv importujte dáta.</div>';return;}
   const sorted2=[...imports].sort((a,b)=>b.key.localeCompare(a.key));
@@ -600,7 +629,14 @@ function renderEvaluation(){
     const splnaStatutCell=s.ok?p.pos:(_ci>=0&&_ci<_path.length-1?_path[_ci+1]:"");
     let actionCell='';
     if(!s.ok&&!aw)actionCell=`<button class="btn btn-sm btn-primary" onclick="quickWarn('${p.name.replace(/'/g,"\\'")}','${s.type||'fj'}')">Napomenúť</button>`;
+    else if(!aw)actionCell=`<button class="btn btn-sm btn-secondary" onclick="quickWarn('${p.name.replace(/'/g,"\\'")}','fj')">Napomenúť</button>`;
     else if(aw)actionCell=`<button class="btn btn-sm btn-secondary" onclick="editWarning('${aw.id}')">Upraviť nap.</button> <button class="btn btn-sm btn-secondary" onclick="openResolveModal('${p.name.replace(/'/g,"\\'")}')">Zrušiť nap.</button>`;
+    // Riziko PB: ak má táto osoba podriadených ktorých pád by ju potopil pod prah PB → varovanie
+    const _pbRisk=getPbRiskForManager(p.name);
+    if(_pbRisk.length){
+      const _names=_pbRisk.map(r=>r.name+' ('+r.pos+'→'+r.lowerPos+')').join(', ');
+      actionCell+=`<div style="margin-top:6px;padding:6px 8px;background:var(--orange-pale);border:1px solid var(--orange);border-radius:6px;font-size:10px;color:var(--orange);line-height:1.3"><strong>⚠ Riziko PB:</strong> ak padne ${_names}, treba napomenúť aj túto osobu za PB.</div>`;
+    }
     if(['TR','C'].includes(p.pos)){const _br=brutoResults[p.name]||null;const _brBadge=_br?'<br><span class="badge badge-'+_br.cls+'">'+_br.label+'</span>':'';const _safe=p.name.replace(/'/g,"\\'");actionCell+=_brBadge+'<br><button class="btn btn-sm btn-secondary" onclick="openBrutoModal(\''+_safe+'\',\''+p.pos+'\')">Manuálna kontrola BRUTTO</button>';}
     const _safePoz=p.name.replace(/'/g,"\\'");actionCell+='<br><button class="btn btn-sm btn-secondary" onclick="openPoziciaModal(\''+_safePoz+'\',\''+p.pos+'\',\'povysenie\')">Povýšiť</button> <button class="btn btn-sm btn-secondary" onclick="openPoziciaModal(\''+_safePoz+'\',\''+p.pos+'\',\'znizenie\')">Znížiť</button>';
     const rowCls=!s.ok&&aw&&ms>=3?'eval-row-fail':!s.ok&&aw?'eval-row-warn':!s.ok?'eval-row-fail':(pr.canPromote===true||(pr.multiPath&&pr.paths?.length))?'eval-row-promo':'eval-row-ok';
@@ -684,7 +720,7 @@ function renderEvidenciaNapomenutia(){
     const _zrus=w.status==='resolved'?(w.resolvedDate||'–'):'–';
     const _wpos=w.pos||'–';
     const _rowClass=w.status==='active'&&ms>=3?'eval-row-fail':w.status==='active'?'eval-row-warn':'';
-    const _reason=w.reason==='fj'?'Nesplnenie FJ':w.reason==='pb'?'Nesplnenie PB':'Nesplnenie FJ+PB';
+    const _reason=w.reason==='fj'?'Nesplnenie FJ':w.reason==='pb'?'Nesplnenie PB':w.reason==='pb_podriadeny'?'Napomenutý za PB (podriadený)':'Nesplnenie FJ+PB';
     let _zrusCell=_zrus;
     if(w.status==='active')_zrusCell+='<br><button class="btn btn-sm btn-secondary" style="font-size:10px" onclick="openResolveModal(\'' +_safe+ '\')">Zrušiť</button>';
     return`<tr class="${_rowClass}"><td><strong>${w.person}</strong></td><td>${formatWarnDate(w.date)}</td><td>${_wpos}</td><td>${_reason}</td><td>${_zrusCell}</td><td><input type="text" value="${_note}" onchange="saveEvPoznamka('nap_${w.id}',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-size:11px;background:transparent"></td><td style="white-space:nowrap"><button class="btn btn-sm btn-secondary" onclick="editWarning('${w.id}')" style="margin-right:4px">Upraviť</button><button class="btn btn-sm btn-danger" onclick="deleteWarning('${w.id}')">&#x2715;</button></td></tr>`;
@@ -707,6 +743,7 @@ function deletePoziciaRow(name,idx){
   pozicieHistory[name].splice(idx,1);
   if(!pozicieHistory[name].length)delete pozicieHistory[name];
   localStorage.setItem('tf_pozicie',JSON.stringify(pozicieHistory));
+  computeEvalPeople();
   renderEvidencia();renderEvaluation();
   showToast('Záznam odstránený.','success');
 }
@@ -790,8 +827,19 @@ function openPoziciaModal(name,currentPos,type){
   window._pozName=name;window._pozType=type;
   document.getElementById('poz-modal-title').textContent=(type==='povysenie'?'Povýšenie':'Zníženie')+': '+name;
   const ALL_POS=["P","SD","MD","SM","EM","TL","VIP IV","VIP III","VIP II","VIP I","SC","C","TR"];
+  const CESTA_MAN=["TR","C","SC","TL","EM","SM","MD","SD","P"];
+  const CESTA_VIP=["TR","C","SC","VIP I","VIP II","VIP III","VIP IV"];
+  const cesta=getPersonCesta(name);
+  const VIP_POS=["VIP I","VIP II","VIP III","VIP IV"];
+  let cestaArr=CESTA_MAN;
+  if(cesta==='obchodna'||VIP_POS.includes(currentPos))cestaArr=CESTA_VIP;
+  const idx=cestaArr.indexOf(currentPos);
+  let suggested='';
+  if(type==='povysenie'&&idx>=0&&idx<cestaArr.length-1)suggested=cestaArr[idx+1];
+  else if(type==='znizenie'&&idx>0)suggested=cestaArr[idx-1];
   const sel=document.getElementById('poz-new-pos');
-  sel.innerHTML=ALL_POS.filter(p=>p!==currentPos).map(p=>`<option value="${p}">${p}</option>`).join('');
+  const options=ALL_POS.filter(p=>p!==currentPos);
+  sel.innerHTML=options.map(p=>`<option value="${p}"${p===suggested?' selected':''}>${p}</option>`).join('');
   document.getElementById('poz-date').value=firstOfMonth();
   document.getElementById('modal-pozicia').classList.add('open');
 }
@@ -812,7 +860,8 @@ function savePozicia(){
     localStorage.setItem('tf_pozicie',JSON.stringify(pozicieHistory));
   }
   closeModal('modal-pozicia');
-  renderDashboard();renderEvaluation();
+  computeEvalPeople();
+  renderDashboard();renderEvaluation();renderEvidencia();
   showToast(type==='povysenie'?'Povýšenie uložené.':'Zníženie uložené.','success');
 }
 function openBrutoModal(name,pos){
