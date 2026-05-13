@@ -211,7 +211,7 @@ tr.danger-row td{background:#fff5f5}
     </div>
   </div>
   <div id="eval-alerts" style="margin-bottom:14px"><div style="background:var(--blue-pale);border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:var(--blue)">📅 Plávajúci kvartál: <strong>Február 2026 – Apríl 2026</strong> · FJ = súčet za 3 mesiace</div><div style="background:var(--orange-pale);border:1px solid var(--orange);border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:var(--orange)">⚠ <strong>Trainee → C: manuálna kontrola BRUTTO FJ</strong> (Denisa Véghová, JUDr. Zuzana Hujsiová)</div></div>
-  <div class="card" style="padding:0;overflow:hidden"><div id="eval-main-table"></div>
+  <div class="card" style="padding:0;overflow:hidden"><div id="eval-main-table"></div></div>
 </div>
 <div class="page" id="page-napomenutia">
   <div class="page-header"><h2>Evidencia</h2><p>Povýšenia, zníženia, napomenutia, mesačné vyhodnotenie</p></div>
@@ -666,7 +666,7 @@ function renderEvaluation(){
     else if(pr.multiPath&&pr.paths?.length)promoCell=pr.paths.map(x=>`<span class="badge badge-blue" style="font-size:10px">→${x.nextPos}✓</span>`).join('<br>');
     else if(pr.multiPath&&pr.allPaths){const best=pr.allPaths.sort((a,b)=>(a.issues?.length||0)-(b.issues?.length||0))[0];promoCell=`<span style="font-size:10px;color:var(--gray3)">${best.nextPos}:${(best.issues||[]).slice(0,1).join(',')}</span>`;}
     else if(pr.issues?.length)promoCell=`<span style="font-size:10px;color:var(--gray3)">${pr.issues.slice(0,1).join(',')}</span>`;
-    let statusBadge=s.ok?'<span class="badge badge-green">OK</span>':aw&&ms>=3?'<span class="badge badge-red">⚠Znížiť</span>':aw?`<span class="badge badge-red">Napomenutý k ${formatWarnDateShort(aw.date)}</span>`:'<span class="badge badge-orange">Nesplnené</span>';
+    let statusBadge=aw&&ms>=3?'<span class="badge badge-red">⚠Znížiť</span>':aw?`<span class="badge badge-red">Napomenutý k ${formatWarnDateShort(aw.date)}</span>`:s.ok?'<span class="badge badge-green">OK</span>':'<span class="badge badge-orange">Nesplnené</span>';
     const _mPath=["P","SD","MD","SM","EM","TL","SC","C","TR"];
     const _oPath=["VIP IV","VIP III","VIP II","VIP I","SC","C","TR"];
     const _manPos=["TL","EM","SM","MD","SD","P"];
@@ -682,7 +682,7 @@ function renderEvaluation(){
     // Riziko PB — len ČERVENÝ (akútny, napomenutí podriadení)
     const _safeName=p.name.replace(/'/g,"\\'");
     const _pbAcute=getPbRiskAcute(p.name);
-    if(_pbAcute.length&&!isPbAlertDismissed(p.name,'acute')){
+    if(_pbAcute.length&&!aw&&!isPbAlertDismissed(p.name,'acute')){
       const _names=_pbAcute.map(r=>r.name).join(', ');
       actionCell+=`<div style="margin-top:6px;padding:6px 24px 6px 8px;background:var(--red-pale);border:1px solid var(--red);border-radius:6px;font-size:10px;color:var(--red);line-height:1.3;position:relative"><span onclick="dismissPbAlert('${_safeName}','acute')" style="position:absolute;top:3px;right:5px;cursor:pointer;font-weight:700;font-size:12px;color:var(--red);padding:0 3px" title="Zatvoriť">&#x2715;</span><strong>⚠ Napomenúť za PB</strong><br>Podriadení s aktívnym napomenutím: ${_names}. Pri ich páde nesplní PB.</div>`;
     }
