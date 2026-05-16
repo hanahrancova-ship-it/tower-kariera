@@ -26,6 +26,24 @@ h1,h2,h3,h4{font-family:var(--font-head)}
 .nav-item svg{width:16px;height:16px;flex-shrink:0}
 .main{padding:32px;overflow-y:auto;min-height:100vh}
 .page{display:none}.page.active{display:block}
+/* Read-only režim (user role) - skrýva editovacie prvky */
+body.tf-readonly #page-import,
+body.tf-readonly button.btn-primary,
+body.tf-readonly button.btn-danger,
+body.tf-readonly button[onclick*="openPoziciaModal"],
+body.tf-readonly button[onclick*="quickWarn"],
+body.tf-readonly button[onclick*="editWarning"],
+body.tf-readonly button[onclick*="openBrutoModal"],
+body.tf-readonly button[onclick*="openAddWarnModal"],
+body.tf-readonly button[onclick*="openCestaModal"],
+body.tf-readonly button[onclick*="openResolveModal"],
+body.tf-readonly button[onclick*="deleteWarning"],
+body.tf-readonly button[onclick*="deleteCurrentImport"],
+body.tf-readonly button[onclick*="deletePozicia"],
+body.tf-readonly button[onclick*="runEvaluation"],
+body.tf-readonly span[onclick*="openCestaModal"],
+body.tf-readonly .nav-item[onclick*="import"]{display:none !important;}
+body.tf-readonly input[type="text"],body.tf-readonly input[type="file"]{pointer-events:none;background:#f5f5f5 !important;}
 .page-header{margin-bottom:28px}
 .page-header h2{font-size:26px;font-weight:800;color:var(--black)}
 .page-header p{font-size:13px;color:var(--gray3);margin-top:4px}
@@ -347,7 +365,7 @@ function getDiscountCoef(h,name,pos){
   return 1;
 }
 function effectiveMaintainFJ(k,h,name,pos){if(!k.maintainFJ)return null;return Math.ceil(k.maintainFJ*getDiscountCoef(h,name,pos))}
-  function hasHistProtection(h){return h>=HIST_PROTECTION}
+function hasHistProtection(h){return h>=HIST_PROTECTION}
 function getKariera(pos){return KARIERA.find(k=>k.pos===pos)}
 function posClass(pos){const m={'MD':'pos-md','SD':'pos-md','P':'pos-md','SM':'pos-sm','EM':'pos-em','TL':'pos-tl','SC':'pos-sc','C':'pos-c','TR':'pos-tr'};if(pos&&pos.startsWith('VIP'))return'pos-vip';return m[pos]||'pos-tr'}
 function getActiveWarning(name){return warnings.find(w=>w.person===name&&w.status==='active')}
@@ -355,17 +373,116 @@ function monthsSince(d){const dt=new Date(d),now=new Date();return(now.getFullYe
 function firstOfMonth(){const d=new Date();d.setDate(1);const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0');return y+'-'+m+'-01';}
 function importLabel(y,m){return`${MESACE[m]} ${y}`}
 
-let imports=JSON.parse(localStorage.getItem('tf_imports')||'[]');
-let warnings=JSON.parse(localStorage.getItem('tf_warnings')||'[]');
-let cestaData=JSON.parse(localStorage.getItem('tf_cesta')||'{}');
+// Dáta sa načítavajú z API (KV storage). Premenné sú prázdne pri inicializácii.
+let imports=[];
+let warnings=[];
+let cestaData={};
 let selectedImportKey=null;
 let people=[];
 let evalPeople=[];
 let resolveTarget=null,cestaTarget=null,selectedCestaValue=null;
-let brutoResults=JSON.parse(localStorage.getItem('tf_bruto')||'{}');
-let pozicieHistory=JSON.parse(localStorage.getItem('tf_pozicie')||'{}');
-let poznamkyData=JSON.parse(localStorage.getItem('tf_poznamky')||'{}');
-let evidenciaPoznamky=JSON.parse(localStorage.getItem('tf_ev_poznamky')||'{}');
+let brutoResults={};
+let pozicieHistory={};
+let poznamkyData={};
+let evidenciaPoznamky={};
+let currentUserRole=null; // 'admin' alebo 'user', zistené z API
+
+// Mapovanie kľúčov localStorage → API
+const STORAGE_KEYS={
+  'tf_imports':'imports',
+  'tf_warnings':'warnings',
+  'tf_cesta':'cesta',
+  'tf_bruto':'bruto',
+  'tf_pozicie':'pozicie',
+  'tf_poznamky':'poznamky',
+  'tf_ev_poznamky':'ev_poznamky',
+  'tf_pb_dismissed':'pb_dismissed'
+  };
+
+// Wrapper: ukladá dáta do KV cez API (admin) alebo iba lokálne (user)
+async function tfSave(localKey, value){
+  const apiKey=STORAGE_KEYS[localKey];
+  if(!apiKey){console.error('Neznámy storage kľúč:',localKey);return;}
+  if(currentUserRole!=='admin'){return;} // user nemôže ukladať
+  try{
+    const res=await fetch('/api/data/save',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({key:apiKey,value:value})
+    });
+    if(!res.ok){const err=await res.json();console.error('Chyba pri ukladaní:',err);showToast('Chyba pri ukladaní dát.','error');}
+  }catch(e){console.error('Sieťová chyba:',e);showToast('Sieťová chyba pri ukladaní.','error');}
+}
+
+// Načíta všetky dáta z API a naplní premenné
+async function tfLoadAll(){
+  try{
+    const res=await fetch('/api/data/get');
+    if(!res.ok){
+      if(res.status===401){window.location.href='/';return false;}
+      throw new Error('HTTP '+res.status);
+    }
+    const json=await res.json();
+    if(!json.ok)throw new Error('Server error');
+    currentUserRole=json.role;
+    const d=json.data||{};
+    imports=d.imports||[];
+    warnings=d.warnings||[];
+    cestaData=d.cesta||{};
+    brutoResults=d.bruto||{};
+    pozicieHistory=d.pozicie||{};
+    poznamkyData=d.poznamky||{};
+    evidenciaPoznamky=d.ev_poznamky||{};
+    pbAlertDismissed=d.pb_dismissed||{};
+    return true;
+  }catch(e){
+    console.error('Chyba pri načítaní dát:',e);
+    alert('Chyba pri načítaní dát zo servera. Skúste obnoviť stránku.');
+    return false;
+  }
+}
+
+// Odhlásenie
+async function tfLogout(){
+  try{await fetch('/api/logout',{method:'POST'});}catch(e){}
+  window.location.href='/';
+}
+
+// Migrácia z localStorage do KV (jednorázová, pre admina)
+async function tfMigrateFromLocalStorage(){
+  if(currentUserRole!=='admin')return;
+  const hasData=imports.length>0||warnings.length>0||Object.keys(cestaData).length>0||Object.keys(pozicieHistory).length>0;
+  if(hasData)return; // v KV už niečo je, nemigrujeme
+  // Skús načítať z localStorage
+  const lsImports=JSON.parse(localStorage.getItem('tf_imports')||'[]');
+  const lsWarnings=JSON.parse(localStorage.getItem('tf_warnings')||'[]');
+  if(lsImports.length===0&&lsWarnings.length===0)return; // localStorage je tiež prázdne
+  if(!confirm('V cloude ešte nie sú žiadne dáta, ale vo vašom prehliadači sú lokálne dáta.\n\nChcete ich migrovať do cloudu, aby ich videli aj kolegovia?\n\n(Importov: '+lsImports.length+', Napomenutí: '+lsWarnings.length+')'))return;
+  // Migruj
+  const migMap=[
+    ['tf_imports','imports'],['tf_warnings','warnings'],['tf_cesta','cesta'],
+    ['tf_bruto','bruto'],['tf_pozicie','pozicie'],['tf_poznamky','poznamky'],
+    ['tf_ev_poznamky','ev_poznamky'],['tf_pb_dismissed','pb_dismissed']
+  ];
+  for(const [lsKey,apiKey] of migMap){
+    const v=localStorage.getItem(lsKey);
+    if(!v)continue;
+    try{
+      const parsed=JSON.parse(v);
+      await fetch('/api/data/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:apiKey,value:parsed})});
+    }catch(e){console.error('Migrácia',lsKey,e);}
+  }
+  showToast('Dáta migrované do cloudu.','success');
+  // Znovu načítaj
+  await tfLoadAll();
+  if(imports.length){
+    const sorted=[...imports].sort((a,b)=>b.key.localeCompare(a.key));
+    selectedImportKey=sorted[0].key;
+    people=sorted[0].people;
+    computeEvalPeople();
+  }
+  renderDashboard();renderEvaluation();renderEvidencia();renderImportSelector();renderKarieraTable();
+}
 
 function computeEvalPeople(){
   if(!imports.length){evalPeople=[];return;}
@@ -460,7 +577,7 @@ function processImport(rows,yearMonth){
   const existing=imports.findIndex(i=>i.key===key);
   if(existing>=0){imports[existing]={key,label,date:new Date().toISOString(),people:parsed};showToast(`${label} aktualizovaný.`,'success');}
   else{imports.push({key,label,date:new Date().toISOString(),people:parsed});showToast(`${label} uložený.`,'success');}
-  localStorage.setItem('tf_imports',JSON.stringify(imports));
+  tfSave('tf_imports',imports);
   selectedImportKey=key;people=parsed;
   computeEvalPeople();
   const st=document.getElementById('import-status');
@@ -474,7 +591,7 @@ function deleteCurrentImport(){
   if(!selectedImportKey){showToast('Vyberte mesiac.','error');return;}
   if(!confirm('Naozaj odstrániť tento import?'))return;
   imports=imports.filter(i=>i.key!==selectedImportKey);
-  localStorage.setItem('tf_imports',JSON.stringify(imports));
+  tfSave('tf_imports',imports);
   if(imports.length){const s=[...imports].sort((a,b)=>b.key.localeCompare(a.key));selectedImportKey=s[0].key;people=s[0].people;}
   else{selectedImportKey=null;people=[];}
   computeEvalPeople();renderImportSelector();renderAll();
@@ -599,7 +716,7 @@ function dismissPbAlert(name,type){
   const warnedIds=directs.filter(d=>!!getActiveWarning(d.name)).map(d=>getActiveWarning(d.name).id).sort().join(',');
   const key=name+'|'+type+'|'+warnedIds;
   pbAlertDismissed[key]=true;
-  localStorage.setItem('tf_pb_dismissed',JSON.stringify(pbAlertDismissed));
+  tfSave('tf_pb_dismissed',pbAlertDismissed);
   renderEvaluation();
 }
 function isPbAlertDismissed(name,type){
@@ -680,7 +797,7 @@ function renderEvaluation(){
     else if(!aw)actionCell=`<button class="btn btn-sm btn-secondary" onclick="quickWarn('${p.name.replace(/'/g,"\\'")}','fj')">Napomenúť</button>`;
     else if(aw)actionCell=`<button class="btn btn-sm btn-secondary" onclick="editWarning('${aw.id}')">Upraviť nap.</button> <button class="btn btn-sm btn-secondary" onclick="openResolveModal('${p.name.replace(/'/g,"\\'")}')">Zrušiť nap.</button>`;
     // Riziko PB — len ČERVENÝ (akútny, napomenutí podriadení)
-    const _safeName=p.name.replace(/'/g,"\\'");
+                   const _safeName=p.name.replace(/'/g,"\\'");
     const _pbAcute=getPbRiskAcute(p.name);
     if(_pbAcute.length&&!aw&&!isPbAlertDismissed(p.name,'acute')){
       const _names=_pbAcute.map(r=>r.name).join(', ');
@@ -800,12 +917,12 @@ function renderEvidenciaMesiaca(){
   }).filter(Boolean);
   el.innerHTML=rows.length?'<div class="table-wrap"><table><thead><tr><th>Mesiac</th><th>Meno vítąza</th><th style="text-align:right">Vlastné FJ</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>':'<div class="empty">Žiadne dáta.</div>';
 }
-function saveEvPoznamka(key,val){evidenciaPoznamky[key]=val;localStorage.setItem('tf_ev_poznamky',JSON.stringify(evidenciaPoznamky));}
+function saveEvPoznamka(key,val){evidenciaPoznamky[key]=val;tfSave('tf_ev_poznamky',evidenciaPoznamky);}
 function deletePoziciaRow(name,idx){
   if(!pozicieHistory[name])return;
   pozicieHistory[name].splice(idx,1);
   if(!pozicieHistory[name].length)delete pozicieHistory[name];
-  localStorage.setItem('tf_pozicie',JSON.stringify(pozicieHistory));
+  tfSave('tf_pozicie',pozicieHistory);
   computeEvalPeople();
   renderEvidencia();renderEvaluation();
   showToast('Záznam odstránený.','success');
@@ -830,7 +947,7 @@ function renderKarieraTable(){
   rows+=`<tr><td colspan="5" style="background:#fff3e0;font-size:11px;color:var(--orange);padding:10px 12px"><strong>Historické zľavy (len udržanie):</strong> ≥18 000 FJ→ochrana (neklesne pod SC) · ≥24 000 FJ→80% štatútu · ≥36 000 FJ→60% štatútu</td></tr>`;
   document.getElementById('kariera-table-body').innerHTML=rows;
 }
-function savePoznamka(pos,val){poznamkyData[pos]=val;localStorage.setItem('tf_poznamky',JSON.stringify(poznamkyData));}
+function savePoznamka(pos,val){poznamkyData[pos]=val;tfSave('tf_poznamky',poznamkyData);}
 function openAddWarnModal(){
   window._editingWarnId=null;
   document.getElementById('warn-modal-title').textContent='Pridať napomenutie';
@@ -874,7 +991,7 @@ function saveWarning(){
     const idx=warnings.findIndex(w=>w.id===window._editingWarnId);
     if(idx<0){showToast('Záznam sa nenašiel.','error');return;}
     warnings[idx]={...warnings[idx],person,date,reason,note};
-    localStorage.setItem('tf_warnings',JSON.stringify(warnings));
+    tfSave('tf_warnings',warnings);
     window._editingWarnId=null;
     closeModal('modal-warn');renderEvidencia();renderEvaluation();
     showToast('Napomenutie upravené.','success');
@@ -882,7 +999,7 @@ function saveWarning(){
   }
   if(getActiveWarning(person)){showToast('Táto osoba už má aktívne napomenutie.','error');return;}
   warnings.push({id:Date.now().toString(),person,date,reason,note,status:'active',createdAt:new Date().toISOString()});
-  localStorage.setItem('tf_warnings',JSON.stringify(warnings));
+  tfSave('tf_warnings',warnings);
   closeModal('modal-warn');renderEvidencia();renderEvaluation();
   showToast('Napomenutie uložené.','success');
 }
@@ -928,8 +1045,8 @@ function savePozicia(){
     if(!pozicieHistory[name])pozicieHistory[name]=[];
     pozicieHistory[name].push({fromPos,toPos,date,type});
     person.pos=toPos;
-    localStorage.setItem('tf_imports',JSON.stringify(imports));
-    localStorage.setItem('tf_pozicie',JSON.stringify(pozicieHistory));
+    tfSave('tf_imports',imports);
+    tfSave('tf_pozicie',pozicieHistory);
   }
   closeModal('modal-pozicia');
   computeEvalPeople();
@@ -953,7 +1070,7 @@ function saveBrutoResult(name,result){
   const labels={splnil_tr:'Odporučeň na C',nesplnil_tr:'Napomenutý (BRUTTO)',splnil_c:'Spĺňa štatút C',nesplnil_c:'Napomenutý (BRUTTO)',promo_sc:'Odporučeň na SC'};
   const clss={splnil_tr:'green',nesplnil_tr:'red',splnil_c:'green',nesplnil_c:'red',promo_sc:'blue'};
   brutoResults[name]={result,label:labels[result],cls:clss[result],date:new Date().toISOString().split('T')[0]};
-  localStorage.setItem('tf_bruto',JSON.stringify(brutoResults));
+  tfSave('tf_bruto',brutoResults);
   closeModal('modal-bruto');
   renderDashboard();renderEvaluation();
   showToast('Výsledok uložený.','success');
@@ -968,13 +1085,13 @@ function confirmResolve(){
   const w=warnings.find(x=>x.person===resolveTarget&&x.status==='active');
   if(!w){closeModal('modal-resolve');return;}
   w.status='resolved';w.resolvedDate=document.getElementById('resolve-date').value;w.resolvedNote=document.getElementById('resolve-note').value;
-  localStorage.setItem('tf_warnings',JSON.stringify(warnings));
+  tfSave('tf_warnings',warnings);
   closeModal('modal-resolve');renderEvidencia();renderEvaluation();
   showToast('Napomenutie zrušené.','success');
 }
 function deleteWarning(id){
   warnings=warnings.filter(w=>w.id!==id);
-  localStorage.setItem('tf_warnings',JSON.stringify(warnings));
+  tfSave('tf_warnings',warnings);
   renderEvidencia();
   showToast('Záznam odstránený.','success');
 }
@@ -1004,7 +1121,7 @@ function saveCesta(){
   if(!canChangeCesta(cestaTarget)&&getPersonCesta(cestaTarget)){if(!confirm('Od poslednej zmeny neuplynul rok. Naozaj zmeniť?'))return;}
   if(!cestaData[cestaTarget])cestaData[cestaTarget]=[];
   cestaData[cestaTarget].push({cesta:selectedCestaValue,date:new Date().toISOString().split('T')[0],note:''});
-  localStorage.setItem('tf_cesta',JSON.stringify(cestaData));
+  tfSave('tf_cesta',cestaData);
   closeModal('modal-cesta');renderLudia();renderEvaluation();
   showToast(`Kariérna cesta: ${selectedCestaValue==='manazerska'?'Manažérska':'Obchodná'}`,'success');
 }
@@ -1026,17 +1143,53 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}));
 function showToast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';setTimeout(()=>t.classList.remove('show'),3000);}
 
-// Init
-if(imports.length){
-  const sorted=[...imports].sort((a,b)=>b.key.localeCompare(a.key));
-  selectedImportKey=sorted[0].key;
-  people=sorted[0].people;
-  computeEvalPeople();
+// Init - asynchronne načítaj dáta z API, potom render
+async function tfInit(){
+  // Pridaj indikátor "Načítavam..."
+  const _t=document.getElementById('eval-main-table');
+  if(_t)_t.innerHTML='<div class="empty" style="padding:48px"><div class="big">⏳</div>Načítavam dáta zo servera...</div>';
+  const ok=await tfLoadAll();
+  if(!ok)return;
+  // Pridaj UI prvky podľa role
+  tfApplyRoleUI();
+  // Migrácia z localStorage pre admina (jednorázová)
+  await tfMigrateFromLocalStorage();
+  // Inicializuj appku
+  if(imports.length){
+    const sorted=[...imports].sort((a,b)=>b.key.localeCompare(a.key));
+    selectedImportKey=sorted[0].key;
+    people=sorted[0].people;
+    computeEvalPeople();
+  }
+  renderKarieraTable();
+  renderEvidencia();
+  renderImportSelector();
+  renderEvaluation();
+  renderDashboard();
 }
-renderKarieraTable();
-renderEvidencia();
-renderImportSelector();
-renderEvaluation();
+
+// Aplikuje obmedzenia podľa role
+function tfApplyRoleUI(){
+  // Pridaj badge a logout do sidebaru
+  const sidebar=document.querySelector('.sidebar');
+  if(sidebar&&!document.getElementById('tf-user-panel')){
+    const panel=document.createElement('div');
+    panel.id='tf-user-panel';
+    panel.style.cssText='margin-top:auto;padding:16px;border-top:1px solid #1a4128;font-size:11px;color:#7aa388';
+    const roleLabel=currentUserRole==='admin'?'👤 ADMIN':'👁️ NÁHĽAD';
+    panel.innerHTML='<div style="margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;font-weight:700">'+roleLabel+'</div><button onclick="tfLogout()" style="width:100%;padding:8px 12px;background:transparent;border:1px solid #1a4128;color:#7aa388;border-radius:6px;font-family:var(--font-mono);font-size:11px;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;font-weight:600">Odhlásiť sa</button>';
+    sidebar.appendChild(panel);
+  }
+  // Skryjeme tlačidlá pre user
+  if(currentUserRole!=='admin'){
+    const css=document.createElement('style');
+    css.textContent='.tf-admin-only{display:none !important;}';
+    document.head.appendChild(css);
+    document.body.classList.add('tf-readonly');
+  }
+}
+
+tfInit();
 </script> 
 
 </body></html>
