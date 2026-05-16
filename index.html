@@ -817,7 +817,7 @@ function renderEvaluation(){
     else if(!aw)actionCell=`<button class="btn btn-sm btn-secondary" onclick="quickWarn('${p.name.replace(/'/g,"\\'")}','fj')">Napomenúť</button>`;
     else if(aw)actionCell=`<button class="btn btn-sm btn-secondary" onclick="editWarning('${aw.id}')">Upraviť nap.</button> <button class="btn btn-sm btn-secondary" onclick="openResolveModal('${p.name.replace(/'/g,"\\'")}')">Zrušiť nap.</button>`;
     // Riziko PB — len ČERVENÝ (akútny, napomenutí podriadení)
-    const _safeName=p.name.replace(/'/g,"\\'");
+                   const _safeName=p.name.replace(/'/g,"\\'");
     const _pbAcute=getPbRiskAcute(p.name);
     if(_pbAcute.length&&!aw&&!isPbAlertDismissed(p.name,'acute')){
       const _names=_pbAcute.map(r=>r.name).join(', ');
@@ -1197,3 +1197,19 @@ function tfApplyRoleUI(){
     panel.id='tf-user-panel';
     panel.style.cssText='margin-top:auto;padding:16px;border-top:1px solid #1a4128;font-size:11px;color:#7aa388';
     const roleLabel=currentUserRole==='admin'?'👤 ADMIN':'👁️ NÁHĽAD';
+    panel.innerHTML='<div style="margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;font-weight:700">'+roleLabel+'</div><button onclick="tfLogout()" style="width:100%;padding:8px 12px;background:transparent;border:1px solid #1a4128;color:#7aa388;border-radius:6px;font-family:var(--font-mono);font-size:11px;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;font-weight:600">Odhlásiť sa</button>';
+    sidebar.appendChild(panel);
+  }
+  // Skryjeme tlačidlá pre user
+  if(currentUserRole!=='admin'){
+    const css=document.createElement('style');
+    css.textContent='.tf-admin-only{display:none !important;}';
+    document.head.appendChild(css);
+    document.body.classList.add('tf-readonly');
+  }
+}
+
+tfInit();
+</script> 
+
+</body></html>
