@@ -229,7 +229,7 @@ tr.danger-row td{background:#fff5f5}
       </select>
     </div>
   </div>
-  <div id="eval-alerts" style="margin-bottom:14px"><div style="background:var(--blue-pale);border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:var(--blue)">📅 Plávajúci kvartál: <strong>Február 2026 – Apríl 2026</strong> · FJ = súčet za 3 mesiace</div><div style="background:var(--orange-pale);border:1px solid var(--orange);border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:var(--orange)">⚠ <strong>Trainee → C: manuálna kontrola BRUTTO FJ</strong> (Denisa Véghová, JUDr. Zuzana Hujsiová)</div></div>
+  <div id="eval-alerts" style="margin-bottom:14px"><div style="background:var(--blue-pale);border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:var(--blue)">📅 Plávajúci kvartál: <strong>Február 2026 – Apríl 2026</strong> · FJ = súčet za 3 mesiace</div><div class="tf-admin-only" style="background:var(--orange-pale);border:1px solid var(--orange);border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:var(--orange)">⚠ <strong>Trainee → C: manuálna kontrola BRUTTO FJ</strong> (Denisa Véghová, JUDr. Zuzana Hujsiová)</div></div>
   <div class="card" style="padding:0;overflow:hidden"><div id="eval-main-table"></div></div>
 </div>
 <div class="page" id="page-napomenutia">
@@ -658,7 +658,16 @@ function renderDashboard(){
   const sorted=[...imports].sort((a,b)=>b.key.localeCompare(a.key));
   const last3=sorted.slice(0,3);
   const periodLabel=last3.length>1?`${last3[last3.length-1].label} – ${last3[0].label}`:last3[0]?.label||'';
-  document.getElementById('dash-period').textContent=`Plávajúci kvartál: ${periodLabel} (${last3.length} mes.) · ${evalPeople.length} ľudí`;
+  // Posledný import — z najnovšieho záznamu vezmi `date` (ISO timestamp)
+  let lastImportTxt='';
+  if(sorted[0]&&sorted[0].date){
+    const d=new Date(sorted[0].date);
+    if(!isNaN(d)){
+      const dd=d.getDate(),mm=d.getMonth()+1,yyyy=d.getFullYear();
+      lastImportTxt=` · 📥 Posledný import: ${dd}.${mm}.${yyyy}`;
+    }
+  }
+  document.getElementById('dash-period').textContent=`Plávajúci kvartál: ${periodLabel} (${last3.length} mes.) · ${evalPeople.length} ľudí${lastImportTxt}`;
   let ok=0,promoCount=0;
   evalPeople.forEach(p=>{if(checkStatus(p).ok)ok++;const pr=checkPromotion(p);if(pr.canPromote===true||(pr.multiPath&&pr.paths?.length))promoCount++;});
   document.getElementById('stat-total').textContent=evalPeople.length;
@@ -736,11 +745,21 @@ function renderEvaluation(){
   const _statOk=document.getElementById('stat-ok');if(_statOk)_statOk.textContent=_ok;
   const _statWarn=document.getElementById('stat-warn');if(_statWarn)_statWarn.textContent=warnings.filter(w=>w.status==='active').length;
   const _statPromo=document.getElementById('stat-promo');if(_statPromo)_statPromo.textContent=_promo;
-  const _dashPeriod=document.getElementById('dash-period');if(_dashPeriod)_dashPeriod.textContent='Plávajúci kvartál: '+periodLabel+' ('+last3.length+' mes.) · '+evalPeople.length+' ľudí';
+  // Posledný import — z najnovšieho záznamu
+  let _lastImportTxt='';
+  const _sorted=[...imports].sort((a,b)=>b.key.localeCompare(a.key));
+  if(_sorted[0]&&_sorted[0].date){
+    const _d=new Date(_sorted[0].date);
+    if(!isNaN(_d)){
+      const _dd=_d.getDate(),_mm=_d.getMonth()+1,_yyyy=_d.getFullYear();
+      _lastImportTxt=' · 📥 Posledný import: '+_dd+'.'+_mm+'.'+_yyyy;
+    }
+  }
+  const _dashPeriod=document.getElementById('dash-period');if(_dashPeriod)_dashPeriod.textContent='Plávajúci kvartál: '+periodLabel+' ('+last3.length+' mes.) · '+evalPeople.length+' ľudí'+_lastImportTxt;
   const trainee=evalPeople.filter(p=>p.pos==='TR');
   const scBezCesty=evalPeople.filter(p=>p.pos==='SC'&&!getPersonCesta(p.name));
   let alerts=`<div style="background:var(--blue-pale);border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:var(--blue)">📅 Plávajúci kvartál: <strong>${periodLabel}</strong> · FJ = súčet za ${last3.length} mesiac${last3.length>1?'e':''}</div>`;
-  if(trainee.length)alerts+=`<div style="background:var(--orange-pale);border:1px solid var(--orange);border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:var(--orange)">⚠ <strong>Trainee → C: manuálna kontrola BRUTTO FJ</strong> (${trainee.map(p=>p.name).join(', ')})</div>`;
+  if(trainee.length)alerts+=`<div class="tf-admin-only" style="background:var(--orange-pale);border:1px solid var(--orange);border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:var(--orange)">⚠ <strong>Trainee → C: manuálna kontrola BRUTTO FJ</strong> (${trainee.map(p=>p.name).join(', ')})</div>`;
   if(scBezCesty.length)alerts+=`<div style="background:var(--orange-pale);border:1px solid var(--orange);border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:var(--orange)">⚠ <strong>${scBezCesty.map(p=>p.name).join(', ')}</strong> – SC bez nastavenej kariérnej cesty.</div>`;
   document.getElementById('eval-alerts').innerHTML=alerts;
   const q=(document.getElementById('eval-search')?.value||'').toLowerCase();
@@ -1178,19 +1197,3 @@ function tfApplyRoleUI(){
     panel.id='tf-user-panel';
     panel.style.cssText='margin-top:auto;padding:16px;border-top:1px solid #1a4128;font-size:11px;color:#7aa388';
     const roleLabel=currentUserRole==='admin'?'👤 ADMIN':'👁️ NÁHĽAD';
-    panel.innerHTML='<div style="margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;font-weight:700">'+roleLabel+'</div><button onclick="tfLogout()" style="width:100%;padding:8px 12px;background:transparent;border:1px solid #1a4128;color:#7aa388;border-radius:6px;font-family:var(--font-mono);font-size:11px;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;font-weight:600">Odhlásiť sa</button>';
-    sidebar.appendChild(panel);
-  }
-  // Skryjeme tlačidlá pre user
-  if(currentUserRole!=='admin'){
-    const css=document.createElement('style');
-    css.textContent='.tf-admin-only{display:none !important;}';
-    document.head.appendChild(css);
-    document.body.classList.add('tf-readonly');
-  }
-}
-
-tfInit();
-</script> 
-
-</body></html>
