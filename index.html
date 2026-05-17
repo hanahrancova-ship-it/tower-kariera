@@ -111,9 +111,12 @@ tr.danger-row td{background:#fff5f5}
 .search-bar input{flex:1;padding:8px 12px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:13px}
 .search-bar select{padding:8px 12px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:12px}
 .empty{text-align:center;padding:40px;color:var(--gray3);font-size:13px}
-.prispevky-table{width:100%;border-collapse:collapse;font-size:11px;font-family:var(--font-mono)}
-.prispevky-table th{background:var(--gray);padding:8px 6px;text-align:center;font-weight:700;font-size:10px;color:var(--gray3);text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid var(--gray2)}
+.prispevky-table{width:100%;border-collapse:collapse;font-size:11px;font-family:var(--font-mono);background:#fff;border-radius:8px;overflow:hidden}
+.prispevky-table th{background:var(--gray);padding:10px 8px;text-align:center;font-weight:700;font-size:10px;color:var(--gray3);text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid var(--gray2)}
 .prispevky-table td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--gray);vertical-align:middle}
+.prispevky-table tbody tr:hover{background:#fafbfa}
+.prispevky-table tbody tr:last-child td{border-bottom:none}
+.cell-person{text-align:left !important;font-weight:700 !important;color:var(--black);background:linear-gradient(90deg,#f4f9f4 0%,#fff 100%);padding-left:14px !important;border-left:3px solid var(--green) !important}
 .prispevok-cell{cursor:pointer;transition:transform 0.1s;line-height:1.3}
 .prispevok-cell:hover{transform:scale(1.04);box-shadow:0 2px 6px rgba(0,0,0,0.12)}
 .cell-empty{background:#fff;color:var(--gray3)}
@@ -318,7 +321,7 @@ body.tf-readonly .prispevok-cell:hover{transform:none;box-shadow:none}
     <div id="servis-tn-section"></div>
   </div>
   <div id="platby-tab-crm" style="display:none">
-    <div class="empty"><div class="big">💻</div>Sekcia CRM bude pridaná neskôr.</div>
+    <div id="crm-content"></div>
   </div>
 </div>
 </main>
@@ -357,6 +360,36 @@ body.tf-readonly .prispevok-cell:hover{transform:none;box-shadow:none}
     <div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end">
       <button class="btn btn-secondary" onclick="closeModal('modal-servis-add')">Zrušiť</button>
       <button class="btn btn-primary" onclick="confirmServisAddPerson()">Pridať</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-crm-upload">
+  <div class="modal" style="max-width:560px">
+    <h3>Nahrať CRM report</h3>
+    <div style="font-size:12px;color:var(--gray3);margin-bottom:14px">Týždenný CSV export z CRM kontroly.</div>
+    <div class="form-group">
+      <label>Dátum reportu (pondelok)</label>
+      <input type="date" id="crm-upload-date" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px">
+    </div>
+    <div class="form-group">
+      <label>CSV súbor</label>
+      <input type="file" id="crm-upload-file" accept=".csv" onchange="onCrmFileSelected(this)" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px">
+    </div>
+    <div id="crm-upload-preview"></div>
+    <div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal('modal-crm-upload')">Zrušiť</button>
+      <button class="btn btn-primary" onclick="confirmCrmUpload()">Nahrať a spracovať</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-crm-fines">
+  <div class="modal" style="max-width:520px">
+    <h3 id="crm-fines-title">Pokuty</h3>
+    <div style="font-size:12px;color:var(--gray3);margin-bottom:14px">Zaškrtnite pokuty ktoré sú uhradené.</div>
+    <div id="crm-fines-list" style="max-height:400px;overflow-y:auto"></div>
+    <div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal('modal-crm-fines')">Zrušiť</button>
+      <button class="btn btn-primary" onclick="saveCrmFines()">Uložiť</button>
     </div>
   </div>
 </div>
@@ -471,6 +504,7 @@ let poznamkyData={};
 let evidenciaPoznamky={};
 let prispevkyData={};
 let servisData={};
+let crmData={reports:{},fines:{}};
 let currentUserRole=null; // 'admin' alebo 'user', zistené z API
 
 // Mapovanie kľúčov localStorage → API
@@ -484,9 +518,11 @@ const STORAGE_KEYS={
   'tf_ev_poznamky':'ev_poznamky',
   'tf_pb_dismissed':'pb_dismissed',
   'tf_prispevky':'prispevky',
-  'tf_servis':'servis'
+  'tf_servis':'servis',
+  'tf_crm':'crm'
 };
-  // Wrapper: ukladá dáta do KV cez API (admin) alebo iba lokálne (user)
+
+// Wrapper: ukladá dáta do KV cez API (admin) alebo iba lokálne (user)
 async function tfSave(localKey, value){
   const apiKey=STORAGE_KEYS[localKey];
   if(!apiKey){console.error('Neznámy storage kľúč:',localKey);return;}
@@ -523,6 +559,7 @@ async function tfLoadAll(){
     pbAlertDismissed=d.pb_dismissed||{};
     prispevkyData=d.prispevky||{};
     servisData=d.servis||{};
+    crmData=d.crm||{reports:{},fines:{}};
     return true;
   }catch(e){
     console.error('Chyba pri načítaní dát:',e);
@@ -552,7 +589,7 @@ async function tfMigrateFromLocalStorage(){
     ['tf_imports','imports'],['tf_warnings','warnings'],['tf_cesta','cesta'],
     ['tf_bruto','bruto'],['tf_pozicie','pozicie'],['tf_poznamky','poznamky'],
     ['tf_ev_poznamky','ev_poznamky'],['tf_pb_dismissed','pb_dismissed'],
-    ['tf_prispevky','prispevky'],['tf_servis','servis']
+    ['tf_prispevky','prispevky'],['tf_servis','servis'],['tf_crm','crm']
   ];
   for(const [lsKey,apiKey] of migMap){
     const v=localStorage.getItem(lsKey);
@@ -635,6 +672,7 @@ function switchPlatbyTab(name,el){
     if(d)d.style.display=(t===name)?'block':'none';
   });
   if(name==='servis')renderServis();
+  if(name==='crm')renderCrm();
 }
 
 
@@ -1398,7 +1436,7 @@ function renderPrispevkyFix(year){
   for(let m=0;m<12;m++)html+='<th style="min-width:62px">'+mesNames[m]+'</th>';
   html+='</tr></thead><tbody>';
   for(const p of PRISPEVKY_FIX){
-    html+='<tr><td style="text-align:left;font-weight:600">'+p.name+'</td><td style="text-align:right;color:var(--gray3)">'+p.platba+' €</td>';
+    html+='<tr><td class="cell-person">'+p.name+'</td><td style="text-align:right;color:var(--gray3)">'+p.platba+' €</td>';
     for(let m=0;m<12;m++){
       const key='fix_'+year+'_'+String(m+1).padStart(2,'0')+'_'+p.name;
       const data=getPrispevok(key);
@@ -1423,7 +1461,7 @@ function renderPrispevkyFakt(year){
   for(let q=1;q<=4;q++)html+='<th style="min-width:120px;background:#e3f2fd;color:#1565c0">Q'+q+'</th>';
   html+='</tr></thead><tbody>';
   for(const p of PRISPEVKY_FAKT){
-    html+='<tr><td style="text-align:left;font-weight:600">'+p.name+'</td>';
+    html+='<tr><td class="cell-person">'+p.name+'</td>';
     html+='<td style="font-size:11px;color:var(--gray3)">'+p.team.join(', ')+'</td>';
     html+='<td style="text-align:right;color:var(--gray3)">'+p.maxPrispevok+' €</td>';
     html+='<td style="text-align:right;color:var(--gray3)">'+p.minFJ+' FJ</td>';
@@ -1623,7 +1661,9 @@ function savePrispevok(){
   const sumaEur=existing.sumaEur!==undefined?existing.sumaEur:(window._prispevokSumaEur||0);
   setPrispevok(key,{status,date:date||null,sumaEur:Math.round(sumaEur*100)/100});
   closeModal('modal-prispevok');
-  renderPrispevky();
+  // Refresh príslušnej sekcie
+  if(key.startsWith('servis_'))renderServis();
+  else renderPrispevky();
   showToast('Platba uložená.','success');
 }
 function deletePrispevok(){
@@ -1632,7 +1672,8 @@ function deletePrispevok(){
   delete prispevkyData[key];
   tfSave('tf_prispevky',prispevkyData);
   closeModal('modal-prispevok');
-  renderPrispevky();
+  if(key.startsWith('servis_'))renderServis();
+  else renderPrispevky();
   showToast('Platba zrušená.','success');
 }
 function formatShortDate(iso){
@@ -1768,7 +1809,6 @@ function renderServisSection(typ){
   }
   // Tabuľka
   html+='<div style="overflow-x:auto"><table class="prispevky-table"><thead><tr><th style="min-width:200px;text-align:left">Osoba</th>';
-  if(typ==='ba')html+='<th style="text-align:right">Platba</th>';
   for(let i=0;i<6;i++)html+='<th style="min-width:78px">'+months[i]+'</th>';
   html+='<th style="text-align:left;min-width:160px">Poznámka</th>';
   if(currentUserRole==='admin')html+='<th class="tf-admin-only" style="min-width:40px"></th>';
@@ -1777,8 +1817,7 @@ function renderServisSection(typ){
   for(let pi=0;pi<section.people.length;pi++){
     const personName=section.people[pi];
     const safeName=personName.replace(/'/g,"\\'");
-    html+='<tr><td style="text-align:left;font-weight:600">'+personName+'</td>';
-    if(typ==='ba')html+='<td style="text-align:right;color:var(--gray3)">'+sumaPerOs+' €</td>';
+    html+='<tr><td class="cell-person">'+personName+'</td>';
     for(let i=0;i<6;i++){
       const monthNum=monthOffset+i+1; // 1..12
       const key='servis_'+typ+'_'+year+'_'+String(monthNum).padStart(2,'0')+'_'+personName;
@@ -1888,6 +1927,326 @@ function saveServisPoznamka(typ,name,text){
   else delete section.poznamky[name];
   if(typ==='ba')saveServisBaSection(cur.year,cur.h,section);
   else saveServisTnSection(cur.year,cur.h,section);
+}
+
+// ===================== CRM =====================
+
+// Helpery
+function getCrm(){return crmData||{reports:{},fines:{}};}
+function ensureCrm(){if(!crmData)crmData={reports:{},fines:{}};if(!crmData.reports)crmData.reports={};if(!crmData.fines)crmData.fines={};}
+function saveCrm(){tfSave('tf_crm',crmData);}
+
+// ISO dátum dnes
+function todayISO(){return new Date().toISOString().slice(0,10);}
+
+// Vráti dátum najbližšieho pondelka (alebo dnešný ak je pondelok)
+function lastMonday(){
+  const d=new Date();
+  const day=d.getDay(); // 0=ne, 1=po, ..., 6=so
+  // koľko dní späť ku poslednému pondelku
+  const back=day===0?6:day-1;
+  d.setDate(d.getDate()-back);
+  d.setHours(0,0,0,0);
+  return d.toISOString().slice(0,10);
+}
+
+// Vráti všetky pondelky ktoré sú v rozsahu od prvého reportu po dnes
+function expectedMondays(){
+  ensureCrm();
+  const reports=Object.keys(crmData.reports).sort();
+  if(!reports.length)return [];
+  const first=new Date(reports[0]);
+  const today=new Date();
+  const result=[];
+  let d=new Date(first);
+  // Posun na pondelok ak nie je
+  while(d.getDay()!==1)d.setDate(d.getDate()+1);
+  while(d<=today){
+    if(d.getDay()===1)result.push(d.toISOString().slice(0,10));
+    d.setDate(d.getDate()+7);
+  }
+  return result;
+}
+
+// Detekuj chýbajúce pondelky
+function missingMondays(){
+  ensureCrm();
+  const expected=expectedMondays();
+  return expected.filter(m=>!crmData.reports[m]);
+}
+
+// CSV parser - vráti zoznam unikátnych mien s počtom záznamov
+function parseCrmCsv(text){
+  const lines=text.split(/\r?\n/).filter(l=>l.trim());
+  if(lines.length<2)return {agentCounts:{},totalRows:0};
+  // Detekuj oddeľovač (; alebo ,)
+  const header=lines[0];
+  const sep=header.includes(';')?';':',';
+  const cols=header.split(sep).map(c=>c.trim().toLowerCase());
+  // Hľadaj stĺpec "agent name"
+  let agentIdx=cols.findIndex(c=>c.includes('agent')&&c.includes('name'));
+  if(agentIdx===-1)agentIdx=1; // fallback - 2. stĺpec
+  const counts={};
+  for(let i=1;i<lines.length;i++){
+    const parts=lines[i].split(sep).map(c=>c.trim());
+    const name=parts[agentIdx];
+    if(!name)continue;
+    counts[name]=(counts[name]||0)+1;
+  }
+  return {agentCounts:counts,totalRows:lines.length-1};
+}
+
+// Spracuj nahraný report
+function processCrmReport(reportDate,csvText,emptyReport){
+  ensureCrm();
+  let offenders=[];
+  let agentCounts={};
+  if(!emptyReport&&csvText){
+    const parsed=parseCrmCsv(csvText);
+    agentCounts=parsed.agentCounts;
+    // Pokuta dostáva ten kto má 2+ záznamy
+    offenders=Object.keys(agentCounts).filter(name=>agentCounts[name]>=2);
+  }
+  // Ulož report
+  crmData.reports[reportDate]={
+    date:reportDate,
+    uploadedAt:new Date().toISOString(),
+    emptyReport:!!emptyReport,
+    offenders,
+    agentCounts
+  };
+  // Pre každého offendera vytvor pokutu (úroveň podľa histórie)
+  for(const name of offenders){
+    const level=getNextFineLevel(name);
+    const amount=crmFineAmountForLevel(level);
+    const fineId='fine_'+reportDate+'_'+name.replace(/\s+/g,'_');
+    crmData.fines[fineId]={
+      id:fineId,
+      person:name,
+      date:reportDate,
+      amount,
+      level,
+      paid:amount===0, // napomenutie = automaticky "vybavené" (žiadna úhrada)
+      paidDate:null
+    };
+  }
+  saveCrm();
+}
+
+// Suma pokuty pre danú úroveň: 1=napomenutie 0€, 2=10€, 3=20€...
+function crmFineAmountForLevel(level){
+  if(level<=1)return 0;
+  return (level-1)*10;
+}
+
+// Vráti ďalšiu úroveň pokuty pre osobu (pokračuje tam kde skončila)
+function getNextFineLevel(name){
+  const fines=Object.values(crmData.fines||{}).filter(f=>f.person===name);
+  if(!fines.length)return 1; // napomenutie
+  // Najvyššia doteraz dosiahnutá úroveň + 1
+  const maxLevel=Math.max(...fines.map(f=>f.level));
+  return maxLevel+1;
+}
+
+// Vráti všetky pokuty osoby zoradené chronologicky
+function finesForPerson(name){
+  return Object.values(crmData.fines||{})
+    .filter(f=>f.person===name)
+    .sort((a,b)=>a.date.localeCompare(b.date));
+}
+
+// Vráti súčet nezaplatených pokút osoby (len skutočné peniaze, napomenutia 0€ neráta)
+function unpaidSum(name){
+  return finesForPerson(name)
+    .filter(f=>!f.paid&&f.amount>0)
+    .reduce((s,f)=>s+f.amount,0);
+}
+
+// Hlavný render CRM
+function renderCrm(){
+  ensureCrm();
+  const c=document.getElementById('crm-content');
+  if(!c)return;
+  let html='';
+  // Status banner
+  const reports=Object.keys(crmData.reports).sort();
+  const lastReport=reports[reports.length-1];
+  const missing=missingMondays();
+  if(missing.length>0){
+    html+='<div style="background:#fff3e0;border:1px solid var(--orange);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#7a4a00">⚠ <strong>Chýbajú reporty pre tieto pondelky:</strong> '+missing.map(m=>formatDate(m)).join(', ')+'</div>';
+  }
+  if(lastReport){
+    html+='<div style="background:#e8f5e9;border:1px solid #4caf50;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#1b5e20">✓ Posledný report nahraný: <strong>'+formatDate(lastReport)+'</strong> ('+(crmData.reports[lastReport].emptyReport?'prázdny - všetci OK':crmData.reports[lastReport].offenders.length+' ľudí s pokutou')+')</div>';
+  }else{
+    html+='<div style="background:#fff3e0;border:1px solid var(--orange);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#7a4a00">⚠ <strong>Ešte nie je nahraný žiadny report.</strong> Nahrajte prvý CSV report z CRM kontroly.</div>';
+  }
+  // Tlačidlo upload (admin only)
+  if(currentUserRole==='admin'){
+    html+='<div style="margin-bottom:18px;display:flex;gap:8px;flex-wrap:wrap">';
+    html+='<button class="btn btn-primary tf-admin-only" onclick="openCrmUpload()">📥 Nahrať CSV report</button>';
+    html+='<button class="btn btn-secondary tf-admin-only" onclick="openCrmEmptyReport()">✓ Označiť pondelok ako bez sankcií</button>';
+    html+='</div>';
+  }
+  // Súhrn — ľudia s nezaplatenými pokutami
+  const allPersons=new Set();
+  for(const f of Object.values(crmData.fines||{}))allPersons.add(f.person);
+  const persons=Array.from(allPersons).sort();
+  if(!persons.length){
+    html+='<div class="empty"><div class="big">📋</div>Zatiaľ žiadne CRM pokuty. Nahrajte prvý report.</div>';
+    c.innerHTML=html;
+    return;
+  }
+  html+='<div class="card"><div class="card-title">Prehľad sankcií CRM</div>';
+  html+='<div style="overflow-x:auto"><table class="prispevky-table"><thead><tr><th style="min-width:180px;text-align:left">Osoba</th><th style="min-width:120px;text-align:right">Na úhradu</th><th style="text-align:left">Aktuálny stav</th><th style="text-align:left">História pokút</th></tr></thead><tbody>';
+  for(const name of persons){
+    const fines=finesForPerson(name);
+    const unpaid=fines.filter(f=>!f.paid&&f.amount>0);
+    const unpaidTotal=unpaid.reduce((s,f)=>s+f.amount,0);
+    const lastFine=fines[fines.length-1];
+    // Status badge — posledná pokuta
+    let statusBadge='';
+    if(lastFine){
+      if(lastFine.level===1)statusBadge='<span style="background:#ffebee;color:#c62828;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700">Napomenutie</span>';
+      else statusBadge='<span style="background:#fff3e0;color:#e65100;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700">Sankcia '+lastFine.amount+'€</span>';
+      statusBadge+=' <span style="font-size:10px;color:var(--gray3);margin-left:6px">'+formatDate(lastFine.date)+'</span>';
+    }
+    html+='<tr><td class="cell-person">'+name+'</td>';
+    // Na úhradu — klikateľné ak admin
+    let unpaidCell='';
+    if(unpaidTotal>0){
+      const onclick=currentUserRole==='admin'?'onclick="openCrmFinesModal(\''+name.replace(/'/g,"\\'")+'\')" style="cursor:pointer"':'';
+      unpaidCell='<td style="text-align:right;background:#ffebee;color:#c62828;font-weight:700" '+onclick+'>'+unpaidTotal+' €</td>';
+    }else{
+      unpaidCell='<td style="text-align:right;color:var(--gray3)">0 €</td>';
+    }
+    html+=unpaidCell;
+    html+='<td style="text-align:left">'+statusBadge+'</td>';
+    // História — malé fajky/krížiky
+    let hist='';
+    for(const f of fines){
+      const label=f.level===1?'⚠':f.amount+'€';
+      const tooltip=formatDate(f.date)+(f.paid?' uhradené '+(f.paidDate?formatDate(f.paidDate):''):' NEUHRADENÉ');
+      const bg=f.paid?'#d4f4dd':'#ffd6d6';
+      const color=f.paid?'#0e6b27':'#a01010';
+      hist+='<span title="'+tooltip+'" style="display:inline-block;padding:2px 6px;background:'+bg+';color:'+color+';border-radius:4px;font-size:10px;margin-right:4px;font-weight:600">'+label+'</span>';
+    }
+    html+='<td style="text-align:left">'+hist+'</td>';
+    html+='</tr>';
+  }
+  html+='</tbody></table></div></div>';
+  c.innerHTML=html;
+}
+
+// Formátovanie dátumu DD.MM.YYYY
+function formatDate(iso){
+  if(!iso)return '';
+  const d=new Date(iso);
+  if(isNaN(d))return iso;
+  return d.getDate()+'.'+(d.getMonth()+1)+'.'+d.getFullYear();
+}
+
+// Modal: upload CSV
+function openCrmUpload(){
+  if(currentUserRole!=='admin')return;
+  document.getElementById('crm-upload-date').value=lastMonday();
+  document.getElementById('crm-upload-file').value='';
+  document.getElementById('crm-upload-preview').innerHTML='';
+  document.getElementById('modal-crm-upload').classList.add('open');
+}
+function onCrmFileSelected(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    window._crmCsvText=e.target.result;
+    const parsed=parseCrmCsv(window._crmCsvText);
+    const offenders=Object.keys(parsed.agentCounts).filter(n=>parsed.agentCounts[n]>=2);
+    let html='<div style="font-size:12px;color:var(--gray3);margin-top:8px"><strong>Náhľad:</strong> '+parsed.totalRows+' záznamov, '+Object.keys(parsed.agentCounts).length+' unikátnych agentov.<br>';
+    if(offenders.length){
+      html+='<strong>'+offenders.length+' osôb dostane pokutu</strong> (majú 2+ záznamov):<ul style="margin:6px 0 0 16px">';
+      for(const n of offenders){
+        const nextLevel=getNextFineLevel(n);
+        const amount=crmFineAmountForLevel(nextLevel);
+        html+='<li>'+n+' → '+(amount===0?'<strong>napomenutie</strong>':'<strong>sankcia '+amount+'€</strong>')+' ('+parsed.agentCounts[n]+' záznamov)</li>';
+      }
+      html+='</ul>';
+    }else{
+      html+='Žiadne osoby s 2+ záznamami — nikto nedostane pokutu.';
+    }
+    html+='</div>';
+    document.getElementById('crm-upload-preview').innerHTML=html;
+  };
+  reader.readAsText(file,'utf-8');
+}
+function confirmCrmUpload(){
+  const date=document.getElementById('crm-upload-date').value;
+  if(!date){alert('Zadajte dátum reportu.');return;}
+  if(!window._crmCsvText){alert('Vyberte CSV súbor.');return;}
+  if(crmData.reports[date]){
+    if(!confirm('Pre dátum '+formatDate(date)+' už existuje report. Prepísať?'))return;
+    // Vymaž staré pokuty z tohto dátumu
+    for(const fid of Object.keys(crmData.fines||{})){
+      if(crmData.fines[fid].date===date)delete crmData.fines[fid];
+    }
+  }
+  processCrmReport(date,window._crmCsvText,false);
+  closeModal('modal-crm-upload');
+  renderCrm();
+  showToast('Report nahraný.','success');
+}
+function openCrmEmptyReport(){
+  if(currentUserRole!=='admin')return;
+  const date=prompt('Pre ktorý pondelok označiť že nikto nemal sankciu? (YYYY-MM-DD)',lastMonday());
+  if(!date)return;
+  if(crmData.reports[date]){
+    if(!confirm('Pre dátum '+formatDate(date)+' už existuje report. Prepísať?'))return;
+    for(const fid of Object.keys(crmData.fines||{})){
+      if(crmData.fines[fid].date===date)delete crmData.fines[fid];
+    }
+  }
+  processCrmReport(date,'',true);
+  renderCrm();
+  showToast('Označené ako bez sankcií.','success');
+}
+
+// Modal: pokuty osoby (zobraziť, označiť ako zaplatené)
+function openCrmFinesModal(name){
+  if(currentUserRole!=='admin')return;
+  window._crmFinesPerson=name;
+  document.getElementById('crm-fines-title').textContent='Pokuty: '+name;
+  const fines=finesForPerson(name).filter(f=>f.amount>0);
+  let html='';
+  for(const f of fines){
+    const checked=f.paid?'checked':'';
+    html+='<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--gray2);border-radius:6px;margin-bottom:6px;cursor:pointer;'+(f.paid?'background:#e8f5e9':'background:#fff5f5')+'">';
+    html+='<input type="checkbox" data-fine-id="'+f.id+'" '+checked+' style="width:18px;height:18px">';
+    html+='<div style="flex:1"><strong>'+f.amount+' €</strong> · z '+formatDate(f.date)+'</div>';
+    if(f.paid&&f.paidDate)html+='<div style="font-size:11px;color:var(--gray3)">uhradené '+formatDate(f.paidDate)+'</div>';
+    html+='</label>';
+  }
+  document.getElementById('crm-fines-list').innerHTML=html||'<div style="color:var(--gray3);text-align:center;padding:20px">Žiadne pokuty s úhradou.</div>';
+  document.getElementById('modal-crm-fines').classList.add('open');
+}
+function saveCrmFines(){
+  const name=window._crmFinesPerson;
+  if(!name)return;
+  const checkboxes=document.querySelectorAll('#crm-fines-list input[type=checkbox]');
+  for(const cb of checkboxes){
+    const fid=cb.dataset.fineId;
+    const f=crmData.fines[fid];
+    if(!f)continue;
+    if(cb.checked&&!f.paid){
+      f.paid=true;
+      f.paidDate=todayISO();
+    }else if(!cb.checked&&f.paid){
+      f.paid=false;
+      f.paidDate=null;
+    }
+  }
+  saveCrm();
+  closeModal('modal-crm-fines');
+  renderCrm();
+  showToast('Stav úhrad uložený.','success');
 }
 
 async function tfInit(){
