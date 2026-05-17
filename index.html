@@ -121,6 +121,11 @@ tr.danger-row td{background:#fff5f5}
 .cell-red{background:#ffd6d6;color:#a01010;font-weight:600}
 .cell-info{background:#eef5ff;color:#0d4b8c;font-weight:500}
 .cell-info-green{background:#e8f8ee;color:#0e6b27;font-weight:500}
+.cell-q-blue{background:#e3f2fd;color:#1565c0;font-weight:500}
+.cell-q-blue.cell-green{background:#c8e6c9;color:#0e6b27}
+.cell-q-blue.cell-red{background:#ffcdd2;color:#a01010}
+.prispevok-cell .cell-sum{font-size:13px;font-weight:700;display:block;line-height:1.2}
+.prispevok-cell .cell-meta{font-size:9px;display:block;line-height:1.1;margin-top:2px;opacity:0.9}
 body.tf-readonly .prispevok-cell{cursor:default}
 body.tf-readonly .prispevok-cell:hover{transform:none;box-shadow:none}
 .empty .big{font-size:32px;margin-bottom:8px}
@@ -169,8 +174,8 @@ body.tf-readonly .prispevok-cell:hover{transform:none;box-shadow:none}
     <div class="nav-item" onclick="showPage('kariera',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>Kariéra
     </div>
-    <div class="nav-item" onclick="showPage('prispevky',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>Príspevky
+    <div class="nav-item" onclick="showPage('platby',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>Platby
     </div>
   </nav>
 </aside>
@@ -290,17 +295,30 @@ body.tf-readonly .prispevok-cell:hover{transform:none;box-shadow:none}
   </div>
 </div>
 
-<div class="page" id="page-prispevky">
+<div class="page" id="page-platby">
   <div class="page-header">
     <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap">
-      <div><h2>Príspevky za kancelárie</h2><p>Mesačné fixné platby · Kvartálne faktúry · Fixné preddavky s vyrovnaním</p></div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <label style="font-size:11px;color:var(--gray3);text-transform:uppercase;letter-spacing:0.5px;font-weight:600">Rok:</label>
-        <select id="prispevky-rok" onchange="renderPrispevky()" style="padding:7px 10px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:13px"></select>
-      </div>
+      <div><h2>Platby</h2><p>Mesačné platby · Kvartálne faktúry · Servis · CRM</p></div>
     </div>
   </div>
-  <div id="prispevky-content"></div>
+  <div class="tabs" id="platby-tabs" style="margin-bottom:18px">
+    <div class="tab active" onclick="switchPlatbyTab('kancelarie',this)">🏢 Kancelárie</div>
+    <div class="tab" onclick="switchPlatbyTab('servis',this)">🔧 Servis</div>
+    <div class="tab" onclick="switchPlatbyTab('crm',this)">💻 CRM</div>
+  </div>
+  <div id="platby-tab-kancelarie">
+    <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:14px">
+      <label style="font-size:11px;color:var(--gray3);text-transform:uppercase;letter-spacing:0.5px;font-weight:600">Rok:</label>
+      <select id="prispevky-rok" onchange="renderPrispevky()" style="padding:7px 10px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:13px"></select>
+    </div>
+    <div id="prispevky-content"></div>
+  </div>
+  <div id="platby-tab-servis" style="display:none">
+    <div class="empty"><div class="big">🔧</div>Sekcia Servis bude pridaná v ďalšej iterácii.<br><span style="font-size:11px">Plánovaný obsah: Servis BA (50€ rozdelené medzi TL+ ľudí v polroku) a Servis TN (fixne 10€/5€ za osobu, mení sa od H2/2026).</span></div>
+  </div>
+  <div id="platby-tab-crm" style="display:none">
+    <div class="empty"><div class="big">💻</div>Sekcia CRM bude pridaná neskôr.</div>
+  </div>
 </div>
 </main>
 </div>
@@ -404,7 +422,7 @@ const KARIERA=[
 const PB_VALUES={TR:0,C:1,SC:1,TL:2,EM:3,SM:6,MD:12,SD:24,P:48,'VIP I':1,'VIP II':1,'VIP III':1,'VIP IV':1};
 const OWNERS=['Mário Markech','Ondrej Broska']; // Vlastníci sa nevyhodnocujú (štatút, napomenutie, akcia, splna na = pomlčky)
 function isOwner(name){return OWNERS.includes(name);}
-const MESACE=['Január','Február','Marec','Apríl','Máj','Jún','Júl','August','September','Október','November','December'];
+  const MESACE=['Január','Február','Marec','Apríl','Máj','Jún','Júl','August','September','Október','November','December'];
 const HIST_PROTECTION=18000,HIST_DISCOUNT_80=24000,HIST_DISCOUNT_60=36000;
 function isVIP(pos){return pos&&pos.startsWith('VIP')}
 function isManazerska(pos){return['TL','EM','SM','MD','SD','P'].includes(pos)}
@@ -590,7 +608,15 @@ function showPage(id,el){
   if(id==='kariera')renderKarieraTable();
   if(id==='vyhodnotenie')renderEvaluation();
   if(id==='import')renderImportSelector();
-  if(id==='prispevky')renderPrispevky();
+  if(id==='platby')renderPrispevky();
+}
+function switchPlatbyTab(name,el){
+  document.querySelectorAll('#platby-tabs .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['kancelarie','servis','crm'].forEach(t=>{
+    const d=document.getElementById('platby-tab-'+t);
+    if(d)d.style.display=(t===name)?'block':'none';
+  });
 }
 
 
@@ -1242,7 +1268,7 @@ const PRISPEVKY_FAKT=[
 const PRISPEVKY_FIXPREDDAVKY=[
   {id:'ba_dominik',label:'Dominik + Katka (BA)',preddavokMes:800,maxPrispevok:1200,minFJ:6000,teamRoots:['Dominik Lehocký'],teamExclude:['Adam Marček']},
   {id:'ba_gallo',label:'Mišo Gallo (BA)',preddavokMes:800,maxPrispevok:1200,minFJ:6000,teamRoots:['Michal Gallo'],teamExclude:['Lucia Budzeľová','Denisa Véghová']}
-  ];
+];
 
 // TN — 1 spoločný príspevok, rozdelený medzi 4 podiely
 const PRISPEVKY_TN={
@@ -1359,9 +1385,10 @@ function renderPrispevkyFix(year){
       const key='fix_'+year+'_'+String(m+1).padStart(2,'0')+'_'+p.name;
       const data=getPrispevok(key);
       let cls='cell-empty';
-      let content=p.platba+' €';
-      if(data&&data.status==='uhradene'){cls='cell-green';content='✓ '+(data.date?formatShortDate(data.date):'');}
-      else if(data&&data.status==='neuhradene'){cls='cell-red';content='✗';}
+      const sumaUlozena=(data&&data.sumaEur!==undefined)?data.sumaEur:p.platba;
+      let content=sumaUlozena+' €';
+      if(data&&data.status==='uhradene'){cls='cell-green';content='<span class="cell-sum">'+sumaUlozena+' €</span><span class="cell-meta">✓ '+(data.date?formatShortDate(data.date):'')+'</span>';}
+      else if(data&&data.status==='neuhradene'){cls='cell-red';content='<span class="cell-sum">'+sumaUlozena+' €</span><span class="cell-meta">✗ '+(data.date?formatShortDate(data.date):'')+'</span>';}
       const safeName=p.name.replace(/'/g,"\\'");
       html+='<td class="prispevok-cell '+cls+'" onclick="openPrispevokModal(\'fix\',\''+key+'\',\''+safeName+'\',\''+mesNames[m]+' '+year+'\','+p.platba+')">'+content+'</td>';
     }
@@ -1375,7 +1402,7 @@ function renderPrispevkyFix(year){
 function renderPrispevkyFakt(year){
   let html='<div class="card" style="margin-bottom:20px"><div class="card-title">🧾 Faktúry kvartálne</div>';
   html+='<div style="overflow-x:auto"><table class="prispevky-table"><thead><tr><th style="min-width:200px;text-align:left">Príjemca</th><th style="text-align:left;min-width:160px">Tím</th><th style="text-align:right">Max prísp.</th><th style="text-align:right">Min FJ/Q</th>';
-  for(let q=1;q<=4;q++)html+='<th style="min-width:120px">Q'+q+'</th>';
+  for(let q=1;q<=4;q++)html+='<th style="min-width:120px;background:#e3f2fd;color:#1565c0">Q'+q+'</th>';
   html+='</tr></thead><tbody>';
   for(const p of PRISPEVKY_FAKT){
     html+='<tr><td style="text-align:left;font-weight:600">'+p.name+'</td>';
@@ -1389,19 +1416,16 @@ function renderPrispevkyFakt(year){
       let sumFJ=0;
       for(const member of p.team)sumFJ+=ownFJForQ(member,year,q);
       const prispevok=Math.min(sumFJ*0.2,p.maxPrispevok);
-      const splnaMin=sumFJ>=p.minFJ;
-      let cls='cell-empty';
+      const prispevokUlozeny=(data&&data.sumaEur!==undefined)?data.sumaEur:prispevok;
+      let cls='cell-q-blue';
       let content='';
-      if(data&&data.status==='uhradene'){cls='cell-green';content='✓ '+prispevok.toFixed(0)+' €<br><span style="font-size:9px">'+(data.date?formatShortDate(data.date):'')+'</span>';}
-      else if(data&&data.status==='neuhradene'){cls='cell-red';content='✗ '+prispevok.toFixed(0)+' €';}
+      if(data&&data.status==='uhradene'){cls='cell-q-blue cell-green';content='<span class="cell-sum">'+Math.round(prispevokUlozeny)+' €</span><span class="cell-meta">✓ '+(data.date?formatShortDate(data.date):'')+'</span>';}
+      else if(data&&data.status==='neuhradene'){cls='cell-q-blue cell-red';content='<span class="cell-sum">'+Math.round(prispevokUlozeny)+' €</span><span class="cell-meta">✗ '+(data.date?formatShortDate(data.date):'')+'</span>';}
       else {
-        // priebežné info
         if(sumFJ>0){
-          const _bg=splnaMin?'cell-info-green':'cell-info';
-          cls=_bg;
-          content=prispevok.toFixed(0)+' €<br><span style="font-size:9px">'+sumFJ.toFixed(0)+'/'+p.minFJ+' FJ</span>';
+          content='<span class="cell-sum">'+Math.round(prispevok)+' €</span><span class="cell-meta">'+sumFJ.toFixed(0)+'/'+p.minFJ+' FJ</span>';
         }else{
-          content='–';
+          content='<span style="color:var(--gray3)">–</span>';
         }
       }
       const safeName=p.name.replace(/'/g,"\\'");
@@ -1437,7 +1461,7 @@ function renderPrispevkyFixPreddavky(year){
       html+='<th style="min-width:62px">'+mesNames[m]+'</th>';
       if(m%3===2){
         const q=Math.floor(m/3)+1;
-        html+='<th style="min-width:90px;background:#fff3e0">Q'+q+' vyrov.</th>';
+        html+='<th style="min-width:90px;background:#e3f2fd;color:#1565c0">Q'+q+' vyrov.</th>';
       }
     }
     html+='</tr></thead><tbody><tr>';
@@ -1445,9 +1469,10 @@ function renderPrispevkyFixPreddavky(year){
       const key=grp.id+'_pre_'+year+'_'+String(m+1).padStart(2,'0');
       const data=getPrispevok(key);
       let cls='cell-empty';
-      let content=grp.preddavokMes+' €';
-      if(data&&data.status==='uhradene'){cls='cell-green';content='✓ '+(data.date?formatShortDate(data.date):'');}
-      else if(data&&data.status==='neuhradene'){cls='cell-red';content='✗';}
+      const sumaUlozena=(data&&data.sumaEur!==undefined)?data.sumaEur:grp.preddavokMes;
+      let content=sumaUlozena+' €';
+      if(data&&data.status==='uhradene'){cls='cell-green';content='<span class="cell-sum">'+sumaUlozena+' €</span><span class="cell-meta">✓ '+(data.date?formatShortDate(data.date):'')+'</span>';}
+      else if(data&&data.status==='neuhradene'){cls='cell-red';content='<span class="cell-sum">'+sumaUlozena+' €</span><span class="cell-meta">✗ '+(data.date?formatShortDate(data.date):'')+'</span>';}
       html+='<td class="prispevok-cell '+cls+'" onclick="openPrispevokModal(\'preddavok\',\''+key+'\',\''+grp.label.replace(/'/g,"\\'")+'\',\''+mesNames[m]+' '+year+'\','+grp.preddavokMes+')">'+content+'</td>';
       if(m%3===2){
         const q=Math.floor(m/3)+1;
@@ -1465,15 +1490,14 @@ function renderPrispevkyFixPreddavky(year){
         const vyrov=narok-zaplatene;
         const vyKey=grp.id+'_vyr_'+year+'_Q'+q;
         const vyData=getPrispevok(vyKey);
-        let vyCls='cell-info';
-        const splnaMin=sumFJ>=grp.minFJ;
-        if(splnaMin&&!vyData)vyCls='cell-info-green';
-        if(vyData&&vyData.status==='uhradene')vyCls='cell-green';
-        else if(vyData&&vyData.status==='neuhradene')vyCls='cell-red';
+        const vyrovUlozena=(vyData&&vyData.sumaEur!==undefined)?vyData.sumaEur:vyrov;
+        let vyCls='cell-q-blue';
+        if(vyData&&vyData.status==='uhradene')vyCls='cell-q-blue cell-green';
+        else if(vyData&&vyData.status==='neuhradene')vyCls='cell-q-blue cell-red';
         let vyContent='';
-        if(vyData&&vyData.status==='uhradene')vyContent='✓ '+vyrov.toFixed(0)+'€<br><span style="font-size:9px">'+(vyData.date?formatShortDate(vyData.date):'')+'</span>';
-        else if(vyData&&vyData.status==='neuhradene')vyContent='✗ '+vyrov.toFixed(0)+'€';
-        else vyContent=(vyrov>=0?'+':'')+vyrov.toFixed(0)+'€<br><span style="font-size:9px">'+sumFJ.toFixed(0)+'/'+grp.minFJ+' FJ</span>';
+        if(vyData&&vyData.status==='uhradene')vyContent='<span class="cell-sum">'+(vyrovUlozena>=0?'+':'')+Math.round(vyrovUlozena)+'€</span><span class="cell-meta">✓ '+(vyData.date?formatShortDate(vyData.date):'')+'</span>';
+        else if(vyData&&vyData.status==='neuhradene')vyContent='<span class="cell-sum">'+(vyrovUlozena>=0?'+':'')+Math.round(vyrovUlozena)+'€</span><span class="cell-meta">✗ '+(vyData.date?formatShortDate(vyData.date):'')+'</span>';
+        else vyContent='<span class="cell-sum">'+(vyrov>=0?'+':'')+Math.round(vyrov)+'€</span><span class="cell-meta">'+sumFJ.toFixed(0)+'/'+grp.minFJ+' FJ</span>';
         html+='<td class="prispevok-cell '+vyCls+'" onclick="openPrispevokModal(\'vyrovnanie\',\''+vyKey+'\',\''+grp.label.replace(/'/g,"\\'")+'\',\'Q'+q+' vyrovnanie '+year+'\','+vyrov.toFixed(2)+')">'+vyContent+'</td>';
       }
     }
@@ -1499,7 +1523,7 @@ function renderPrispevkyTN(year){
       html+='<th style="min-width:62px">'+mesNames[m]+'</th>';
       if(m%3===2){
         const q=Math.floor(m/3)+1;
-        html+='<th style="min-width:90px;background:#fff3e0">Q'+q+' vyrov.</th>';
+        html+='<th style="min-width:90px;background:#e3f2fd;color:#1565c0">Q'+q+' vyrov.</th>';
       }
     }
     html+='</tr></thead><tbody><tr>';
@@ -1510,9 +1534,10 @@ function renderPrispevkyTN(year){
       const key='tn_p'+i+'_pre_'+year+'_'+String(m+1).padStart(2,'0');
       const data=getPrispevok(key);
       let cls='cell-empty';
-      let content=preddavokMes+' €';
-      if(data&&data.status==='uhradene'){cls='cell-green';content='✓ '+(data.date?formatShortDate(data.date):'');}
-      else if(data&&data.status==='neuhradene'){cls='cell-red';content='✗';}
+      const sumaUlozena=(data&&data.sumaEur!==undefined)?data.sumaEur:preddavokMes;
+      let content=sumaUlozena+' €';
+      if(data&&data.status==='uhradene'){cls='cell-green';content='<span class="cell-sum">'+sumaUlozena+' €</span><span class="cell-meta">✓ '+(data.date?formatShortDate(data.date):'')+'</span>';}
+      else if(data&&data.status==='neuhradene'){cls='cell-red';content='<span class="cell-sum">'+sumaUlozena+' €</span><span class="cell-meta">✗ '+(data.date?formatShortDate(data.date):'')+'</span>';}
       html+='<td class="prispevok-cell '+cls+'" onclick="openPrispevokModal(\'preddavok\',\''+key+'\',\'TN: '+podiel.label.replace(/'/g,"\\'")+'\',\''+mesNames[m]+' '+year+'\','+preddavokMes+')">'+content+'</td>';
       if(m%3===2){
         // Spočítaj celkové FJ tímu za Q
@@ -1538,14 +1563,14 @@ function renderPrispevkyTN(year){
         }
         const vyKey='tn_p'+i+'_vyr_'+year+'_Q'+q;
         const vyData=getPrispevok(vyKey);
-        let vyCls='cell-info';
-        if(splnaMin&&!vyData)vyCls='cell-info-green';
-        if(vyData&&vyData.status==='uhradene')vyCls='cell-green';
-        else if(vyData&&vyData.status==='neuhradene')vyCls='cell-red';
+        const vyrovUlozena=(vyData&&vyData.sumaEur!==undefined)?vyData.sumaEur:vyrov;
+        let vyCls='cell-q-blue';
+        if(vyData&&vyData.status==='uhradene')vyCls='cell-q-blue cell-green';
+        else if(vyData&&vyData.status==='neuhradene')vyCls='cell-q-blue cell-red';
         let vyContent='';
-        if(vyData&&vyData.status==='uhradene')vyContent='✓ '+vyrov.toFixed(0)+'€<br><span style="font-size:9px">'+(vyData.date?formatShortDate(vyData.date):'')+'</span>';
-        else if(vyData&&vyData.status==='neuhradene')vyContent='✗ '+vyrov.toFixed(0)+'€';
-        else vyContent=(vyrov>=0?'+':'')+vyrov.toFixed(0)+'€'+(ovr?'<br><span style="font-size:9px">manuálne</span>':'<br><span style="font-size:9px">'+sumFJ.toFixed(0)+'/'+tn.minFJ+' FJ</span>');
+        if(vyData&&vyData.status==='uhradene')vyContent='<span class="cell-sum">'+(vyrovUlozena>=0?'+':'')+Math.round(vyrovUlozena)+'€</span><span class="cell-meta">✓ '+(vyData.date?formatShortDate(vyData.date):'')+'</span>';
+        else if(vyData&&vyData.status==='neuhradene')vyContent='<span class="cell-sum">'+(vyrovUlozena>=0?'+':'')+Math.round(vyrovUlozena)+'€</span><span class="cell-meta">✗ '+(vyData.date?formatShortDate(vyData.date):'')+'</span>';
+        else vyContent='<span class="cell-sum">'+(vyrov>=0?'+':'')+Math.round(vyrov)+'€</span><span class="cell-meta">'+(ovr?'manuálne':sumFJ.toFixed(0)+'/'+tn.minFJ+' FJ')+'</span>';
         html+='<td class="prispevok-cell '+vyCls+'" onclick="openPrispevokModal(\'vyrovnanie\',\''+vyKey+'\',\'TN: '+podiel.label.replace(/'/g,"\\'")+'\',\'Q'+q+' vyrovnanie '+year+'\','+vyrov.toFixed(2)+')">'+vyContent+'</td>';
       }
     }
@@ -1560,9 +1585,11 @@ function openPrispevokModal(type,key,name,obdobie,sumaEur){
   if(currentUserRole!=='admin'){showToast('Iba admin môže meniť platby.','error');return;}
   const data=getPrispevok(key)||{};
   window._prispevokKey=key;
+  window._prispevokSumaEur=sumaEur; // dynamicky vypočítaná suma v momente otvorenia
   document.getElementById('prispevok-modal-title').textContent='Platba: '+name;
   document.getElementById('prispevok-modal-period').textContent=obdobie+' · suma '+sumaEur+' €';
-  const stat=data.status||'';
+  // Defaultný status = uhradene (väčšina ľudí platí)
+  const stat=data.status||'uhradene';
   document.getElementById('prispevok-status').value=stat;
   document.getElementById('prispevok-date').value=data.date||firstOfMonth();
   document.getElementById('modal-prispevok').classList.add('open');
@@ -1573,7 +1600,10 @@ function savePrispevok(){
   const status=document.getElementById('prispevok-status').value;
   const date=document.getElementById('prispevok-date').value;
   if(!status){deletePrispevok();return;}
-  setPrispevok(key,{status,date:date||null});
+  // Ulož aj sumu (historicky), prevezmi existujúcu ak je
+  const existing=prispevkyData[key]||{};
+  const sumaEur=existing.sumaEur!==undefined?existing.sumaEur:(window._prispevokSumaEur||0);
+  setPrispevok(key,{status,date:date||null,sumaEur:Math.round(sumaEur*100)/100});
   closeModal('modal-prispevok');
   renderPrispevky();
   showToast('Platba uložená.','success');
