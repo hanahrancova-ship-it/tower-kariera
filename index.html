@@ -4,7 +4,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tower Finance – Kariérny systém</title>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.47.0/tabler-icons.min.css">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -50,17 +49,17 @@ body.tf-readonly .tf-admin-only{display:none !important;}
 .page-header{margin-bottom:22px}
 .page-header h2{font-size:22px;font-weight:600;color:var(--black);letter-spacing:-0.3px}
 .page-header p{font-size:12px;color:var(--gray3);margin-top:4px}
-.card{background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);border:1px solid var(--gray2)}
-.card-title{font-family:var(--font-head);font-weight:700;font-size:14px;margin-bottom:14px;color:var(--black)}
+.card{background:var(--white);border-radius:10px;padding:18px 20px;box-shadow:none;border:1px solid var(--gray2)}
+.card-title{font-family:var(--font-mono);font-weight:600;font-size:14px;margin-bottom:14px;color:var(--black);letter-spacing:-0.2px}
 .upload-zone{border:2px dashed var(--gray2);border-radius:var(--radius);padding:36px;text-align:center;cursor:pointer;transition:all .2s;background:var(--gray)}
 .upload-zone:hover,.upload-zone.dragover{border-color:var(--green);background:var(--green-pale)}
 .upload-zone input{display:none}
 .upload-zone .icon{font-size:32px;margin-bottom:10px}
 .upload-zone p{font-size:13px;color:var(--gray3)}
 .upload-zone strong{color:var(--black);font-size:14px;display:block;margin-bottom:6px}
-.btn{font-family:var(--font-head);font-weight:700;font-size:13px;padding:9px 18px;border-radius:6px;border:none;cursor:pointer;transition:all .15s}
-.btn-primary{background:var(--green);color:var(--white)}.btn-primary:hover{background:var(--green-dark)}
-.btn-secondary{background:var(--gray2);color:var(--black)}.btn-secondary:hover{background:#ddd}
+.btn{font-family:var(--font-mono);font-weight:600;font-size:12px;padding:8px 14px;border-radius:6px;border:1px solid transparent;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--green-dark);color:#fff;border-color:var(--green-dark)}.btn-primary:hover{background:#0a2412}
+.btn-secondary{background:#fff;color:var(--green-dark);border-color:var(--gray2)}.btn-secondary:hover{border-color:var(--gray3);background:var(--gray)}
 .btn-danger{background:var(--red);color:var(--white)}
 .btn-sm{padding:5px 12px;font-size:11px}
 .badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:12px;font-size:10px;font-family:var(--font-mono);font-weight:600;white-space:nowrap}
@@ -110,12 +109,13 @@ tr.danger-row td{background:#fff5f5}
 .search-bar input{flex:1;padding:8px 12px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:13px}
 .search-bar select{padding:8px 12px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:12px}
 .empty{text-align:center;padding:40px;color:var(--gray3);font-size:13px}
-.prispevky-table{width:100%;border-collapse:collapse;font-size:11px;font-family:var(--font-mono);background:#fff;border-radius:8px;overflow:hidden}
-.prispevky-table th{background:var(--gray);padding:10px 8px;text-align:center;font-weight:700;font-size:10px;color:var(--gray3);text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid var(--gray2)}
-.prispevky-table td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--gray);vertical-align:middle}
+.prispevky-table{width:100%;border-collapse:collapse;font-size:12px;font-family:var(--font-mono);background:#fff;border-radius:10px;overflow:hidden}
+.prispevky-table thead tr{background:#FAFAFA;border-bottom:1px solid var(--gray2)}
+.prispevky-table th{padding:11px 12px;text-align:center;font-weight:600;font-size:10px;color:var(--gray3);text-transform:uppercase;letter-spacing:0.5px}
+.prispevky-table td{padding:10px 8px;text-align:center;border-bottom:1px solid #F4F4F4;vertical-align:middle}
 .prispevky-table tbody tr:hover{background:#fafbfa}
 .prispevky-table tbody tr:last-child td{border-bottom:none}
-.cell-person{text-align:left !important;font-weight:700 !important;color:var(--black);background:linear-gradient(90deg,#f4f9f4 0%,#fff 100%);padding-left:14px !important;border-left:3px solid var(--green) !important}
+.cell-person{text-align:left !important;font-weight:600 !important;color:var(--black);padding-left:14px !important;background:#fff !important;border-left:none !important}
 .prispevok-cell{cursor:pointer;transition:transform 0.1s;line-height:1.3}
 .prispevok-cell:hover{transform:scale(1.04);box-shadow:0 2px 6px rgba(0,0,0,0.12)}
 .cell-empty{background:#fff;color:var(--gray3)}
@@ -377,10 +377,10 @@ i[class^="ti-"],i[class*=" ti-"]{font-style:normal;display:inline-flex;align-ite
     <div class="metric-card metric-info"><div class="metric-label">Môžu byť povýšení</div><div class="metric-value" id="stat-promo">0</div></div>
   </div>
   <div class="action-bar">
-    <button class="btn-new btn-new-primary" onclick="runEvaluation()"><i class="ti ti-player-play"></i> Spustiť vyhodnotenie</button>
-    <button class="btn-new btn-new-secondary" onclick="exportReport()"><i class="ti ti-download"></i> Exportovať CSV</button>
+    <button class="btn-new btn-new-primary" onclick="runEvaluation()">▶ Spustiť vyhodnotenie</button>
+    <button class="btn-new btn-new-secondary" onclick="exportReport()">⬇ Exportovať CSV</button>
     <div class="search-wrap">
-      <i class="ti ti-search"></i>
+      🔍
       <input type="text" id="eval-search" placeholder="Hľadať..." oninput="renderEvaluation()">
       <select id="eval-filter-pos" onchange="renderEvaluation()" style="padding:7px 10px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:12px;background:#fff">
         <option value="">Všetky pozície</option>
@@ -401,7 +401,7 @@ i[class^="ti-"],i[class*=" ti-"]{font-style:normal;display:inline-flex;align-ite
       </select>
     </div>
   </div>
-  <div id="eval-alerts" style="margin-bottom:14px"><div class="status-banner status-banner-success" style="background:var(--blue-pale);color:#0d4b8c"><i class="ti ti-calendar"></i><span>Plávajúci kvartál: <strong>Február 2026 – Apríl 2026</strong> · FJ = súčet za 3 mesiace</span></div><div class="tf-admin-only status-banner status-banner-warn"><i class="ti ti-alert-triangle"></i><span><strong>Trainee → C: manuálna kontrola BRUTTO FJ</strong> (Denisa Véghová, JUDr. Zuzana Hujsiová)</span></div></div>
+  <div id="eval-alerts" style="margin-bottom:14px"><div class="status-banner status-banner-success" style="background:var(--blue-pale);color:#0d4b8c">📅<span>Plávajúci kvartál: <strong>Február 2026 – Apríl 2026</strong> · FJ = súčet za 3 mesiace</span></div><div class="tf-admin-only status-banner status-banner-warn">⚠<span><strong>Trainee → C: manuálna kontrola BRUTTO FJ</strong> (Denisa Véghová, JUDr. Zuzana Hujsiová)</span></div></div>
   <div id="eval-main-table"></div>
 </div>
 <div class="page" id="page-napomenutia">
@@ -650,6 +650,18 @@ function getAvatarClass(rowStatus){
   if(rowStatus==='ok')return 'av-success';
   return '';
 }
+function toggleActionMenu(btn){
+  // Zatvor všetky ostatné
+  document.querySelectorAll('.action-menu.open').forEach(m=>{if(m!==btn.nextElementSibling)m.classList.remove('open');});
+  const menu=btn.nextElementSibling;
+  if(menu&&menu.classList.contains('action-menu'))menu.classList.toggle('open');
+}
+// Zavri menu pri kliku mimo
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.action-menu-wrap')){
+    document.querySelectorAll('.action-menu.open').forEach(m=>m.classList.remove('open'));
+  }
+});
 function getActiveWarning(name){return warnings.find(w=>w.person===name&&w.status==='active')}
 function monthsSince(d){const dt=new Date(d),now=new Date();return(now.getFullYear()-dt.getFullYear())*12+(now.getMonth()-dt.getMonth())}
 function firstOfMonth(){const d=new Date();d.setDate(1);const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0');return y+'-'+m+'-01';}
@@ -828,7 +840,7 @@ function showPage(id,el){
   if(id==='vyhodnotenie')renderEvaluation();
   if(id==='import')renderImportSelector();
   if(id==='platby')renderPrispevky();
-  }
+}
 function switchPlatbyTab(name,el){
   document.querySelectorAll('#platby-tabs .tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
@@ -1114,20 +1126,34 @@ function renderEvaluation(){
     const _path=_sCesta==="obchodna"?_oPath:_mPath;
     const _ci=_path.indexOf(p.pos);
     const splnaStatutCell=s.ok?p.pos:(_ci>=0&&_ci<_path.length-1?_path[_ci+1]:"");
-    let actionCell='';
-    if(!s.ok&&!aw)actionCell=`<button class="btn btn-sm btn-danger" onclick="quickWarn('${p.name.replace(/'/g,"\\'")}','${s.type||'fj'}')">Napomenúť</button>`;
-    else if(!aw)actionCell=`<button class="btn btn-sm btn-secondary" onclick="quickWarn('${p.name.replace(/'/g,"\\'")}','fj')">Napomenúť</button>`;
-    else if(aw)actionCell=`<button class="btn btn-sm btn-secondary" onclick="editWarning('${aw.id}')">Upraviť nap.</button> <button class="btn btn-sm btn-secondary" onclick="openResolveModal('${p.name.replace(/'/g,"\\'")}')">Zrušiť nap.</button>`;
+    // 3-bodky menu (action menu)
+    const _safeNm=p.name.replace(/'/g,"\\'");
+    let menuItems='';
+    // Napomenutie / Zrušenie napomenutia
+    if(aw){
+      menuItems+=`<button class="action-menu-item" onclick="editWarning('${aw.id}')">✎ Upraviť napomenutie</button>`;
+      menuItems+=`<button class="action-menu-item menu-danger" onclick="openResolveModal('${_safeNm}')">✕ Zrušiť napomenutie</button>`;
+    }else{
+      menuItems+=`<button class="action-menu-item ${!s.ok?'menu-danger':''}" onclick="quickWarn('${_safeNm}','${s.type||'fj'}')">⚠ Napomenúť</button>`;
+    }
+    menuItems+=`<button class="action-menu-item" onclick="openPoziciaModal('${_safeNm}','${p.pos}','povysenie')">↑ Povýšiť</button>`;
+    menuItems+=`<button class="action-menu-item" onclick="openPoziciaModal('${_safeNm}','${p.pos}','znizenie')">↓ Znížiť</button>`;
+    // BRUTTO len pri TR
+    if(p.pos==='TR'){
+      menuItems+=`<button class="action-menu-item" onclick="openBrutoModal('${_safeNm}','${p.pos}')">📊 Manuálna kontrola BRUTTO</button>`;
+    }
+    let actionCell=`<div class="action-menu-wrap"><button class="action-menu-btn" onclick="toggleActionMenu(this)" title="Akcie">⋮</button><div class="action-menu">${menuItems}</div></div>`;
+    // BRUTTO badge ak existuje
+    if(p.pos==='TR'){
+      const _br=brutoResults[p.name]||null;
+      if(_br)actionCell=`<span class="badge badge-${_br.cls}" style="font-size:9px;margin-right:4px">${_br.label}</span>`+actionCell;
+    }
     // Riziko PB — len ČERVENÝ (akútny, napomenutí podriadení)
-    const _safeName=p.name.replace(/'/g,"\\'");
     const _pbAcute=getPbRiskAcute(p.name);
     if(_pbAcute.length&&!aw&&!isPbAlertDismissed(p.name,'acute')){
       const _names=_pbAcute.map(r=>r.name).join(', ');
-      actionCell+=`<div class="tf-admin-only" style="margin-top:6px;padding:6px 24px 6px 8px;background:var(--red-pale);border:1px solid var(--red);border-radius:6px;font-size:10px;color:var(--red);line-height:1.3;position:relative"><span onclick="dismissPbAlert('${_safeName}','acute')" style="position:absolute;top:3px;right:5px;cursor:pointer;font-weight:700;font-size:12px;color:var(--red);padding:0 3px" title="Zatvoriť">&#x2715;</span><strong>⚠ Napomenúť za PB</strong><br>Podriadení s aktívnym napomenutím: ${_names}. Pri ich páde nesplní PB.</div>`;
+      actionCell=`<div class="tf-admin-only" style="margin-bottom:6px;padding:6px 24px 6px 8px;background:#FCEBEB;border:1px solid #F7C1C1;border-radius:6px;font-size:10px;color:#A32D2D;line-height:1.3;position:relative;text-align:left"><span onclick="dismissPbAlert('${_safeNm}','acute')" style="position:absolute;top:3px;right:5px;cursor:pointer;font-weight:700;font-size:12px;color:#A32D2D;padding:0 3px" title="Zatvoriť">&#x2715;</span><strong>⚠ Napomenúť za PB</strong><br>Podr. s nap.: ${_names}</div>`+actionCell;
     }
-    // BRUTTO len pri TR (nikdy pri C ani inde)
-    if(p.pos==='TR'){const _br=brutoResults[p.name]||null;const _brBadge=_br?'<br><span class="badge badge-'+_br.cls+'">'+_br.label+'</span>':'';const _safe=p.name.replace(/'/g,"\\'");actionCell+=_brBadge+'<br><button class="btn btn-sm btn-secondary" onclick="openBrutoModal(\''+_safe+'\',\''+p.pos+'\')">Manuálna kontrola BRUTTO</button>';}
-    const _safePoz=p.name.replace(/'/g,"\\'");actionCell+='<br><button class="btn btn-sm btn-secondary" onclick="openPoziciaModal(\''+_safePoz+'\',\''+p.pos+'\',\'povysenie\')">Povýšiť</button> <button class="btn btn-sm btn-secondary" onclick="openPoziciaModal(\''+_safePoz+'\',\''+p.pos+'\',\'znizenie\')">Znížiť</button>';
     const rowCls=(!s.ok&&aw&&ms>=3?'eval-row-fail':!s.ok&&aw?'eval-row-warn':!s.ok?'eval-row-fail':(pr.canPromote===true||(pr.multiPath&&pr.paths?.length))?'eval-row-promo':'eval-row-ok')+(_posChanged?' pos-divider':'');
     const useGroupFJ=['EM','SM','MD','SD','P'].includes(p.pos);
     if(_posChanged)html+=`<tr class="pos-divider"><td colspan="12" style="padding:0;border:0;height:8px;background:var(--gray)"></td></tr>`;
@@ -2072,403 +2098,3 @@ function openServisAddPerson(typ){
 }
 function confirmServisAddPerson(){
   const typ=window._servisAddTyp;
-  const name=document.getElementById('servis-add-person-sel').value;
-  if(!name){alert('Vyberte osobu.');return;}
-  const cur=servisCurrentH[typ];
-  const section=(typ==='ba')?getServisBaSection(cur.year,cur.h):getServisTnSection(cur.year,cur.h);
-  if(!section.people.includes(name))section.people.push(name);
-  if(typ==='ba')saveServisBaSection(cur.year,cur.h,section);
-  else saveServisTnSection(cur.year,cur.h,section);
-  closeModal('modal-servis-add');
-  renderServis();
-}
-function removeServisPerson(typ,name){
-  if(currentUserRole!=='admin')return;
-  if(!confirm('Odstrániť '+name+' z polroka?'))return;
-  const cur=servisCurrentH[typ];
-  const section=(typ==='ba')?getServisBaSection(cur.year,cur.h):getServisTnSection(cur.year,cur.h);
-  section.people=section.people.filter(n=>n!==name);
-  if(section.poznamky)delete section.poznamky[name];
-  if(typ==='ba')saveServisBaSection(cur.year,cur.h,section);
-  else saveServisTnSection(cur.year,cur.h,section);
-  renderServis();
-}
-function saveServisPoznamka(typ,name,text){
-  const cur=servisCurrentH[typ];
-  const section=(typ==='ba')?getServisBaSection(cur.year,cur.h):getServisTnSection(cur.year,cur.h);
-  if(!section.poznamky)section.poznamky={};
-  if(text.trim())section.poznamky[name]=text.trim();
-  else delete section.poznamky[name];
-  if(typ==='ba')saveServisBaSection(cur.year,cur.h,section);
-  else saveServisTnSection(cur.year,cur.h,section);
-}
-
-// ===================== CRM =====================
-
-// Helpery
-function getCrm(){return crmData||{reports:{},fines:{}};}
-function ensureCrm(){if(!crmData)crmData={reports:{},fines:{}};if(!crmData.reports)crmData.reports={};if(!crmData.fines)crmData.fines={};}
-function saveCrm(){tfSave('tf_crm',crmData);}
-
-// ISO dátum dnes
-function todayISO(){return new Date().toISOString().slice(0,10);}
-
-// Vráti dátum najbližšieho pondelka (alebo dnešný ak je pondelok)
-function lastMonday(){
-  const d=new Date();
-  const day=d.getDay(); // 0=ne, 1=po, ..., 6=so
-  // koľko dní späť ku poslednému pondelku
-  const back=day===0?6:day-1;
-  d.setDate(d.getDate()-back);
-  d.setHours(0,0,0,0);
-  return d.toISOString().slice(0,10);
-}
-
-// Vráti všetky pondelky ktoré sú v rozsahu od prvého reportu po dnes
-function expectedMondays(){
-  ensureCrm();
-  const reports=Object.keys(crmData.reports).sort();
-  if(!reports.length)return [];
-  const first=new Date(reports[0]);
-  const today=new Date();
-  const result=[];
-  let d=new Date(first);
-  // Posun na pondelok ak nie je
-  while(d.getDay()!==1)d.setDate(d.getDate()+1);
-  while(d<=today){
-    if(d.getDay()===1)result.push(d.toISOString().slice(0,10));
-    d.setDate(d.getDate()+7);
-  }
-  return result;
-}
-
-// Detekuj chýbajúce pondelky
-function missingMondays(){
-  ensureCrm();
-  const expected=expectedMondays();
-  return expected.filter(m=>!crmData.reports[m]);
-}
-
-// CSV parser - vráti zoznam unikátnych mien s počtom záznamov
-function parseCrmCsv(text){
-  const lines=text.split(/\r?\n/).filter(l=>l.trim());
-  if(lines.length<2)return {agentCounts:{},totalRows:0};
-  // Detekuj oddeľovač (; alebo ,)
-  const header=lines[0];
-  const sep=header.includes(';')?';':',';
-  const cols=header.split(sep).map(c=>c.trim().toLowerCase());
-  // Hľadaj stĺpec "agent name"
-  let agentIdx=cols.findIndex(c=>c.includes('agent')&&c.includes('name'));
-  if(agentIdx===-1)agentIdx=1; // fallback - 2. stĺpec
-  const counts={};
-  for(let i=1;i<lines.length;i++){
-    const parts=lines[i].split(sep).map(c=>c.trim());
-    const name=parts[agentIdx];
-    if(!name)continue;
-    counts[name]=(counts[name]||0)+1;
-  }
-  return {agentCounts:counts,totalRows:lines.length-1};
-}
-
-// Spracuj nahraný report
-function processCrmReport(reportDate,csvText,emptyReport){
-  ensureCrm();
-  let offenders=[];
-  let agentCounts={};
-  if(!emptyReport&&csvText){
-    const parsed=parseCrmCsv(csvText);
-    agentCounts=parsed.agentCounts;
-    // Pokuta dostáva ten kto má 2+ záznamy
-    offenders=Object.keys(agentCounts).filter(name=>agentCounts[name]>=2);
-  }
-  // Ulož report
-  crmData.reports[reportDate]={
-    date:reportDate,
-    uploadedAt:new Date().toISOString(),
-    emptyReport:!!emptyReport,
-    offenders,
-    agentCounts
-  };
-  // Pre každého offendera vytvor pokutu (úroveň podľa histórie)
-  for(const name of offenders){
-    const level=getNextFineLevel(name);
-    const amount=crmFineAmountForLevel(level);
-    const fineId='fine_'+reportDate+'_'+name.replace(/\s+/g,'_');
-    crmData.fines[fineId]={
-      id:fineId,
-      person:name,
-      date:reportDate,
-      amount,
-      level,
-      paid:amount===0, // napomenutie = automaticky "vybavené" (žiadna úhrada)
-      paidDate:null
-    };
-  }
-  saveCrm();
-}
-
-// Suma pokuty pre danú úroveň: 1=napomenutie 0€, 2=10€, 3=20€...
-function crmFineAmountForLevel(level){
-  if(level<=1)return 0;
-  return (level-1)*10;
-}
-
-// Vráti ďalšiu úroveň pokuty pre osobu (pokračuje tam kde skončila)
-function getNextFineLevel(name){
-  const fines=Object.values(crmData.fines||{}).filter(f=>f.person===name);
-  if(!fines.length)return 1; // napomenutie
-  // Najvyššia doteraz dosiahnutá úroveň + 1
-  const maxLevel=Math.max(...fines.map(f=>f.level));
-  return maxLevel+1;
-}
-
-// Vráti všetky pokuty osoby zoradené chronologicky
-function finesForPerson(name){
-  return Object.values(crmData.fines||{})
-    .filter(f=>f.person===name)
-    .sort((a,b)=>a.date.localeCompare(b.date));
-}
-
-// Vráti súčet nezaplatených pokút osoby (len skutočné peniaze, napomenutia 0€ neráta)
-function unpaidSum(name){
-  return finesForPerson(name)
-    .filter(f=>!f.paid&&f.amount>0)
-    .reduce((s,f)=>s+f.amount,0);
-}
-
-// Hlavný render CRM
-function renderCrm(){
-  ensureCrm();
-  const c=document.getElementById('crm-content');
-  if(!c)return;
-  let html='';
-  // Status banner
-  const reports=Object.keys(crmData.reports).sort();
-  const lastReport=reports[reports.length-1];
-  const missing=missingMondays();
-  if(missing.length>0){
-    html+='<div style="background:#fff3e0;border:1px solid var(--orange);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#7a4a00">⚠ <strong>Chýbajú reporty pre tieto pondelky:</strong> '+missing.map(m=>formatDate(m)).join(', ')+'</div>';
-  }
-  if(lastReport){
-    html+='<div style="background:#e8f5e9;border:1px solid #4caf50;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#1b5e20">✓ Posledný report nahraný: <strong>'+formatDate(lastReport)+'</strong> ('+(crmData.reports[lastReport].emptyReport?'prázdny - všetci OK':crmData.reports[lastReport].offenders.length+' ľudí s pokutou')+')</div>';
-  }else{
-    html+='<div style="background:#fff3e0;border:1px solid var(--orange);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#7a4a00">⚠ <strong>Ešte nie je nahraný žiadny report.</strong> Nahrajte prvý CSV report z CRM kontroly.</div>';
-  }
-  // Tlačidlo upload (admin only)
-  if(currentUserRole==='admin'){
-    html+='<div style="margin-bottom:18px;display:flex;gap:8px;flex-wrap:wrap">';
-    html+='<button class="btn btn-primary tf-admin-only" onclick="openCrmUpload()">📥 Nahrať CSV report</button>';
-    html+='<button class="btn btn-secondary tf-admin-only" onclick="openCrmEmptyReport()">✓ Označiť pondelok ako bez sankcií</button>';
-    html+='</div>';
-  }
-  // Súhrn — ľudia s nezaplatenými pokutami
-  const allPersons=new Set();
-  for(const f of Object.values(crmData.fines||{}))allPersons.add(f.person);
-  const persons=Array.from(allPersons).sort();
-  if(!persons.length){
-    html+='<div class="empty"><div class="big">📋</div>Zatiaľ žiadne CRM pokuty. Nahrajte prvý report.</div>';
-    c.innerHTML=html;
-    return;
-  }
-  html+='<div class="card"><div class="card-title">Prehľad sankcií CRM</div>';
-  html+='<div style="overflow-x:auto"><table class="prispevky-table"><thead><tr><th style="min-width:180px;text-align:left">Osoba</th><th style="min-width:120px;text-align:right">Na úhradu</th><th style="text-align:left">Aktuálny stav</th><th style="text-align:left">História pokút</th></tr></thead><tbody>';
-  for(const name of persons){
-    const fines=finesForPerson(name);
-    const unpaid=fines.filter(f=>!f.paid&&f.amount>0);
-    const unpaidTotal=unpaid.reduce((s,f)=>s+f.amount,0);
-    const lastFine=fines[fines.length-1];
-    // Status badge — posledná pokuta
-    let statusBadge='';
-    if(lastFine){
-      if(lastFine.level===1)statusBadge='<span style="background:#ffebee;color:#c62828;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700">Napomenutie</span>';
-      else statusBadge='<span style="background:#fff3e0;color:#e65100;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700">Sankcia '+lastFine.amount+'€</span>';
-      statusBadge+=' <span style="font-size:10px;color:var(--gray3);margin-left:6px">'+formatDate(lastFine.date)+'</span>';
-    }
-    html+='<tr><td class="cell-person">'+name+'</td>';
-    // Na úhradu — klikateľné ak admin
-    let unpaidCell='';
-    if(unpaidTotal>0){
-      const onclick=currentUserRole==='admin'?'onclick="openCrmFinesModal(\''+name.replace(/'/g,"\\'")+'\')" style="cursor:pointer"':'';
-      unpaidCell='<td style="text-align:right;background:#ffebee;color:#c62828;font-weight:700" '+onclick+'>'+unpaidTotal+' €</td>';
-    }else{
-      unpaidCell='<td style="text-align:right;color:var(--gray3)">0 €</td>';
-    }
-    html+=unpaidCell;
-    html+='<td style="text-align:left">'+statusBadge+'</td>';
-    // História — malé fajky/krížiky
-    let hist='';
-    for(const f of fines){
-      const label=f.level===1?'⚠':f.amount+'€';
-      const tooltip=formatDate(f.date)+(f.paid?' uhradené '+(f.paidDate?formatDate(f.paidDate):''):' NEUHRADENÉ');
-      const bg=f.paid?'#d4f4dd':'#ffd6d6';
-      const color=f.paid?'#0e6b27':'#a01010';
-      hist+='<span title="'+tooltip+'" style="display:inline-block;padding:2px 6px;background:'+bg+';color:'+color+';border-radius:4px;font-size:10px;margin-right:4px;font-weight:600">'+label+'</span>';
-    }
-    html+='<td style="text-align:left">'+hist+'</td>';
-    html+='</tr>';
-  }
-  html+='</tbody></table></div></div>';
-  c.innerHTML=html;
-}
-
-// Formátovanie dátumu DD.MM.YYYY
-function formatDate(iso){
-  if(!iso)return '';
-  const d=new Date(iso);
-  if(isNaN(d))return iso;
-  return d.getDate()+'.'+(d.getMonth()+1)+'.'+d.getFullYear();
-}
-
-// Modal: upload CSV
-function openCrmUpload(){
-  if(currentUserRole!=='admin')return;
-  document.getElementById('crm-upload-date').value=lastMonday();
-  document.getElementById('crm-upload-file').value='';
-  document.getElementById('crm-upload-preview').innerHTML='';
-  document.getElementById('modal-crm-upload').classList.add('open');
-}
-function onCrmFileSelected(input){
-  const file=input.files[0];
-  if(!file)return;
-  const reader=new FileReader();
-  reader.onload=function(e){
-    window._crmCsvText=e.target.result;
-    const parsed=parseCrmCsv(window._crmCsvText);
-    const offenders=Object.keys(parsed.agentCounts).filter(n=>parsed.agentCounts[n]>=2);
-    let html='<div style="font-size:12px;color:var(--gray3);margin-top:8px"><strong>Náhľad:</strong> '+parsed.totalRows+' záznamov, '+Object.keys(parsed.agentCounts).length+' unikátnych agentov.<br>';
-    if(offenders.length){
-      html+='<strong>'+offenders.length+' osôb dostane pokutu</strong> (majú 2+ záznamov):<ul style="margin:6px 0 0 16px">';
-      for(const n of offenders){
-        const nextLevel=getNextFineLevel(n);
-        const amount=crmFineAmountForLevel(nextLevel);
-        html+='<li>'+n+' → '+(amount===0?'<strong>napomenutie</strong>':'<strong>sankcia '+amount+'€</strong>')+' ('+parsed.agentCounts[n]+' záznamov)</li>';
-      }
-      html+='</ul>';
-    }else{
-      html+='Žiadne osoby s 2+ záznamami — nikto nedostane pokutu.';
-    }
-    html+='</div>';
-    document.getElementById('crm-upload-preview').innerHTML=html;
-  };
-  reader.readAsText(file,'utf-8');
-}
-function confirmCrmUpload(){
-  const date=document.getElementById('crm-upload-date').value;
-  if(!date){alert('Zadajte dátum reportu.');return;}
-  if(!window._crmCsvText){alert('Vyberte CSV súbor.');return;}
-  if(crmData.reports[date]){
-    if(!confirm('Pre dátum '+formatDate(date)+' už existuje report. Prepísať?'))return;
-    // Vymaž staré pokuty z tohto dátumu
-    for(const fid of Object.keys(crmData.fines||{})){
-      if(crmData.fines[fid].date===date)delete crmData.fines[fid];
-    }
-  }
-  processCrmReport(date,window._crmCsvText,false);
-  closeModal('modal-crm-upload');
-  renderCrm();
-  showToast('Report nahraný.','success');
-}
-function openCrmEmptyReport(){
-  if(currentUserRole!=='admin')return;
-  const date=prompt('Pre ktorý pondelok označiť že nikto nemal sankciu? (YYYY-MM-DD)',lastMonday());
-  if(!date)return;
-  if(crmData.reports[date]){
-    if(!confirm('Pre dátum '+formatDate(date)+' už existuje report. Prepísať?'))return;
-    for(const fid of Object.keys(crmData.fines||{})){
-      if(crmData.fines[fid].date===date)delete crmData.fines[fid];
-    }
-  }
-  processCrmReport(date,'',true);
-  renderCrm();
-  showToast('Označené ako bez sankcií.','success');
-}
-
-// Modal: pokuty osoby (zobraziť, označiť ako zaplatené)
-function openCrmFinesModal(name){
-  if(currentUserRole!=='admin')return;
-  window._crmFinesPerson=name;
-  document.getElementById('crm-fines-title').textContent='Pokuty: '+name;
-  const fines=finesForPerson(name).filter(f=>f.amount>0);
-  let html='';
-  for(const f of fines){
-    const checked=f.paid?'checked':'';
-    html+='<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--gray2);border-radius:6px;margin-bottom:6px;cursor:pointer;'+(f.paid?'background:#e8f5e9':'background:#fff5f5')+'">';
-    html+='<input type="checkbox" data-fine-id="'+f.id+'" '+checked+' style="width:18px;height:18px">';
-    html+='<div style="flex:1"><strong>'+f.amount+' €</strong> · z '+formatDate(f.date)+'</div>';
-    if(f.paid&&f.paidDate)html+='<div style="font-size:11px;color:var(--gray3)">uhradené '+formatDate(f.paidDate)+'</div>';
-    html+='</label>';
-  }
-  document.getElementById('crm-fines-list').innerHTML=html||'<div style="color:var(--gray3);text-align:center;padding:20px">Žiadne pokuty s úhradou.</div>';
-  document.getElementById('modal-crm-fines').classList.add('open');
-}
-function saveCrmFines(){
-  const name=window._crmFinesPerson;
-  if(!name)return;
-  const checkboxes=document.querySelectorAll('#crm-fines-list input[type=checkbox]');
-  for(const cb of checkboxes){
-    const fid=cb.dataset.fineId;
-    const f=crmData.fines[fid];
-    if(!f)continue;
-    if(cb.checked&&!f.paid){
-      f.paid=true;
-      f.paidDate=todayISO();
-    }else if(!cb.checked&&f.paid){
-      f.paid=false;
-      f.paidDate=null;
-    }
-  }
-  saveCrm();
-  closeModal('modal-crm-fines');
-  renderCrm();
-  showToast('Stav úhrad uložený.','success');
-}
-
-async function tfInit(){
-  // Pridaj indikátor "Načítavam..."
-  const _t=document.getElementById('eval-main-table');
-  if(_t)_t.innerHTML='<div class="empty" style="padding:48px"><div class="big">⏳</div>Načítavam dáta zo servera...</div>';
-  const ok=await tfLoadAll();
-  if(!ok)return;
-  // Pridaj UI prvky podľa role
-  tfApplyRoleUI();
-  // Migrácia z localStorage pre admina (jednorázová)
-  await tfMigrateFromLocalStorage();
-  // Inicializuj appku
-  if(imports.length){
-    const sorted=[...imports].sort((a,b)=>b.key.localeCompare(a.key));
-    selectedImportKey=sorted[0].key;
-    people=sorted[0].people;
-    computeEvalPeople();
-  }
-  renderKarieraTable();
-  renderEvidencia();
-  renderImportSelector();
-  renderEvaluation();
-  renderDashboard();
-}
-
-// Aplikuje obmedzenia podľa role
-function tfApplyRoleUI(){
-  // Pridaj badge a logout do sidebaru
-  const sidebar=document.querySelector('.sidebar');
-  if(sidebar&&!document.getElementById('tf-user-panel')){
-    const panel=document.createElement('div');
-    panel.id='tf-user-panel';
-    panel.style.cssText='margin-top:auto;padding:16px;border-top:1px solid #1a4128;font-size:11px;color:#7aa388';
-    const roleLabel=currentUserRole==='admin'?'👤 ADMIN':'👁️ NÁHĽAD';
-    panel.innerHTML='<div style="margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;font-weight:700">'+roleLabel+'</div><button onclick="tfLogout()" style="width:100%;padding:8px 12px;background:transparent;border:1px solid #1a4128;color:#7aa388;border-radius:6px;font-family:var(--font-mono);font-size:11px;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;font-weight:600">Odhlásiť sa</button>';
-    sidebar.appendChild(panel);
-  }
-  // Skryjeme tlačidlá pre user
-  if(currentUserRole!=='admin'){
-    const css=document.createElement('style');
-    css.textContent='.tf-admin-only{display:none !important;}';
-    document.head.appendChild(css);
-    document.body.classList.add('tf-readonly');
-  }
-}
-
-tfInit();
-</script> 
-
-</body></html>
