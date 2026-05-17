@@ -3,6 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tower Finance – Kariérny systém</title>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.47.0/tabler-icons.min.css">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -45,9 +46,9 @@ body.tf-readonly span[onclick*="openCestaModal"],
 body.tf-readonly .nav-item[onclick*="import"]{display:none !important;}
 body.tf-readonly input[type="text"],body.tf-readonly input[type="file"]{pointer-events:none;background:#f5f5f5 !important;}
 body.tf-readonly .tf-admin-only{display:none !important;}
-.page-header{margin-bottom:28px}
-.page-header h2{font-size:26px;font-weight:800;color:var(--black)}
-.page-header p{font-size:13px;color:var(--gray3);margin-top:4px}
+.page-header{margin-bottom:22px}
+.page-header h2{font-size:22px;font-weight:600;color:var(--black);letter-spacing:-0.3px}
+.page-header p{font-size:12px;color:var(--gray3);margin-top:4px}
 .card{background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);border:1px solid var(--gray2)}
 .card-title{font-family:var(--font-head);font-weight:700;font-size:14px;margin-bottom:14px;color:var(--black)}
 .upload-zone{border:2px dashed var(--gray2);border-radius:var(--radius);padding:36px;text-align:center;cursor:pointer;transition:all .2s;background:var(--gray)}
@@ -61,12 +62,12 @@ body.tf-readonly .tf-admin-only{display:none !important;}
 .btn-secondary{background:var(--gray2);color:var(--black)}.btn-secondary:hover{background:#ddd}
 .btn-danger{background:var(--red);color:var(--white)}
 .btn-sm{padding:5px 12px;font-size:11px}
-.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-family:var(--font-head);font-weight:700}
-.badge-green{background:var(--green-pale);color:var(--green-dark)}
-.badge-red{background:var(--red-pale);color:var(--red)}
-.badge-orange{background:var(--orange-pale);color:var(--orange)}
-.badge-blue{background:var(--blue-pale);color:var(--blue)}
-.badge-gray{background:var(--gray2);color:var(--gray4)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:12px;font-size:10px;font-family:var(--font-mono);font-weight:600;white-space:nowrap}
+.badge-green{background:#EAF3DE;color:#173404}
+.badge-red{background:#FCEBEB;color:#501313}
+.badge-orange{background:#FAEEDA;color:#854F0B}
+.badge-blue{background:#E6F1FB;color:#042C53}
+.badge-gray{background:var(--gray);color:#5F5E5A}
 .table-wrap{overflow-x:auto;margin-top:8px}
 table{width:100%;border-collapse:collapse;font-size:12px}
 th{font-family:var(--font-head);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;padding:10px 12px;text-align:left;color:var(--gray3);background:var(--gray);border-bottom:2px solid var(--gray2)}
@@ -93,11 +94,8 @@ tr.danger-row td{background:#fff5f5}
 .toast{position:fixed;bottom:24px;right:24px;background:var(--black);color:var(--white);padding:12px 20px;border-radius:8px;font-size:13px;font-family:var(--font-head);font-weight:600;z-index:2000;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none}
 .toast.show{transform:translateY(0);opacity:1}
 .toast.success{background:var(--green-dark)}.toast.error{background:var(--red)}
-.pos{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-family:var(--font-head);font-weight:700}
-.pos-md,.pos-sd,.pos-p{background:#0E3318;color:#fff}.pos-sm{background:#3CD64E;color:#0E3318}
-.pos-em{background:#1565c0;color:#fff}.pos-tl{background:#6a1b9a;color:#fff}
-.pos-sc{background:#f57c00;color:#fff}.pos-c{background:#78909c;color:#fff}
-.pos-tr{background:#bdbdbd;color:#333}.pos-vip{background:#c62828;color:#fff}
+.pos{display:inline-block;padding:3px 8px;border-radius:4px;font-size:10px;font-family:var(--font-mono);font-weight:600;background:#E6F1FB;color:#042C53;text-transform:none;letter-spacing:0}
+.pos-md,.pos-sd,.pos-p,.pos-sm,.pos-em,.pos-tl,.pos-sc,.pos-c,.pos-tr,.pos-vip{background:#E6F1FB;color:#042C53}
 .warn-timeline{display:flex;flex-direction:column;gap:12px}
 .warn-item{background:var(--white);border-radius:8px;padding:14px 16px;border:1px solid var(--gray2);border-left:4px solid var(--orange)}
 .warn-item.active-warn{border-left-color:var(--red)}.warn-item.resolved{border-left-color:var(--green);opacity:0.7}
@@ -155,6 +153,150 @@ body.tf-readonly .prispevok-cell:hover{transform:none;box-shadow:none}
 .import-month-item.active{border-color:var(--green);background:var(--green-pale)}
 .import-month-item .month-name{font-family:var(--font-head);font-weight:700;font-size:13px}
 .import-month-item .month-count{font-size:11px;color:var(--gray3)}
+
+/* ============= NOVÝ DIZAJN SYSTÉM ============= */
+/* Page header */
+.page-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px;padding:0 4px;flex-wrap:wrap;gap:12px}
+.page-head h2{font-size:20px;font-weight:600;color:var(--black);margin:0}
+.page-head .page-sub{font-size:12px;color:var(--gray3);margin-top:4px}
+
+/* Period switcher (mesiac/polrok šípky) */
+.period-switch{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;font-family:var(--font-mono)}
+.period-switch button{padding:5px 10px;background:#fff;border:1px solid var(--gray2);border-radius:6px;cursor:pointer;color:var(--black);display:inline-flex;align-items:center;justify-content:center;transition:all .15s}
+.period-switch button:hover{background:var(--gray);border-color:var(--gray3)}
+.period-switch .label{min-width:110px;text-align:center;color:var(--black)}
+
+/* Metric karty */
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:18px}
+.metric-card{background:var(--gray);border-radius:10px;padding:14px 16px}
+.metric-card .metric-label{font-size:10px;color:var(--gray3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;font-weight:600}
+.metric-card .metric-value{font-size:22px;font-weight:600;color:var(--black);font-family:var(--font-mono)}
+.metric-card.metric-success{background:#EAF3DE}
+.metric-card.metric-success .metric-label,.metric-card.metric-success .metric-value{color:#173404}
+.metric-card.metric-danger{background:#FCEBEB}
+.metric-card.metric-danger .metric-label,.metric-card.metric-danger .metric-value{color:#501313}
+.metric-card.metric-info{background:#E6F1FB}
+.metric-card.metric-info .metric-label,.metric-card.metric-info .metric-value{color:#042C53}
+
+/* Action bar (pred tabuľkou) */
+.action-bar{display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
+.action-bar .search-wrap{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--gray3)}
+.action-bar .search-wrap input{padding:7px 12px;border:1px solid var(--gray2);border-radius:6px;font-size:12px;width:180px;font-family:var(--font-mono);background:#fff}
+.action-bar .search-wrap input:focus{outline:none;border-color:var(--green-dark);box-shadow:0 0 0 3px rgba(14,51,24,0.08)}
+
+/* Nové btn štýly */
+.btn-new{padding:8px 14px;font-size:12px;font-weight:600;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);border:1px solid transparent;transition:all .15s}
+.btn-new.btn-new-primary{background:var(--green-dark);color:#fff;border-color:var(--green-dark)}
+.btn-new.btn-new-primary:hover{background:#0a2412}
+.btn-new.btn-new-secondary{background:#fff;color:var(--green-dark);border-color:var(--gray2)}
+.btn-new.btn-new-secondary:hover{border-color:var(--gray3);background:var(--gray)}
+.btn-new.btn-new-danger{background:#FCEBEB;color:#A32D2D;border-color:#F7C1C1}
+.btn-new.btn-new-danger:hover{background:#F7C1C1}
+.btn-new.btn-new-dashed{background:#fff;color:var(--green-dark);border:1px dashed var(--green-dark)}
+.btn-new.btn-new-dashed:hover{background:var(--green-pale)}
+.btn-new i{font-size:14px}
+
+/* Nový dizajn tabuľky */
+.tbl-wrap{background:#fff;border:1px solid var(--gray2);border-radius:10px;overflow:hidden;margin-bottom:14px}
+.tbl-wrap-scroll{overflow-x:auto}
+.tbl-new{width:100%;border-collapse:collapse;font-size:12px;font-family:var(--font-mono);background:#fff}
+.tbl-new thead tr{background:#FAFAFA;border-bottom:1px solid var(--gray2)}
+.tbl-new th{padding:11px 12px;text-align:center;font-weight:600;font-size:10px;color:var(--gray3);text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap}
+.tbl-new th.th-left{text-align:left}
+.tbl-new tbody tr{border-bottom:1px solid #F4F4F4;transition:background .12s}
+.tbl-new tbody tr:hover{background:#fafbfa}
+.tbl-new tbody tr:last-child{border-bottom:none}
+.tbl-new tbody tr.row-success{background:#FBFEFA}
+.tbl-new tbody tr.row-warn{background:#FFFBFA}
+.tbl-new tbody tr.row-warn:hover,.tbl-new tbody tr.row-success:hover{background:#f8fcf6}
+.tbl-new td{padding:12px 12px;text-align:center;color:var(--gray4);vertical-align:middle}
+.tbl-new td.td-left{text-align:left}
+.tbl-new td.td-num{font-weight:600;color:var(--black);font-family:var(--font-mono)}
+.tbl-new td.td-num.td-warn{color:#A32D2D}
+.tbl-new td.td-num.td-success{color:#173404}
+
+/* Person s avatarom */
+.person-cell{display:flex;align-items:center;gap:10px;text-align:left}
+.avatar{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;font-family:var(--font-mono);flex-shrink:0}
+.avatar-default{background:var(--gray);color:var(--gray4)}
+.avatar-success{background:#EAF3DE;color:#173404}
+.avatar-warn{background:#FCEBEB;color:#501313}
+.avatar-info{background:#E6F1FB;color:#042C53}
+.person-name{font-weight:600;color:var(--black)}
+.person-sub{font-size:10px;color:var(--gray3);margin-top:1px}
+
+/* Badges (nové, oddelené od pôvodných .badge) */
+.badge-new{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;font-family:var(--font-mono);white-space:nowrap}
+.badge-new.badge-pill{border-radius:12px;padding:4px 10px}
+.badge-new.bg-pos{background:#E6F1FB;color:#042C53}
+.badge-new.bg-neutral{background:var(--gray);color:#5F5E5A}
+.badge-new.bg-success{background:#EAF3DE;color:#173404}
+.badge-new.bg-warn{background:#FAEEDA;color:#854F0B}
+.badge-new.bg-danger{background:#FCEBEB;color:#501313}
+.badge-new.bg-info{background:#E6F1FB;color:#042C53}
+
+/* Akcia menu (3 bodky) */
+.action-menu-wrap{position:relative;display:inline-block}
+.action-menu-btn{background:transparent;border:none;cursor:pointer;color:var(--gray3);padding:4px 6px;border-radius:4px;transition:all .12s}
+.action-menu-btn:hover{background:var(--gray);color:var(--black)}
+.action-menu-btn i{font-size:16px}
+.action-menu{position:absolute;right:0;top:100%;background:#fff;border:1px solid var(--gray2);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);min-width:170px;z-index:100;overflow:hidden;display:none}
+.action-menu.open{display:block}
+.action-menu-item{display:flex;align-items:center;gap:8px;padding:9px 14px;font-size:12px;color:var(--black);cursor:pointer;font-family:var(--font-mono);background:#fff;border:none;width:100%;text-align:left;transition:background .12s}
+.action-menu-item:hover{background:var(--gray)}
+.action-menu-item.menu-danger{color:#A32D2D}
+.action-menu-item.menu-danger:hover{background:#FCEBEB}
+.action-menu-item i{font-size:14px}
+
+/* Footer pod tabuľkou */
+.tbl-footer{text-align:center;font-size:11px;color:var(--gray3);margin-top:10px;padding:4px}
+.tbl-footer a{color:var(--green-dark);text-decoration:underline}
+
+/* CRM karty */
+.crm-card{display:grid;grid-template-columns:1fr auto auto;gap:16px;align-items:center;padding:14px 18px;background:#fff;border:1px solid var(--gray2);border-radius:10px;margin-bottom:8px;transition:all .12s}
+.crm-card.crm-unpaid{border-color:#F7C1C1;border-left:4px solid #E24B4A}
+.crm-card.crm-paid{background:#FAFAFA;border-color:#E8E8E8;grid-template-columns:1fr auto}
+.crm-card .crm-name{font-size:14px;font-weight:600;color:var(--black)}
+.crm-card.crm-paid .crm-name{font-size:13px;color:var(--gray4);font-weight:500}
+.crm-card .crm-sub{font-size:11px;color:var(--gray3);margin-top:2px}
+.crm-card .crm-amount{font-size:18px;font-weight:600;color:#A32D2D;font-family:var(--font-mono)}
+
+/* Status banner */
+.status-banner{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:12px}
+.status-banner i{font-size:16px;flex-shrink:0}
+.status-banner-success{background:#EAF3DE;color:#173404}
+.status-banner-warn{background:#FAEEDA;color:#854F0B}
+.status-banner-danger{background:#FCEBEB;color:#501313}
+
+/* Vylepšenia eval tabuľky */
+#eval-main-table table{font-size:12px;border-collapse:collapse;background:#fff;width:100%}
+#eval-main-table thead tr{background:#FAFAFA;border-bottom:1px solid var(--gray2)}
+#eval-main-table th{font-weight:600;font-size:10px;color:var(--gray3);text-transform:uppercase;letter-spacing:0.5px;padding:11px 8px;background:#FAFAFA}
+#eval-main-table td{padding:11px 8px;border-bottom:1px solid #F4F4F4}
+#eval-main-table tbody tr:hover{background:#fafbfa}
+#eval-main-table tbody tr.eval-row-fail{background:#FFFBFA}
+#eval-main-table tbody tr.eval-row-warn{background:#FFFBFA}
+#eval-main-table tbody tr.eval-row-promo{background:#F6FBFF}
+#eval-main-table .table-wrap{background:#fff;border:1px solid var(--gray2);border-radius:10px;overflow:hidden}
+#eval-main-table table{border-radius:10px;overflow:hidden}
+
+/* Avatary pre eval-name-cell */
+.eval-name-cell{min-width:160px}
+.eval-name-cell .name-wrap{display:flex;align-items:center;gap:10px}
+.eval-name-cell .avatar{width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;font-family:var(--font-mono);flex-shrink:0;background:var(--gray);color:var(--gray4)}
+.eval-name-cell .avatar.av-success{background:#EAF3DE;color:#173404}
+.eval-name-cell .avatar.av-warn{background:#FCEBEB;color:#501313}
+.eval-name-cell .avatar.av-info{background:#E6F1FB;color:#042C53}
+.eval-name-cell .name-text{font-weight:600;color:var(--black);font-size:12px}
+
+/* Vylepšené tlačidlá (existujúce .btn) */
+.btn-sm{padding:5px 10px;font-size:11px;border-radius:5px;font-weight:600}
+.btn-danger{background:#FCEBEB;color:#A32D2D;border:1px solid #F7C1C1}
+.btn-danger:hover{background:#F7C1C1}
+
+/* Tabler ikony fallback - ak by sa nenačítala CDN, neukáže nič ale neflashne raw text */
+i[class^="ti-"],i[class*=" ti-"]{font-style:normal;display:inline-flex;align-items:center}
+
 </style>
 </head>
 <body>
@@ -221,30 +363,36 @@ body.tf-readonly .prispevok-cell:hover{transform:none;box-shadow:none}
   </div>
 </div>
 <div class="page active" id="page-vyhodnotenie">
-  <div class="page-header"><h2>Vyhodnotenie</h2><p id="dash-period">Plávajúci kvartál: Február 2026 – Apríl 2026 (3 mes.) · 26 ľudí</p></div>
-  <div class="stats-grid">
-    <div class="stat-card"><div class="val" id="stat-total">26</div><div class="lbl">Celkom ľudí</div></div>
-    <div class="stat-card accent-green"><div class="val" id="stat-ok">14</div><div class="lbl">Spĺňajú štatút</div></div>
-    <div class="stat-card accent-red"><div class="val" id="stat-warn">1</div><div class="lbl">Aktívne napomenutia</div></div>
-    <div class="stat-card accent-orange"><div class="val" id="stat-promo">0</div><div class="lbl">Môžu byť povýšení</div></div>
+  <div class="page-head">
+    <div>
+      <h2>Vyhodnotenie</h2>
+      <div class="page-sub" id="dash-period">Plávajúci kvartál: Február 2026 – Apríl 2026 (3 mes.) · 26 ľudí</div>
+    </div>
   </div>
-  <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center">
-    <button class="btn btn-primary" onclick="runEvaluation()">▶ Spustiť vyhodnotenie</button>
-    <button class="btn btn-secondary" onclick="exportReport()">⬇ Exportovať CSV</button>
-    <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
-      <input type="text" id="eval-search" placeholder="Hľadať..." oninput="renderEvaluation()" style="padding:7px 12px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:12px;width:160px">
-      <select id="eval-filter-pos" onchange="renderEvaluation()" style="padding:7px 10px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:12px">
+  <div class="metric-grid">
+    <div class="metric-card"><div class="metric-label">Celkom ľudí</div><div class="metric-value" id="stat-total">26</div></div>
+    <div class="metric-card metric-success"><div class="metric-label">Spĺňajú štatút</div><div class="metric-value" id="stat-ok">14</div></div>
+    <div class="metric-card metric-danger"><div class="metric-label">Aktívne napomenutia</div><div class="metric-value" id="stat-warn">1</div></div>
+    <div class="metric-card metric-info"><div class="metric-label">Môžu byť povýšení</div><div class="metric-value" id="stat-promo">0</div></div>
+  </div>
+  <div class="action-bar">
+    <button class="btn-new btn-new-primary" onclick="runEvaluation()"><i class="ti ti-player-play"></i> Spustiť vyhodnotenie</button>
+    <button class="btn-new btn-new-secondary" onclick="exportReport()"><i class="ti ti-download"></i> Exportovať CSV</button>
+    <div class="search-wrap">
+      <i class="ti ti-search"></i>
+      <input type="text" id="eval-search" placeholder="Hľadať..." oninput="renderEvaluation()">
+      <select id="eval-filter-pos" onchange="renderEvaluation()" style="padding:7px 10px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:12px;background:#fff">
         <option value="">Všetky pozície</option>
         <option>MD</option><option>SD</option><option>SM</option><option>EM</option>
         <option>TL</option><option>SC</option><option>C</option><option>TR</option>
         <option>VIP I</option><option>VIP II</option><option>VIP III</option>
       </select>
-      <select id="eval-filter-cesta" onchange="renderEvaluation()" style="padding:7px 10px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:12px">
+      <select id="eval-filter-cesta" onchange="renderEvaluation()" style="padding:7px 10px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:12px;background:#fff">
         <option value="">Všetky cesty</option>
-        <option value="manazerska">🏢 Manažérska</option>
-        <option value="obchodna">💼 Obchodná</option>
+        <option value="manazerska">Manažérska</option>
+        <option value="obchodna">Obchodná</option>
       </select>
-      <select id="eval-filter-status" onchange="renderEvaluation()" style="padding:7px 10px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:12px">
+      <select id="eval-filter-status" onchange="renderEvaluation()" style="padding:7px 10px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:12px;background:#fff">
         <option value="">Všetci</option>
         <option value="ok">Len OK</option>
         <option value="fail">Len nesplnené</option>
@@ -252,8 +400,8 @@ body.tf-readonly .prispevok-cell:hover{transform:none;box-shadow:none}
       </select>
     </div>
   </div>
-  <div id="eval-alerts" style="margin-bottom:14px"><div style="background:var(--blue-pale);border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:var(--blue)">📅 Plávajúci kvartál: <strong>Február 2026 – Apríl 2026</strong> · FJ = súčet za 3 mesiace</div><div class="tf-admin-only" style="background:var(--orange-pale);border:1px solid var(--orange);border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:var(--orange)">⚠ <strong>Trainee → C: manuálna kontrola BRUTTO FJ</strong> (Denisa Véghová, JUDr. Zuzana Hujsiová)</div></div>
-  <div class="card" style="padding:0;overflow:hidden"><div id="eval-main-table"></div></div>
+  <div id="eval-alerts" style="margin-bottom:14px"><div class="status-banner status-banner-success" style="background:var(--blue-pale);color:#0d4b8c"><i class="ti ti-calendar"></i><span>Plávajúci kvartál: <strong>Február 2026 – Apríl 2026</strong> · FJ = súčet za 3 mesiace</span></div><div class="tf-admin-only status-banner status-banner-warn"><i class="ti ti-alert-triangle"></i><span><strong>Trainee → C: manuálna kontrola BRUTTO FJ</strong> (Denisa Véghová, JUDr. Zuzana Hujsiová)</span></div></div>
+  <div id="eval-main-table"></div>
 </div>
 <div class="page" id="page-napomenutia">
   <div class="page-header"><h2>Evidencia</h2><p>Povýšenia, zníženia, napomenutia, mesačné vyhodnotenie</p></div>
@@ -485,6 +633,22 @@ function effectiveMaintainFJ(k,h,name,pos){if(!k.maintainFJ)return null;return M
 function hasHistProtection(h){return h>=HIST_PROTECTION}
 function getKariera(pos){return KARIERA.find(k=>k.pos===pos)}
 function posClass(pos){const m={'MD':'pos-md','SD':'pos-md','P':'pos-md','SM':'pos-sm','EM':'pos-em','TL':'pos-tl','SC':'pos-sc','C':'pos-c','TR':'pos-tr'};if(pos&&pos.startsWith('VIP'))return'pos-vip';return m[pos]||'pos-tr'}
+function getInitials(name){
+  if(!name)return '?';
+  // Odstráň tituly (Mgr., Ing., JUDr., Bc., DiS.)
+  const cleaned=name.replace(/(Mgr\.|Ing\.|JUDr\.|Bc\.|DiS\.|,)/g,'').trim();
+  const parts=cleaned.split(/\s+/).filter(x=>x);
+  if(!parts.length)return '?';
+  if(parts.length===1)return parts[0].slice(0,2).toUpperCase();
+  return (parts[0][0]+parts[parts.length-1][0]).toUpperCase();
+}
+function getAvatarClass(rowStatus){
+  // rowStatus: 'promo' / 'warn' / 'fail' / 'ok'
+  if(rowStatus==='promo')return 'av-info';
+  if(rowStatus==='warn'||rowStatus==='fail')return 'av-warn';
+  if(rowStatus==='ok')return 'av-success';
+  return '';
+}
 function getActiveWarning(name){return warnings.find(w=>w.person===name&&w.status==='active')}
 function monthsSince(d){const dt=new Date(d),now=new Date();return(now.getFullYear()-dt.getFullYear())*12+(now.getMonth()-dt.getMonth())}
 function firstOfMonth(){const d=new Date();d.setDate(1);const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0');return y+'-'+m+'-01';}
@@ -823,7 +987,7 @@ function fjCell(v,threshold,label,extra){
   const tip=`Potrebné: ${threshold.toFixed(0)} | Aktuálne: ${v.toFixed(0)} | Rozdiel: −${(threshold-v).toFixed(0)}${extra?' | '+extra:''}`;
   return`<span class="fj-cell fj-fail">${v.toFixed(0)}<span class="tip-wrap"><span class="tip-icon">i</span><span class="tip-box">${label}: ${tip}</span></span></span>`;
 }
-function pbCell(v,threshold){
+  function pbCell(v,threshold){
   if(!threshold)return`<span class="fj-cell fj-neutral">${v}</span>`;
   if(v>=threshold)return`<span class="fj-cell fj-ok">${v}</span>`;
   return`<span class="fj-cell fj-fail">${v}<span class="tip-wrap"><span class="tip-icon">i</span><span class="tip-box">PB: Potrebné ${threshold} | Aktuálne ${v} | Rozdiel −${threshold-v}</span></span></span>`;
@@ -975,7 +1139,16 @@ function renderEvaluation(){
       _actionFinal='<span style="color:var(--gray3)">–</span>';
       _rowClsFinal='eval-row-ok'+(_posChanged?' pos-divider':'');
     }
-    html+=`<tr class="${_rowClsFinal}"><td class="eval-name-cell"><div style="font-weight:700;font-family:var(--font-head)">${p.name}</div><div style="display:flex;gap:4px;margin-top:3px">${extras.join('')}</div></td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td style="font-size:11px;color:var(--gray3)">${p.manager||'–'}</td><td style="font-size:11px">${cestaCell}</td><td style="text-align:right">${fjCell(p.ownFJ,useGroupFJ?null:effFJ,'Vlastné FJ',coef<1?`zľava ${Math.round(coef*100)}%`:'')}</td><td style="text-align:right">${useGroupFJ?fjCell(p.groupFJ,effFJ,'Skupinové FJ',coef<1?`zľava ${Math.round(coef*100)}%`:''):`<span class="fj-cell fj-neutral">${p.groupFJ.toFixed(0)}</span>`}</td><td style="text-align:right">${fjCell(p.histFJ,null,'Hist.FJ','')}</td><td style="text-align:right">${pbCell(p.pb,pbThresh)}</td><td>${_statusBadgeFinal}</td><td>${_napomCellFinal}</td><td>${_splnaFinal}</td><td>${_actionFinal}</td></tr>`;
+    // Avatar status
+    let _avStatus='';
+    if(aw)_avStatus='warn';
+    else if(!s.ok)_avStatus='fail';
+    else if(pr.canPromote===true||(pr.multiPath&&pr.paths?.length))_avStatus='promo';
+    else _avStatus='ok';
+    const _avCls=getAvatarClass(_avStatus);
+    const _initials=getInitials(p.name);
+    const _personCell=`<div class="name-wrap"><div class="avatar ${_avCls}">${_initials}</div><div><div class="name-text">${p.name}</div><div style="display:flex;gap:4px;margin-top:3px">${extras.join('')}</div></div></div>`;
+    html+=`<tr class="${_rowClsFinal}"><td class="eval-name-cell">${_personCell}</td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td style="font-size:11px;color:var(--gray3)">${p.manager||'–'}</td><td style="font-size:11px">${cestaCell}</td><td style="text-align:right">${fjCell(p.ownFJ,useGroupFJ?null:effFJ,'Vlastné FJ',coef<1?`zľava ${Math.round(coef*100)}%`:'')}</td><td style="text-align:right">${useGroupFJ?fjCell(p.groupFJ,effFJ,'Skupinové FJ',coef<1?`zľava ${Math.round(coef*100)}%`:''):`<span class="fj-cell fj-neutral">${p.groupFJ.toFixed(0)}</span>`}</td><td style="text-align:right">${fjCell(p.histFJ,null,'Hist.FJ','')}</td><td style="text-align:right">${pbCell(p.pb,pbThresh)}</td><td>${_statusBadgeFinal}</td><td>${_napomCellFinal}</td><td>${_splnaFinal}</td><td>${_actionFinal}</td></tr>`;
   });
   html+=`</tbody></table></div><div style="display:flex;gap:20px;padding:12px 16px;background:var(--gray);border-top:1px solid var(--gray2);font-size:11px;color:var(--gray3);flex-wrap:wrap"><span><span class="fj-cell fj-ok">1234</span>=splnené</span><span><span class="fj-cell fj-fail">1234</span>=nesplnené(hover=detail)</span><span style="background:#fff8f8;padding:2px 6px;border-radius:4px">červený=nesplnený</span><span style="background:#fffbf0;padding:2px 6px;border-radius:4px">žltý=napomenutie</span><span style="background:#f0fbff;padding:2px 6px;border-radius:4px">modrý=povýšenie</span></div>`;
   document.getElementById('eval-main-table').innerHTML=html;
