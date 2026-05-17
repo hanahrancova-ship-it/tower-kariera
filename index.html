@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="sk"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -827,7 +828,7 @@ function showPage(id,el){
   if(id==='vyhodnotenie')renderEvaluation();
   if(id==='import')renderImportSelector();
   if(id==='platby')renderPrispevky();
-}
+  }
 function switchPlatbyTab(name,el){
   document.querySelectorAll('#platby-tabs .tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
@@ -987,7 +988,7 @@ function fjCell(v,threshold,label,extra){
   const tip=`Potrebné: ${threshold.toFixed(0)} | Aktuálne: ${v.toFixed(0)} | Rozdiel: −${(threshold-v).toFixed(0)}${extra?' | '+extra:''}`;
   return`<span class="fj-cell fj-fail">${v.toFixed(0)}<span class="tip-wrap"><span class="tip-icon">i</span><span class="tip-box">${label}: ${tip}</span></span></span>`;
 }
-  function pbCell(v,threshold){
+function pbCell(v,threshold){
   if(!threshold)return`<span class="fj-cell fj-neutral">${v}</span>`;
   if(v>=threshold)return`<span class="fj-cell fj-ok">${v}</span>`;
   return`<span class="fj-cell fj-fail">${v}<span class="tip-wrap"><span class="tip-icon">i</span><span class="tip-box">PB: Potrebné ${threshold} | Aktuálne ${v} | Rozdiel −${threshold-v}</span></span></span>`;
