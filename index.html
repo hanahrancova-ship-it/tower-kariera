@@ -143,8 +143,14 @@ body.tf-readonly .prispevok-cell:hover{transform:none;box-shadow:none}
 #eval-main-table td{padding:8px 6px}
 .eval-name-cell{min-width:140px}
 .eval-row-fail td{background:#fff8f8}.eval-row-warn td{background:#fffbf0}
-.pos-divider td{border-top:3px solid #0E3318 !important}
 .eval-row-ok td{background:#fff}.eval-row-promo td{background:#f0fbff}
+/* Vylepšenie pre #eval-main-table — jemnejšie pozadia ako podsvietené */
+#eval-main-table .eval-row-fail td{background:#FFFBFA !important}
+#eval-main-table .eval-row-warn td{background:#FFFBFA !important}
+#eval-main-table .eval-row-promo td{background:#F8FCFF !important}
+#eval-main-table .eval-row-ok td{background:#fff !important}
+#eval-main-table tr.pos-spacer td{background:transparent !important;height:14px !important;padding:0 !important;border:none !important;border-bottom:none !important}
+#bug-report-btn:hover{background:var(--gray);border-color:var(--gray3);transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,0.12)}
 .napom-dot{display:inline-flex;gap:3px;margin-left:4px;vertical-align:middle}
 .napom-m{width:10px;height:10px;border-radius:50%;display:inline-block}
 .napom-m.used{background:var(--red)}.napom-m.free{background:var(--gray2);border:1px solid #ccc}
@@ -323,6 +329,9 @@ i[class^="ti-"],i[class*=" ti-"]{font-style:normal;display:inline-flex;align-ite
     <div class="nav-item" onclick="showPage('platby',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>Platby
     </div>
+    <div class="nav-item tf-admin-only" onclick="showPage('bugy',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="6"></circle><path d="M12 7v6m-3-6v-2a3 3 0 0 1 6 0v2M3 13h3m12 0h3M5 19l3-2m11 2l-3-2M5 7l3 2m11-2l-3 2"></path></svg>Nahlásené chyby
+    </div>
   </nav>
 </aside>
 <main class="main">
@@ -473,6 +482,15 @@ i[class^="ti-"],i[class*=" ti-"]{font-style:normal;display:inline-flex;align-ite
     <div id="crm-content"></div>
   </div>
 </div>
+<div class="page" id="page-bugy">
+  <div class="page-head">
+    <div>
+      <h2>🐛 Nahlásené chyby</h2>
+      <div class="page-sub" id="bugy-sub">Zoznam chýb nahlásených používateľmi</div>
+    </div>
+  </div>
+  <div id="bugy-content"></div>
+</div>
 </main>
 </div>
 <!-- MODALS -->
@@ -542,6 +560,27 @@ i[class^="ti-"],i[class*=" ti-"]{font-style:normal;display:inline-flex;align-ite
     </div>
   </div>
 </div>
+<div class="modal-overlay" id="modal-bug-report">
+  <div class="modal" style="max-width:520px">
+    <h3>🐛 Nahlásiť chybu</h3>
+    <div style="font-size:12px;color:var(--gray3);margin-bottom:14px">Napíš čo presne nefunguje. Tvoja chyba sa pošle adminovi.</div>
+    <div class="form-group">
+      <label>Tvoje meno</label>
+      <input type="text" id="bug-name" placeholder="Napr. Lucia Budzeľová" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px">
+    </div>
+    <div class="form-group">
+      <label>Popis chyby</label>
+      <textarea id="bug-text" rows="5" placeholder="Napíš presne kde sa chyba nachádza a čo nefunguje..." style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px;resize:vertical"></textarea>
+    </div>
+    <div style="font-size:11px;color:var(--gray3);margin-bottom:10px" id="bug-page-info">Stránka: -</div>
+    <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal('modal-bug-report')">Zrušiť</button>
+      <button class="btn btn-primary" onclick="submitBugReport()">Odoslať</button>
+    </div>
+  </div>
+</div>
+<!-- Floating tlačidlo Nahlásiť chybu -->
+<button id="bug-report-btn" onclick="openBugReportModal()" title="Nahlásiť chybu" style="position:fixed;bottom:20px;right:20px;z-index:90;background:#fff;border:1px solid var(--gray2);border-radius:50px;padding:10px 16px;font-size:12px;font-weight:600;font-family:var(--font-mono);cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.08);display:inline-flex;align-items:center;gap:6px;color:var(--green-dark);transition:all .15s">🐛 Nahlásiť chybu</button>
 <div class="modal-overlay" id="modal-warn">
   <div class="modal">
     <h3 id="warn-modal-title">Pridať napomenutie</h3>
@@ -682,6 +721,7 @@ let evidenciaPoznamky={};
 let prispevkyData={};
 let servisData={};
 let crmData={reports:{},fines:{}};
+let bugsData=[];
 let currentUserRole=null; // 'admin' alebo 'user', zistené z API
 
 // Mapovanie kľúčov localStorage → API
@@ -696,7 +736,8 @@ const STORAGE_KEYS={
   'tf_pb_dismissed':'pb_dismissed',
   'tf_prispevky':'prispevky',
   'tf_servis':'servis',
-  'tf_crm':'crm'
+  'tf_crm':'crm',
+  'tf_bugs':'bugs'
 };
 
 // Wrapper: ukladá dáta do KV cez API (admin) alebo iba lokálne (user)
@@ -737,6 +778,7 @@ async function tfLoadAll(){
     prispevkyData=d.prispevky||{};
     servisData=d.servis||{};
     crmData=d.crm||{reports:{},fines:{}};
+    bugsData=Array.isArray(d.bugs)?d.bugs:[];
     return true;
   }catch(e){
     console.error('Chyba pri načítaní dát:',e);
@@ -766,7 +808,7 @@ async function tfMigrateFromLocalStorage(){
     ['tf_imports','imports'],['tf_warnings','warnings'],['tf_cesta','cesta'],
     ['tf_bruto','bruto'],['tf_pozicie','pozicie'],['tf_poznamky','poznamky'],
     ['tf_ev_poznamky','ev_poznamky'],['tf_pb_dismissed','pb_dismissed'],
-    ['tf_prispevky','prispevky'],['tf_servis','servis'],['tf_crm','crm']
+    ['tf_prispevky','prispevky'],['tf_servis','servis'],['tf_crm','crm'],['tf_bugs','bugs']
   ];
   for(const [lsKey,apiKey] of migMap){
     const v=localStorage.getItem(lsKey);
@@ -840,6 +882,7 @@ function showPage(id,el){
   if(id==='vyhodnotenie')renderEvaluation();
   if(id==='import')renderImportSelector();
   if(id==='platby')renderPrispevky();
+  if(id==='bugy')renderBugy();
 }
 function switchPlatbyTab(name,el){
   document.querySelectorAll('#platby-tabs .tab').forEach(t=>t.classList.remove('active'));
@@ -1091,12 +1134,34 @@ function renderEvaluation(){
     return true;
   });
   if(!filtered.length){document.getElementById('eval-main-table').innerHTML='<div class="empty" style="padding:48px"><div class="big">🎉</div>Žiadne záznamy.</div>';return;}
-  filtered.sort((a,b)=>{const o=["P","SD","MD","SM","EM","TL","VIP IV","VIP III","VIP II","VIP I","SC","C","TR"];const pa=o.indexOf(a.pos)<0?99:o.indexOf(a.pos),pb2=o.indexOf(b.pos)<0?99:o.indexOf(b.pos);if(pa!==pb2)return pa-pb2;return b.ownFJ-a.ownFJ;});
+  // Skupinovanie VIP do manažérskych pozícií:
+  // VIP I = pri TL, VIP II = pri EM, VIP III = pri SM, VIP IV = pri MD
+  // V rámci skupiny zoradenie podľa Vlastných FJ (najvyšší hore)
+  function getGroupKey(pos){
+    if(pos==='VIP I')return 'TL';
+    if(pos==='VIP II')return 'EM';
+    if(pos==='VIP III')return 'SM';
+    if(pos==='VIP IV')return 'MD';
+    if(pos==='SD'||pos==='P')return 'MD'; // SD a P spolu s MD na vrchole
+    return pos;
+  }
+  function getGroupOrder(groupKey){
+    const o=["MD","SM","EM","TL","SC","C","TR"];
+    const i=o.indexOf(groupKey);
+    return i<0?99:i;
+  }
+  filtered.sort((a,b)=>{
+    const ga=getGroupKey(a.pos), gb=getGroupKey(b.pos);
+    const oa=getGroupOrder(ga), ob=getGroupOrder(gb);if(oa!==ob)return oa-ob;
+    // V rámci skupiny: najvyššie ownFJ hore
+    return b.ownFJ-a.ownFJ;
+  });
   let html=`<div class="table-wrap"><table><thead><tr><th class="eval-name-cell">Meno</th><th>Pozícia</th><th>Manažér</th><th>Kariérna cesta</th><th style="text-align:right">Vlastné FJ (${last3.length}m)</th><th style="text-align:right">Skupinové FJ</th><th style="text-align:right">Hist.FJ</th><th style="text-align:right">PB</th><th>Štatút</th><th>Napomenutie</th><th>Spļňa štatút na</th><th>Akcia</th></tr></thead><tbody>`;
-  let _prevPos=null;
+  let _prevGroup=null;
   filtered.forEach(p=>{
-    const _posChanged=_prevPos!==null&&_prevPos!==p.pos;
-    _prevPos=p.pos;
+    const _curGroup=getGroupKey(p.pos);
+    const _posChanged=_prevGroup!==null&&_prevGroup!==_curGroup;
+    _prevGroup=_curGroup;
     const k=getKariera(p.pos),s=checkStatus(p),pr=checkPromotion(p),aw=getActiveWarning(p.name),ms=aw?monthsSince(aw.date):0;
     const coef=getDiscountCoef(p.histFJ,p.name,p.pos),effFJ=k?.maintainFJ?effectiveMaintainFJ(k,p.histFJ,p.name,p.pos):null,pbThresh=k?.maintainPB||0;
     const extras=[];
@@ -1154,9 +1219,9 @@ function renderEvaluation(){
       const _names=_pbAcute.map(r=>r.name).join(', ');
       actionCell=`<div class="tf-admin-only" style="margin-bottom:6px;padding:6px 24px 6px 8px;background:#FCEBEB;border:1px solid #F7C1C1;border-radius:6px;font-size:10px;color:#A32D2D;line-height:1.3;position:relative;text-align:left"><span onclick="dismissPbAlert('${_safeNm}','acute')" style="position:absolute;top:3px;right:5px;cursor:pointer;font-weight:700;font-size:12px;color:#A32D2D;padding:0 3px" title="Zatvoriť">&#x2715;</span><strong>⚠ Napomenúť za PB</strong><br>Podr. s nap.: ${_names}</div>`+actionCell;
     }
-    const rowCls=(!s.ok&&aw&&ms>=3?'eval-row-fail':!s.ok&&aw?'eval-row-warn':!s.ok?'eval-row-fail':(pr.canPromote===true||(pr.multiPath&&pr.paths?.length))?'eval-row-promo':'eval-row-ok')+(_posChanged?' pos-divider':'');
+    const rowCls=(!s.ok&&aw&&ms>=3?'eval-row-fail':!s.ok&&aw?'eval-row-warn':!s.ok?'eval-row-fail':(pr.canPromote===true||(pr.multiPath&&pr.paths?.length))?'eval-row-promo':'eval-row-ok');
     const useGroupFJ=['EM','SM','MD','SD','P'].includes(p.pos);
-    if(_posChanged)html+=`<tr class="pos-divider"><td colspan="12" style="padding:0;border:0;height:8px;background:var(--gray)"></td></tr>`;
+    if(_posChanged)html+=`<tr class="pos-spacer"><td colspan="12"></td></tr>`;
     // Vlastníci sa nevyhodnocujú — posledné 4 stĺpce ako pomlčky
     let _statusBadgeFinal=statusBadge, _napomCellFinal=napomCell, _splnaFinal=splnaStatutCell, _actionFinal=actionCell, _rowClsFinal=rowCls;
     if(isOwner(p.name)){
@@ -1164,7 +1229,7 @@ function renderEvaluation(){
       _napomCellFinal='<span style="color:var(--gray3)">–</span>';
       _splnaFinal='<span style="color:var(--gray3)">–</span>';
       _actionFinal='<span style="color:var(--gray3)">–</span>';
-      _rowClsFinal='eval-row-ok'+(_posChanged?' pos-divider':'');
+      _rowClsFinal='eval-row-ok';
     }
     // Avatar status
     let _avStatus='';
@@ -1177,7 +1242,7 @@ function renderEvaluation(){
     const _personCell=`<div class="name-wrap"><div class="avatar ${_avCls}">${_initials}</div><div><div class="name-text">${p.name}</div><div style="display:flex;gap:4px;margin-top:3px">${extras.join('')}</div></div></div>`;
     html+=`<tr class="${_rowClsFinal}"><td class="eval-name-cell">${_personCell}</td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td style="font-size:11px;color:var(--gray3)">${p.manager||'–'}</td><td style="font-size:11px">${cestaCell}</td><td style="text-align:right">${fjCell(p.ownFJ,useGroupFJ?null:effFJ,'Vlastné FJ',coef<1?`zľava ${Math.round(coef*100)}%`:'')}</td><td style="text-align:right">${useGroupFJ?fjCell(p.groupFJ,effFJ,'Skupinové FJ',coef<1?`zľava ${Math.round(coef*100)}%`:''):`<span class="fj-cell fj-neutral">${p.groupFJ.toFixed(0)}</span>`}</td><td style="text-align:right">${fjCell(p.histFJ,null,'Hist.FJ','')}</td><td style="text-align:right">${pbCell(p.pb,pbThresh)}</td><td>${_statusBadgeFinal}</td><td>${_napomCellFinal}</td><td>${_splnaFinal}</td><td>${_actionFinal}</td></tr>`;
   });
-  html+=`</tbody></table></div><div style="display:flex;gap:20px;padding:12px 16px;background:var(--gray);border-top:1px solid var(--gray2);font-size:11px;color:var(--gray3);flex-wrap:wrap"><span><span class="fj-cell fj-ok">1234</span>=splnené</span><span><span class="fj-cell fj-fail">1234</span>=nesplnené(hover=detail)</span><span style="background:#fff8f8;padding:2px 6px;border-radius:4px">červený=nesplnený</span><span style="background:#fffbf0;padding:2px 6px;border-radius:4px">žltý=napomenutie</span><span style="background:#f0fbff;padding:2px 6px;border-radius:4px">modrý=povýšenie</span></div>`;
+  html+=`</tbody></table></div><div style="display:flex;gap:16px;padding:10px 16px;font-size:11px;color:var(--gray3);flex-wrap:wrap;margin-top:8px;justify-content:center"><span><span class="fj-cell fj-ok">●</span> splnené</span><span><span class="fj-cell fj-fail">●</span> nesplnené (hover = detail)</span></div>`;
   document.getElementById('eval-main-table').innerHTML=html;
 }
 function renderLudia(){
@@ -1472,7 +1537,7 @@ function selectCesta(val){
   selectedCestaValue=val;highlightCestaBtn(val);
   const current=getPersonCesta(cestaTarget),sb=document.getElementById('cesta-save-btn');
   if(val!==current){sb.disabled=false;sb.style.opacity='1';}else{sb.disabled=true;sb.style.opacity='0.4';}
-}
+  }
 function saveCesta(){
   if(!cestaTarget||!selectedCestaValue)return;
   if(!canChangeCesta(cestaTarget)&&getPersonCesta(cestaTarget)){if(!confirm('Od poslednej zmeny neuplynul rok. Naozaj zmeniť?'))return;}
@@ -2098,7 +2163,7 @@ function openServisAddPerson(typ){
 }
 function confirmServisAddPerson(){
   const typ=window._servisAddTyp;
-const name=document.getElementById('servis-add-person-sel').value;
+  const name=document.getElementById('servis-add-person-sel').value;
   if(!name){alert('Vyberte osobu.');return;}
   const cur=servisCurrentH[typ];
   const section=(typ==='ba')?getServisBaSection(cur.year,cur.h):getServisTnSection(cur.year,cur.h);
@@ -2459,6 +2524,109 @@ function saveCrmFines(){
   closeModal('modal-crm-fines');
   renderCrm();
   showToast('Stav úhrad uložený.','success');
+}
+
+// ===================== NAHLÁSIŤ CHYBU =====================
+function openBugReportModal(){
+  // Načítaj meno z localStorage ak si ho už raz zadal
+  const savedName=localStorage.getItem('tf_bug_name')||'';
+  document.getElementById('bug-name').value=savedName;
+  document.getElementById('bug-text').value='';
+  // Detekuj aktuálnu stránku
+  const activePage=document.querySelector('.page.active');
+  const pageId=activePage?activePage.id.replace('page-',''):'?';
+  const pageNames={
+    'vyhodnotenie':'Vyhodnotenie',
+    'napomenutia':'Evidencia',
+    'kariera':'Kariéra',
+    'ludia':'Ľudia',
+    'platby':'Platby',
+    'import':'Import dát'
+  };
+  const pageName=pageNames[pageId]||pageId;
+  document.getElementById('bug-page-info').textContent='Stránka: '+pageName;
+  window._bugPageName=pageName;
+  document.getElementById('modal-bug-report').classList.add('open');
+}
+async function submitBugReport(){
+  const name=document.getElementById('bug-name').value.trim();
+  const text=document.getElementById('bug-text').value.trim();
+  if(!name){alert('Prosím napíš svoje meno.');return;}
+  if(!text){alert('Prosím popis chybu.');return;}
+  // Ulož meno na neskôr
+  localStorage.setItem('tf_bug_name',name);
+  const bug={
+    id:'bug_'+Date.now(),
+    name,
+    page:window._bugPageName||'?',
+    text,
+    date:new Date().toISOString(),
+    resolved:false,
+    userAgent:navigator.userAgent.substring(0,200),
+    screenSize:window.innerWidth+'x'+window.innerHeight
+  };
+  if(!Array.isArray(bugsData))bugsData=[];
+  bugsData.push(bug);
+  await tfSave('tf_bugs',bugsData);
+  closeModal('modal-bug-report');
+  showToast('Ďakujem, chyba bola odoslaná.','success');
+}
+function renderBugy(){
+  const c=document.getElementById('bugy-content');
+  if(!c)return;
+  if(!Array.isArray(bugsData)||!bugsData.length){
+    c.innerHTML='<div class="empty"><div class="big">✨</div>Žiadne nahlásené chyby.</div>';
+    document.getElementById('bugy-sub').textContent='Zoznam chýb nahlásených používateľmi';
+    return;
+  }
+  // Sort: najnovšie hore, nevyriešené hore
+  const sorted=[...bugsData].sort((a,b)=>{
+    if(a.resolved!==b.resolved)return a.resolved?1:-1;
+    return b.date.localeCompare(a.date);
+  });
+  const openCount=bugsData.filter(b=>!b.resolved).length;
+  document.getElementById('bugy-sub').textContent=openCount+' nevyriešených / '+bugsData.length+' celkom';
+  let html='';
+  for(const bug of sorted){
+    const dt=new Date(bug.date);
+    const dtStr=dt.getDate()+'.'+(dt.getMonth()+1)+'.'+dt.getFullYear()+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
+    const bg=bug.resolved?'#FAFAFA':'#fff';
+    const border=bug.resolved?'1px solid var(--gray2)':'1px solid #F7C1C1';
+    const borderLeft=bug.resolved?'1px solid var(--gray2)':'4px solid #E24B4A';
+    html+='<div style="background:'+bg+';border:'+border+';border-left:'+borderLeft+';border-radius:10px;padding:14px 18px;margin-bottom:10px">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:start;gap:10px;margin-bottom:8px;flex-wrap:wrap">';
+    html+='<div><div style="font-weight:600;color:var(--black);font-size:14px">'+bug.name+'</div>';
+    html+='<div style="font-size:11px;color:var(--gray3);margin-top:2px">'+dtStr+' · stránka: <strong>'+bug.page+'</strong></div></div>';
+    html+='<div style="display:flex;gap:6px">';
+    if(!bug.resolved){
+      html+='<button class="btn btn-secondary" style="font-size:11px;padding:5px 10px" onclick="resolveBug(\''+bug.id+'\')">✓ Vyriešené</button>';
+    }else{
+      html+='<span class="badge badge-green" style="font-size:10px">✓ Vyriešené</span>';
+    }
+    html+='<button class="btn btn-secondary" style="font-size:11px;padding:5px 10px;color:#A32D2D" onclick="deleteBug(\''+bug.id+'\')">🗑</button>';
+    html+='</div></div>';
+    html+='<div style="font-size:13px;color:var(--gray4);white-space:pre-wrap;line-height:1.5">'+escapeHtml(bug.text)+'</div>';
+    if(bug.screenSize){
+      html+='<div style="font-size:10px;color:var(--gray3);margin-top:8px;font-family:var(--font-mono)">📱 '+bug.screenSize+'</div>';
+    }
+    html+='</div>';
+  }
+  c.innerHTML=html;
+}
+function escapeHtml(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+async function resolveBug(id){
+  const b=bugsData.find(x=>x.id===id);
+  if(!b)return;
+  b.resolved=true;
+  b.resolvedDate=new Date().toISOString();
+  await tfSave('tf_bugs',bugsData);
+  renderBugy();
+}
+async function deleteBug(id){
+  if(!confirm('Vymazať chybu trvalo?'))return;
+  bugsData=bugsData.filter(b=>b.id!==id);
+  await tfSave('tf_bugs',bugsData);
+  renderBugy();
 }
 
 async function tfInit(){
