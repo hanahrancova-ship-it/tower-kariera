@@ -1,7 +1,16 @@
 {
   "name": "povysovanietower",
   "compatibility_date": "2026-05-11",
+  "main": "src/worker.js",
   "assets": {
-    "directory": "./"
-  }
+    "directory": "./",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "kv_namespaces": [
+    {
+      "binding": "DATA",
+      "id": "eb4c1e4bd75142d7b992359e69942d09"
+    }
+  ]
 }
