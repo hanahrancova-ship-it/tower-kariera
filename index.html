@@ -46,6 +46,10 @@ body.tf-readonly span[onclick*="openCestaModal"],
 body.tf-readonly .nav-item[onclick*="import"]{display:none !important;}
 body.tf-readonly input[type="text"],body.tf-readonly input[type="file"]{pointer-events:none;background:#f5f5f5 !important;}
 body.tf-readonly .tf-admin-only{display:none !important;}
+/* Bug report modal — user MUSÍ vedieť písať a odoslať */
+body.tf-readonly #modal-bug-report input[type="text"],
+body.tf-readonly #modal-bug-report textarea{pointer-events:auto !important;background:#fff !important;}
+body.tf-readonly #modal-bug-report button.btn-primary{display:inline-flex !important;}
 .page-header{margin-bottom:22px}
 .page-header h2{font-size:22px;font-weight:600;color:var(--black);letter-spacing:-0.3px}
 .page-header p{font-size:12px;color:var(--gray3);margin-top:4px}
@@ -1149,10 +1153,17 @@ function renderEvaluation(){
     const o=["MD","SM","EM","TL","SC","C","TR"];
     const i=o.indexOf(groupKey);
     return i<0?99:i;
-  }
+    }
   filtered.sort((a,b)=>{
+    // Owners (Mário Markech, Ondrej Broska) vždy hore
+    const aOwner=isOwner(a.name), bOwner=isOwner(b.name);
+    if(aOwner&&!bOwner)return -1;
+    if(!aOwner&&bOwner)return 1;
+    if(aOwner&&bOwner)return a.name.localeCompare(b.name);
+    // Ostatné: zoradenie podľa skupiny
     const ga=getGroupKey(a.pos), gb=getGroupKey(b.pos);
-    const oa=getGroupOrder(ga), ob=getGroupOrder(gb);if(oa!==ob)return oa-ob;
+    const oa=getGroupOrder(ga), ob=getGroupOrder(gb);
+    if(oa!==ob)return oa-ob;
     // V rámci skupiny: najvyššie ownFJ hore
     return b.ownFJ-a.ownFJ;
   });
@@ -1221,7 +1232,7 @@ function renderEvaluation(){
     }
     const rowCls=(!s.ok&&aw&&ms>=3?'eval-row-fail':!s.ok&&aw?'eval-row-warn':!s.ok?'eval-row-fail':(pr.canPromote===true||(pr.multiPath&&pr.paths?.length))?'eval-row-promo':'eval-row-ok');
     const useGroupFJ=['EM','SM','MD','SD','P'].includes(p.pos);
-    if(_posChanged)html+=`<tr class="pos-spacer"><td colspan="12"></td></tr>`;
+    // Žiadne spacer riadky medzi skupinami - tabuľka je súvislá
     // Vlastníci sa nevyhodnocujú — posledné 4 stĺpce ako pomlčky
     let _statusBadgeFinal=statusBadge, _napomCellFinal=napomCell, _splnaFinal=splnaStatutCell, _actionFinal=actionCell, _rowClsFinal=rowCls;
     if(isOwner(p.name)){
@@ -1527,7 +1538,7 @@ function openCestaModal(name){
   highlightCestaBtn(current);
   const sb=document.getElementById('cesta-save-btn');sb.disabled=true;sb.style.opacity='0.4';
   document.getElementById('modal-cesta').classList.add('open');
-}
+  }
 function highlightCestaBtn(sel){
   const m=document.getElementById('cesta-btn-manazerska'),o=document.getElementById('cesta-btn-obchodna');
   m.style.borderColor=sel==='manazerska'?'var(--blue)':'var(--gray2)';m.style.background=sel==='manazerska'?'var(--blue-pale)':'';
@@ -1537,7 +1548,7 @@ function selectCesta(val){
   selectedCestaValue=val;highlightCestaBtn(val);
   const current=getPersonCesta(cestaTarget),sb=document.getElementById('cesta-save-btn');
   if(val!==current){sb.disabled=false;sb.style.opacity='1';}else{sb.disabled=true;sb.style.opacity='0.4';}
-  }
+}
 function saveCesta(){
   if(!cestaTarget||!selectedCestaValue)return;
   if(!canChangeCesta(cestaTarget)&&getPersonCesta(cestaTarget)){if(!confirm('Od poslednej zmeny neuplynul rok. Naozaj zmeniť?'))return;}
@@ -1801,14 +1812,8 @@ function renderPrispevkyFixPreddavky(year){
         let sumFJ=0;
         for(const member of team)sumFJ+=ownFJForQ(member,year,q);
         const narok=Math.min(sumFJ*0.2,grp.maxPrispevok);
-        // Zaplatené preddavky za Q
-        let zaplatene=0;
-        for(let mm=q*3-2;mm<=q*3;mm++){
-          const kk=grp.id+'_pre_'+year+'_'+String(mm).padStart(2,'0');
-          const d=getPrispevok(kk);
-          if(d&&d.status==='uhradene')zaplatene+=grp.preddavokMes;
-        }
-        const vyrov=narok-zaplatene;
+        // Vyrovnanie = celý nárok (firma vypláca príspevok, NIE odčítavame preddavky)
+        const vyrov=narok;
         const vyKey=grp.id+'_vyr_'+year+'_Q'+q;
         const vyData=getPrispevok(vyKey);
         const vyrovUlozena=(vyData&&vyData.sumaEur!==undefined)?vyData.sumaEur:vyrov;
@@ -1873,13 +1878,8 @@ function renderPrispevkyTN(year){
         }else{
           const celkovyNarok=Math.min(sumFJ*0.2,tn.maxPrispevok);
           narokNaPodiel=celkovyNarok/tn.podiely.length;
-          let zaplatene=0;
-          for(let mm=q*3-2;mm<=q*3;mm++){
-            const kk='tn_p'+i+'_pre_'+year+'_'+String(mm).padStart(2,'0');
-            const d=getPrispevok(kk);
-            if(d&&d.status==='uhradene')zaplatene+=preddavokMes;
-          }
-          vyrov=narokNaPodiel-zaplatene;
+          // Vyrovnanie = celý nárok na podiel (firma vypláca príspevok)
+          vyrov=narokNaPodiel;
           splnaMin=sumFJ>=tn.minFJ;
         }
         const vyKey='tn_p'+i+'_vyr_'+year+'_Q'+q;
