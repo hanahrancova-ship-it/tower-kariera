@@ -153,7 +153,9 @@ body.tf-readonly .prispevok-cell:hover{transform:none;box-shadow:none}
 #eval-main-table .eval-row-warn td{background:#FFFBFA !important}
 #eval-main-table .eval-row-promo td{background:#F8FCFF !important}
 #eval-main-table .eval-row-ok td{background:#fff !important}
-#eval-main-table tr.pos-spacer td{background:transparent !important;height:14px !important;padding:0 !important;border:none !important;border-bottom:none !important}
+#eval-main-table tbody tr.pos-spacer{background:transparent !important;height:14px !important}
+#eval-main-table tbody tr.pos-spacer td{background:transparent !important;height:14px !important;padding:0 !important;border:none !important;border-bottom:none !important}
+#eval-main-table tbody tr.pos-spacer:hover{background:transparent !important}
 #bug-report-btn:hover{background:var(--gray);border-color:var(--gray3);transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,0.12)}
 .napom-dot{display:inline-flex;gap:3px;margin-left:4px;vertical-align:middle}
 .napom-m{width:10px;height:10px;border-radius:50%;display:inline-block}
@@ -525,8 +527,13 @@ i[class^="ti-"],i[class*=" ti-"]{font-style:normal;display:inline-flex;align-ite
     <h3>Pridať osobu do servisu</h3>
     <div id="servis-add-period" style="font-size:12px;color:var(--gray3);margin-bottom:14px"></div>
     <div class="form-group">
-      <label>Osoba</label>
-      <select id="servis-add-person-sel" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px"></select>
+      <label>Osoba zo zoznamu</label>
+      <select id="servis-add-person-sel" onchange="onServisAddSelChange()" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px"></select>
+    </div>
+    <div style="text-align:center;font-size:11px;color:var(--gray3);margin:8px 0">— alebo —</div>
+    <div class="form-group">
+      <label>Iná osoba (napr. asistentka)</label>
+      <input type="text" id="servis-add-person-manual" placeholder="Meno a priezvisko" oninput="onServisAddManualChange()" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px">
     </div>
     <div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end">
       <button class="btn btn-secondary" onclick="closeModal('modal-servis-add')">Zrušiť</button>
@@ -1153,15 +1160,14 @@ function renderEvaluation(){
     const o=["MD","SM","EM","TL","SC","C","TR"];
     const i=o.indexOf(groupKey);
     return i<0?99:i;
-    }
+  }
   filtered.sort((a,b)=>{
     // Owners (Mário Markech, Ondrej Broska) vždy hore
     const aOwner=isOwner(a.name), bOwner=isOwner(b.name);
     if(aOwner&&!bOwner)return -1;
     if(!aOwner&&bOwner)return 1;
     if(aOwner&&bOwner)return a.name.localeCompare(b.name);
-    // Ostatné: zoradenie podľa skupiny
-    const ga=getGroupKey(a.pos), gb=getGroupKey(b.pos);
+    // Ostatné: zoradenie podľa skupinyconst ga=getGroupKey(a.pos), gb=getGroupKey(b.pos);
     const oa=getGroupOrder(ga), ob=getGroupOrder(gb);
     if(oa!==ob)return oa-ob;
     // V rámci skupiny: najvyššie ownFJ hore
@@ -1232,7 +1238,7 @@ function renderEvaluation(){
     }
     const rowCls=(!s.ok&&aw&&ms>=3?'eval-row-fail':!s.ok&&aw?'eval-row-warn':!s.ok?'eval-row-fail':(pr.canPromote===true||(pr.multiPath&&pr.paths?.length))?'eval-row-promo':'eval-row-ok');
     const useGroupFJ=['EM','SM','MD','SD','P'].includes(p.pos);
-    // Žiadne spacer riadky medzi skupinami - tabuľka je súvislá
+    if(_posChanged)html+=`<tr class="pos-spacer"><td colspan="12"></td></tr>`;
     // Vlastníci sa nevyhodnocujú — posledné 4 stĺpce ako pomlčky
     let _statusBadgeFinal=statusBadge, _napomCellFinal=napomCell, _splnaFinal=splnaStatutCell, _actionFinal=actionCell, _rowClsFinal=rowCls;
     if(isOwner(p.name)){
@@ -1538,7 +1544,7 @@ function openCestaModal(name){
   highlightCestaBtn(current);
   const sb=document.getElementById('cesta-save-btn');sb.disabled=true;sb.style.opacity='0.4';
   document.getElementById('modal-cesta').classList.add('open');
-  }
+}
 function highlightCestaBtn(sel){
   const m=document.getElementById('cesta-btn-manazerska'),o=document.getElementById('cesta-btn-obchodna');
   m.style.borderColor=sel==='manazerska'?'var(--blue)':'var(--gray2)';m.style.background=sel==='manazerska'?'var(--blue-pale)':'';
@@ -1941,7 +1947,7 @@ function deletePrispevok(){
   else renderPrispevky();
   showToast('Platba zrušená.','success');
 }
-function formatShortDate(iso){
+  function formatShortDate(iso){
   const d=new Date(iso);
   if(isNaN(d))return '';
   return d.getDate()+'.'+(d.getMonth()+1)+'.';
@@ -2158,16 +2164,41 @@ function openServisAddPerson(typ){
     if(!existujuci.has(p.name))opts+='<option value="'+p.name+'">'+p.name+' ('+p.pos+')</option>';
   }
   sel.innerHTML=opts;
+  // Reset manuálne pole
+  const manualInput=document.getElementById('servis-add-person-manual');
+  if(manualInput)manualInput.value='';
+  sel.value='';
   document.getElementById('servis-add-period').textContent='Polrok H'+cur.h+'/'+cur.year+' · '+(typ==='ba'?'Servis BA':'Servis TN');
   document.getElementById('modal-servis-add').classList.add('open');
 }
+// Keď vyberieš zo zoznamu, vyčisti manuálne pole
+function onServisAddSelChange(){
+  const sel=document.getElementById('servis-add-person-sel');
+  if(sel.value){
+    const m=document.getElementById('servis-add-person-manual');
+    if(m)m.value='';
+  }
+}
+// Keď napíšeš manuálne meno, vyčisti dropdown
+function onServisAddManualChange(){
+  const m=document.getElementById('servis-add-person-manual');
+  if(m&&m.value.trim()){
+    document.getElementById('servis-add-person-sel').value='';
+  }
+}
 function confirmServisAddPerson(){
   const typ=window._servisAddTyp;
-  const name=document.getElementById('servis-add-person-sel').value;
-  if(!name){alert('Vyberte osobu.');return;}
+  let name=document.getElementById('servis-add-person-sel').value;
+  // Ak nie je vybraný zo zoznamu, použi manuálny vstup
+  if(!name){
+    const manualVal=document.getElementById('servis-add-person-manual').value.trim();
+    if(manualVal)name=manualVal;
+  }
+  if(!name){alert('Vyberte osobu zo zoznamu alebo napíšte meno ručne.');return;}
   const cur=servisCurrentH[typ];
   const section=(typ==='ba')?getServisBaSection(cur.year,cur.h):getServisTnSection(cur.year,cur.h);
-  if(!section.people.includes(name))section.people.push(name);
+  if(section.people.includes(name)){alert('Táto osoba už je v zozname.');return;}
+  section.people.push(name);
   if(typ==='ba')saveServisBaSection(cur.year,cur.h,section);
   else saveServisTnSection(cur.year,cur.h,section);
   closeModal('modal-servis-add');
