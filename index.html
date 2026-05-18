@@ -1167,7 +1167,8 @@ function renderEvaluation(){
     if(aOwner&&!bOwner)return -1;
     if(!aOwner&&bOwner)return 1;
     if(aOwner&&bOwner)return a.name.localeCompare(b.name);
-    // Ostatné: zoradenie podľa skupinyconst ga=getGroupKey(a.pos), gb=getGroupKey(b.pos);
+    // Ostatné: zoradenie podľa skupiny
+    const ga=getGroupKey(a.pos), gb=getGroupKey(b.pos);
     const oa=getGroupOrder(ga), ob=getGroupOrder(gb);
     if(oa!==ob)return oa-ob;
     // V rámci skupiny: najvyššie ownFJ hore
