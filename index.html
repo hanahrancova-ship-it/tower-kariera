@@ -391,7 +391,7 @@ i[class^="ti-"],i[class*=" ti-"]{font-style:normal;display:inline-flex;align-ite
     <div class="metric-card metric-success"><div class="metric-label">Spĺňajú štatút</div><div class="metric-value" id="stat-ok">14</div></div>
     <div class="metric-card metric-danger"><div class="metric-label">Aktívne napomenutia</div><div class="metric-value" id="stat-warn">1</div></div>
     <div class="metric-card metric-info"><div class="metric-label">Môžu byť povýšení</div><div class="metric-value" id="stat-promo">0</div></div>
-    </div>
+  </div>
   <div class="action-bar">
     <button class="btn-new btn-new-primary" onclick="runEvaluation()">▶ Spustiť vyhodnotenie</button>
     <button class="btn-new btn-new-secondary" onclick="exportReport()">⬇ Exportovať CSV</button>
@@ -657,11 +657,11 @@ const KARIERA=[
   {pos:'C',name:'Consultant',rate:4,maintainFJ:450,maintainPB:0,promoteFJ:400,promotePB:0,promoteHistFJ:null,promoteNote:'400 FJ BRUTTO hist.'},
   {pos:'SC',name:'Senior Consultant',rate:5,maintainFJ:900,maintainPB:0,promoteFJ:900,promotePB:0,promoteHistFJ:1500,promoteNote:'900 FJ/kv + 1 500 FJ hist.'},
   {pos:'TL',name:'Team Leader',rate:5.5,maintainFJ:900,maintainGroupFJ:1350,maintainPB:1,promoteFJ:900,promoteGroupFJ:1350,promotePB:1,promoteHistFJ:null,promoteNote:'Spln. SC + 900 FJ vlastnych + 1 350 FJ skup. + 1 PB',maintainSCcondition:true},
-  {pos:'EM',name:'Executive Manager',rate:6,maintainFJ:3150,maintainPB:3,promoteFJ:3150,promotePB:3,promoteHistFJ:null,promoteNote:'Spln. SC + 3 150 FJ/kv + 3 PB'},
-  {pos:'SM',name:'Senior Manager',rate:6.5,maintainFJ:6300,maintainPB:6,promoteFJ:6300,promotePB:6,promoteHistFJ:null,promoteNote:'6 300 FJ/kv + 6 PB'},
-  {pos:'MD',name:'Managing Director',rate:7,maintainFJ:11700,maintainPB:12,promoteFJ:11700,promotePB:12,promoteHistFJ:null,promoteNote:'11 700 FJ/kv + 12 PB'},
-  {pos:'SD',name:'Senior Director',rate:7.5,maintainFJ:22500,maintainPB:24,promoteFJ:22500,promotePB:24,promoteHistFJ:null,promoteNote:'22 500 FJ/kv + 24 PB'},
-  {pos:'P',name:'Partner',rate:8,maintainFJ:43200,maintainPB:48,promoteFJ:43200,promotePB:48,promoteHistFJ:null,promoteNote:'43 200 FJ/kv + 48 PB'},
+  {pos:'EM',name:'Executive Manager',rate:6,maintainGroupFJ:3150,maintainPB:3,promoteGroupFJ:3150,promotePB:3,promoteHistFJ:null,promoteNote:'Spln. SC + 3 150 skupinových FJ/kv + 3 PB'},
+  {pos:'SM',name:'Senior Manager',rate:6.5,maintainGroupFJ:6300,maintainPB:6,promoteGroupFJ:6300,promotePB:6,promoteHistFJ:null,promoteNote:'6 300 skupinových FJ/kv + 6 PB'},
+  {pos:'MD',name:'Managing Director',rate:7,maintainGroupFJ:11700,maintainPB:12,promoteGroupFJ:11700,promotePB:12,promoteHistFJ:null,promoteNote:'11 700 skupinových FJ/kv + 12 PB'},
+  {pos:'SD',name:'Senior Director',rate:7.5,maintainGroupFJ:22500,maintainPB:24,promoteGroupFJ:22500,promotePB:24,promoteHistFJ:null,promoteNote:'22 500 skupinových FJ/kv + 24 PB'},
+  {pos:'P',name:'Partner',rate:8,maintainGroupFJ:43200,maintainPB:48,promoteGroupFJ:43200,promotePB:48,promoteHistFJ:null,promoteNote:'43 200 skupinových FJ/kv + 48 PB'},
   {pos:'VIP I',name:'VIP Consultant I.',rate:5.5,maintainFJ:1800,maintainPB:0,promoteFJ:1800,promotePB:0,promoteHistFJ:6000,promoteNote:'1 800 FJ/kv + 6 000 FJ hist.'},
   {pos:'VIP II',name:'VIP Consultant II.',rate:6,maintainFJ:2100,maintainPB:0,promoteFJ:2100,promotePB:0,promoteHistFJ:6000,promoteNote:'2 100 FJ/kv + 6 000 FJ hist.'},
   {pos:'VIP III',name:'VIP Consultant III.',rate:6.5,maintainFJ:2400,maintainPB:0,promoteFJ:2400,promotePB:0,promoteHistFJ:6000,promoteNote:'2 400 FJ/kv + 6 000 FJ hist.'},
@@ -785,7 +785,7 @@ async function tfLoadAll(){
     brutoResults=d.bruto||{};
     pozicieHistory=d.pozicie||{};
     poznamkyData=d.poznamky||{};
-  evidenciaPoznamky=d.ev_poznamky||{};
+    evidenciaPoznamky=d.ev_poznamky||{};
     pbAlertDismissed=d.pb_dismissed||{};
     prispevkyData=d.prispevky||{};
     servisData=d.servis||{};
@@ -998,9 +998,9 @@ dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover'
 function checkStatus(p){
   const k=getKariera(p.pos);if(!k)return{ok:true,msg:'',type:'',issues:[]};
   const h=p.histFJ||0,coef=getDiscountCoef(h,p.name,p.pos),issues=[];
-  if(k.maintainSCcondition){const kSC=getKariera('SC'),scEff=effectiveMaintainFJ(kSC,h,p.name,p.pos);if(p.ownFJ<scEff)issues.push(`SC FJ: ${p.ownFJ.toFixed(0)}/${scEff}`);}
-  if(k.maintainFJ){const useGroupFJ=['EM','SM','MD','SD','P'].includes(p.pos);const eff=effectiveMaintainFJ(k,h,p.name,p.pos);const effFJ=useGroupFJ?(p.effectiveGroupFJ!==undefined?p.effectiveGroupFJ:p.groupFJ):p.ownFJ;if(effFJ<eff){let msg=`FJ: ${effFJ.toFixed(0)}/${eff}${coef<1?' (zľava '+Math.round((1-coef)*100)+'%)':''}`;if(useGroupFJ&&p.capDetail&&p.capDetail.length){msg+=' (po obmedzení '+p.capDetail.map(d=>d.podriadeny+' max 50%').join(', ')+')';}issues.push(msg);}}
-  if(k.maintainGroupFJ){const effGFJ=p.effectiveGroupFJ!==undefined?p.effectiveGroupFJ:p.groupFJ;if(effGFJ<k.maintainGroupFJ){let msg=`Skup. FJ: ${effGFJ.toFixed(0)}/${k.maintainGroupFJ}`;if(p.capDetail&&p.capDetail.length){msg+=' (po obmedzení '+p.capDetail.map(d=>d.podriadeny+' max 50%').join(', ')+')';}issues.push(msg);}}
+  if(k.maintainSCcondition){const kSC=getKariera('SC'),scEff=effectiveMaintainFJ(kSC,h,p.name,p.pos);if(p.ownFJ<scEff)issues.push(`SC FJ: ${p.ownFJ.toFixed(2)}/${scEff}`);}
+  if(k.maintainFJ){const eff=effectiveMaintainFJ(k,h,p.name,p.pos);if(p.ownFJ<eff)issues.push(`FJ: ${p.ownFJ.toFixed(2)}/${eff}${coef<1?' (zľava '+Math.round((1-coef)*100)+'%)':''}`);}
+  if(k.maintainGroupFJ){const effGFJ=p.effectiveGroupFJ!==undefined?p.effectiveGroupFJ:p.groupFJ;if(effGFJ<k.maintainGroupFJ){let msg=`Skup. FJ: ${effGFJ.toFixed(2)}/${k.maintainGroupFJ}`;if(p.capDetail&&p.capDetail.length){msg+=' (po obmedzení '+p.capDetail.map(d=>d.podriadeny+' max 50%').join(', ')+')';}issues.push(msg);}}
   if(k.maintainPB&&p.pb<k.maintainPB)issues.push(`PB: ${p.pb}/${k.maintainPB}`);
   const type=issues.length===0?'ok':issues[0].startsWith('PB')?'pb':'fj';
   return{ok:issues.length===0,msg:issues.join(' · '),type,issues};
@@ -1030,11 +1030,11 @@ function evalPromoTo(p,nextPos){
   const nk=getKariera(nextPos);if(!nk)return{canPromote:false,nextPos};
   if(nextPos==='C')return{canPromote:null,nextPos,brutoCheck:true};
   const issues=[];
-  if(nextPos==='TL'){const kSC=getKariera('SC');if(p.ownFJ<kSC.promoteFJ)issues.push(`SC FJ: ${p.ownFJ.toFixed(0)}/${kSC.promoteFJ}`);if(p.histFJ<kSC.promoteHistFJ)issues.push(`SC Hist: ${p.histFJ.toFixed(0)}/${kSC.promoteHistFJ}`);}
-  if(nk.promoteFJ&&p.ownFJ<nk.promoteFJ)issues.push(`FJ: ${p.ownFJ.toFixed(0)}/${nk.promoteFJ}`);
-  if(nk.promoteGroupFJ){const effGFJ=p.effectiveGroupFJ!==undefined?p.effectiveGroupFJ:p.groupFJ;if(effGFJ<nk.promoteGroupFJ)issues.push(`Skup. FJ: ${effGFJ.toFixed(0)}/${nk.promoteGroupFJ}`);}
+  if(nextPos==='TL'){const kSC=getKariera('SC');if(p.ownFJ<kSC.promoteFJ)issues.push(`SC FJ: ${p.ownFJ.toFixed(2)}/${kSC.promoteFJ}`);if(p.histFJ<kSC.promoteHistFJ)issues.push(`SC Hist: ${p.histFJ.toFixed(2)}/${kSC.promoteHistFJ}`);}
+  if(nk.promoteFJ&&p.ownFJ<nk.promoteFJ)issues.push(`FJ: ${p.ownFJ.toFixed(2)}/${nk.promoteFJ}`);
+  if(nk.promoteGroupFJ){const effGFJ=p.effectiveGroupFJ!==undefined?p.effectiveGroupFJ:p.groupFJ;if(effGFJ<nk.promoteGroupFJ)issues.push(`Skup. FJ: ${effGFJ.toFixed(2)}/${nk.promoteGroupFJ}`);}
   if(nk.promotePB&&p.pb<nk.promotePB)issues.push(`PB: ${p.pb}/${nk.promotePB}`);
-  if(nk.promoteHistFJ&&p.histFJ<nk.promoteHistFJ)issues.push(`Hist: ${p.histFJ.toFixed(0)}/${nk.promoteHistFJ}`);
+  if(nk.promoteHistFJ&&p.histFJ<nk.promoteHistFJ)issues.push(`Hist: ${p.histFJ.toFixed(2)}/${nk.promoteHistFJ}`);
   return{canPromote:issues.length===0,nextPos,issues,note:nk.promoteNote};
 }
 
@@ -1066,16 +1066,16 @@ function renderDashboard(){
   const _sw=document.getElementById('stat-warn');if(_sw)_sw.textContent=warnings.filter(w=>w.status==='active').length;
   const _sp=document.getElementById('stat-promo');if(_sp)_sp.textContent=promoCount;
   const issues=evalPeople.filter(p=>!checkStatus(p).ok&&!isOwner(p.name));
-  let html=issues.length?`<div class="table-wrap"><table><thead><tr><th>Meno</th><th>Pozícia</th><th>Vlastné FJ (${last3.length}m)</th><th>Hist.FJ</th><th>PB</th><th>Problém</th><th>Napomenutie</th><th>Dôvod</th></tr></thead><tbody>${[...issues].sort((a,b)=>{const o=["P","SD","MD","SM","EM","TL","VIP IV","VIP III","VIP II","VIP I","SC","C","TR"];return(o.indexOf(a.pos)<0?99:o.indexOf(a.pos))-(o.indexOf(b.pos)<0?99:o.indexOf(b.pos));}).map(p=>{const s=checkStatus(p),aw=getActiveWarning(p.name),ms=aw?monthsSince(aw.date):0;const _rText=aw?(aw.reason==='fj'?'Nesplnenie FJ':aw.reason==='pb'?'Nesplnenie PB':aw.reason==='pb_podriadeny'?'PB - podr.':'FJ+PB'):'–';return`<tr class="${aw&&ms>=3?'danger-row':aw?'warning-row':''}"><td><strong>${p.name}</strong></td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td>${p.ownFJ.toFixed(0)}</td><td>${p.histFJ.toFixed(0)}</td><td>${p.pb}</td><td><span class="badge badge-orange" style="font-size:10px">${s.msg}</span></td><td>${aw?`<span class="badge badge-red">${ms+1}/3 mes. (k ${formatWarnDateShort(aw.date)})</span>`:'<span class="badge badge-gray">–</span>'}</td><td style="font-size:11px;color:var(--gray4)">${_rText}</td></tr>`;}).join('')}</tbody></table></div>`:'<div class="empty"><div class="big">✅</div>Všetci spĺňajú štatút!</div>';
+  let html=issues.length?`<div class="table-wrap"><table><thead><tr><th>Meno</th><th>Pozícia</th><th>Vlastné FJ (${last3.length}m)</th><th>Hist.FJ</th><th>PB</th><th>Problém</th><th>Napomenutie</th><th>Dôvod</th></tr></thead><tbody>${[...issues].sort((a,b)=>{const o=["P","SD","MD","SM","EM","TL","VIP IV","VIP III","VIP II","VIP I","SC","C","TR"];return(o.indexOf(a.pos)<0?99:o.indexOf(a.pos))-(o.indexOf(b.pos)<0?99:o.indexOf(b.pos));}).map(p=>{const s=checkStatus(p),aw=getActiveWarning(p.name),ms=aw?monthsSince(aw.date):0;const _rText=aw?(aw.reason==='fj'?'Nesplnenie FJ':aw.reason==='pb'?'Nesplnenie PB':aw.reason==='pb_podriadeny'?'PB - podr.':'FJ+PB'):'–';return`<tr class="${aw&&ms>=3?'danger-row':aw?'warning-row':''}"><td><strong>${p.name}</strong></td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td>${p.ownFJ.toFixed(2)}</td><td>${p.histFJ.toFixed(2)}</td><td>${p.pb}</td><td><span class="badge badge-orange" style="font-size:10px">${s.msg}</span></td><td>${aw?`<span class="badge badge-red">${ms+1}/3 mes. (k ${formatWarnDateShort(aw.date)})</span>`:'<span class="badge badge-gray">–</span>'}</td><td style="font-size:11px;color:var(--gray4)">${_rText}</td></tr>`;}).join('')}</tbody></table></div>`:'<div class="empty"><div class="big">✅</div>Všetci spĺňajú štatút!</div>';
   const _dt=document.getElementById('dash-table');if(_dt)_dt.innerHTML=html;
 }
 </script>
 <script>
 function fjCell(v,threshold,label,extra){
-  if(threshold===null||threshold===undefined)return`<span class="fj-cell fj-neutral">${v.toFixed(0)}</span>`;
-  if(v>=threshold)return`<span class="fj-cell fj-ok">${v.toFixed(0)}</span>`;
-  const tip=`Potrebné: ${threshold.toFixed(0)} | Aktuálne: ${v.toFixed(0)} | Rozdiel: −${(threshold-v).toFixed(0)}${extra?' | '+extra:''}`;
-  return`<span class="fj-cell fj-fail">${v.toFixed(0)}<span class="tip-wrap"><span class="tip-icon">i</span><span class="tip-box">${label}: ${tip}</span></span></span>`;
+  if(threshold===null||threshold===undefined)return`<span class="fj-cell fj-neutral">${v.toFixed(2)}</span>`;
+  if(v>=threshold)return`<span class="fj-cell fj-ok">${v.toFixed(2)}</span>`;
+  const tip=`Potrebné: ${threshold.toFixed(2)} | Aktuálne: ${v.toFixed(2)} | Rozdiel: −${(threshold-v).toFixed(2)}${extra?' | '+extra:''}`;
+  return`<span class="fj-cell fj-fail">${v.toFixed(2)}<span class="tip-wrap"><span class="tip-icon">i</span><span class="tip-box">${label}: ${tip}</span></span></span>`;
 }
 function pbCell(v,threshold){
   if(!threshold)return`<span class="fj-cell fj-neutral">${v}</span>`;
@@ -1178,7 +1178,7 @@ function renderEvaluation(){
     if(pos==='VIP IV')return 'MD';
     if(pos==='SD'||pos==='P')return 'MD'; // SD a P spolu s MD na vrchole
     return pos;
-    }
+  }
   function getGroupOrder(groupKey){
     const o=["MD","SM","EM","TL","SC","C","TR"];
     const i=o.indexOf(groupKey);
@@ -1205,7 +1205,7 @@ function renderEvaluation(){
     const _posChanged=_prevGroup!==null&&_prevGroup!==_curGroup;
     _prevGroup=_curGroup;
     const k=getKariera(p.pos),s=checkStatus(p),pr=checkPromotion(p),aw=getActiveWarning(p.name),ms=aw?monthsSince(aw.date):0;
-    const coef=getDiscountCoef(p.histFJ,p.name,p.pos),effFJ=k?.maintainFJ?effectiveMaintainFJ(k,p.histFJ,p.name,p.pos):null,pbThresh=k?.maintainPB||0;
+    const coef=getDiscountCoef(p.histFJ,p.name,p.pos),effFJ=k?.maintainFJ?effectiveMaintainFJ(k,p.histFJ,p.name,p.pos):null,effGroupFJ=k?.maintainGroupFJ||null,pbThresh=k?.maintainPB||0;
     const extras=[];
     const _cestaSafe=p.name.replace(/'/g,"\\'");
     const _cesta=isManazerska(p.pos)?'manazerska':isVIP(p.pos)?'obchodna':(getPersonCesta(p.name)||null);
@@ -1288,18 +1288,27 @@ function renderEvaluation(){
     const _personCell=`<div class="name-wrap"><div class="avatar ${_avCls}">${_initials}</div><div><div class="name-text">${p.name}</div><div style="display:flex;gap:4px;margin-top:3px">${extras.join('')}</div></div></div>`;
     // Skupinové FJ s info badge ak je obmedzenie 50%
     let groupFJCell;
-    if(useGroupFJ){
-      groupFJCell=fjCell(p.groupFJ,effFJ,'Skupinové FJ',coef<1?`zľava ${Math.round(coef*100)}%`:'');
+    const _hasGroupThreshold=k?.maintainGroupFJ;
+    if(_hasGroupThreshold){
+      // Použijem effectiveGroupFJ na kontrolu farby
+      const effG=p.effectiveGroupFJ!==undefined?p.effectiveGroupFJ:p.groupFJ;
+      const _isOk=effG>=k.maintainGroupFJ;
+      const _display=p.groupFJ.toFixed(2);
+      if(_isOk){
+        groupFJCell=`<span class="fj-cell fj-ok">${_display}</span>`;
+      }else{
+        const tip=`Potrebné: ${k.maintainGroupFJ.toFixed(2)} | Efektívne: ${effG.toFixed(2)} | Rozdiel: −${(k.maintainGroupFJ-effG).toFixed(2)}`;
+        groupFJCell=`<span class="fj-cell fj-fail">${_display}<span class="tip-wrap"><span class="tip-icon">i</span><span class="tip-box">Skupinové FJ: ${tip}</span></span></span>`;
+      }
       // Ak má cap obmedzenie, pridaj malé info
       if(p.capDetail&&p.capDetail.length){
-        const _capTooltip=p.capDetail.map(d=>d.podriadeny+' prispel '+Math.round(d.prispel)+', max povolených '+Math.round(d.limit)+' (50%)').join(' | ');
-        const _effRound=Math.round(p.effectiveGroupFJ);
-        groupFJCell+=`<br><span title="${_capTooltip}" style="font-size:9px;color:#A32D2D;cursor:help">⓵ efektívne ${_effRound}</span>`;
+        const _capTooltip=p.capDetail.map(d=>d.podriadeny+' prispel '+d.prispel.toFixed(2)+', max povolených '+d.limit.toFixed(2)+' (50%)').join(' | ');
+        groupFJCell+=`<br><span title="${_capTooltip}" style="font-size:9px;color:#A32D2D;cursor:help">⓵ efektívne ${p.effectiveGroupFJ.toFixed(2)}</span>`;
       }
     }else{
-      groupFJCell=`<span class="fj-cell fj-neutral">${p.groupFJ.toFixed(0)}</span>`;
+      groupFJCell=`<span class="fj-cell fj-neutral">${p.groupFJ.toFixed(2)}</span>`;
     }
-    html+=`<tr class="${_rowClsFinal}"><td class="eval-name-cell">${_personCell}</td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td style="font-size:11px;color:var(--gray3)">${p.manager||'–'}</td><td style="font-size:11px">${cestaCell}</td><td style="text-align:right">${fjCell(p.ownFJ,useGroupFJ?null:effFJ,'Vlastné FJ',coef<1?`zľava ${Math.round(coef*100)}%`:'')}</td><td style="text-align:right">${groupFJCell}</td><td style="text-align:right">${fjCell(p.histFJ,null,'Hist.FJ','')}</td><td style="text-align:right">${pbCell(p.pb,pbThresh)}</td><td>${_statusBadgeFinal}</td><td>${_napomCellFinal}</td><td>${_splnaFinal}</td><td>${_actionFinal}</td></tr>`;
+    html+=`<tr class="${_rowClsFinal}"><td class="eval-name-cell">${_personCell}</td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td style="font-size:11px;color:var(--gray3)">${p.manager||'–'}</td><td style="font-size:11px">${cestaCell}</td><td style="text-align:right">${fjCell(p.ownFJ,effFJ,'Vlastné FJ',coef<1?`zľava ${Math.round(coef*100)}%`:'')}</td><td style="text-align:right">${groupFJCell}</td><td style="text-align:right">${fjCell(p.histFJ,null,'Hist.FJ','')}</td><td style="text-align:right">${pbCell(p.pb,pbThresh)}</td><td>${_statusBadgeFinal}</td><td>${_napomCellFinal}</td><td>${_splnaFinal}</td><td>${_actionFinal}</td></tr>`;
   });
   html+=`</tbody></table></div><div style="display:flex;gap:16px;padding:10px 16px;font-size:11px;color:var(--gray3);flex-wrap:wrap;margin-top:8px;justify-content:center"><span><span class="fj-cell fj-ok">●</span> splnené</span><span><span class="fj-cell fj-fail">●</span> nesplnené (hover = detail)</span></div>`;
   document.getElementById('eval-main-table').innerHTML=html;
@@ -1414,7 +1423,7 @@ function renderKarieraTable(){
   groups.forEach(g=>{
     rows+=`<tr><td colspan="5" style="background:var(--gray);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray3)">${g.label}</td></tr>`;
     g.positions.forEach(pos=>{const k=KARIERA.find(x=>x.pos===pos);if(!k)return;
-      const _maintainStr=pos==='TL'?'900 FJ vlastných + 1 350 FJ skupinových + 1 PB + SC podmienky':k.maintainFJ?(k.maintainFJ+' FJ/kv'+(k.maintainGroupFJ?' + '+k.maintainGroupFJ+' FJ skup.':'')+(k.maintainPB?' + '+k.maintainPB+' PB':'')+(k.maintainSCcondition?' + SC podmienky':'')):'–';
+      const _maintainStr=pos==='TL'?'900 FJ vlastných + 1 350 FJ skupinových + 1 PB + SC podmienky':(k.maintainGroupFJ&&!k.maintainFJ)?(k.maintainGroupFJ+' FJ skupinových/kv'+(k.maintainPB?' + '+k.maintainPB+' PB':'')):k.maintainFJ?(k.maintainFJ+' FJ vlastných/kv'+(k.maintainGroupFJ?' + '+k.maintainGroupFJ+' FJ skup.':'')+(k.maintainPB?' + '+k.maintainPB+' PB':'')+(k.maintainSCcondition?' + SC podmienky':'')):'–';
       const _promoFJ=k.promoteFJ?k.promoteFJ+' FJ vlastných':'';
       const _promoGrp=k.promoteGroupFJ?k.promoteGroupFJ+' FJ skupinových':'';
       const _promoHist=k.promoteHistFJ?k.promoteHistFJ+' FJ hist.':'';
@@ -1962,7 +1971,7 @@ function openPrispevokModal(type,key,name,obdobie,sumaEur){
   document.getElementById('prispevok-status').value=stat;
   document.getElementById('prispevok-date').value=data.date||firstOfMonth();
   document.getElementById('modal-prispevok').classList.add('open');
-}
+  }
 function savePrispevok(){
   const key=window._prispevokKey;
   if(!key)return;
@@ -2358,7 +2367,7 @@ function processCrmReport(reportDate,csvText,emptyReport){
     const level=getNextFineLevel(name);
     const amount=crmFineAmountForLevel(level);
     const fineId='fine_'+reportDate+'_'+name.replace(/\s+/g,'_');
-  crmData.fines[fineId]={
+    crmData.fines[fineId]={
       id:fineId,
       person:name,
       date:reportDate,
