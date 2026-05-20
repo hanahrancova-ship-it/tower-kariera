@@ -394,402 +394,402 @@ i[class^="ti-"],i[class*=" ti-"]{font-style:normal;display:inline-flex;align-ite
   </div>
   <div class="metric-grid">
     <div class="metric-card"><div class="metric-label">Celkom ľudí</div><div class="metric-value" id="stat-total">26</div></div>
-    <!DOCTYPE html>
-<html lang="sk"><head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tower Finance – Kariérny systém</title>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --green:#3CD64E;--green-dark:#0E3318;--green-pale:#e8f8ee;
-  --black:#0E3318;--white:#ffffff;--gray:#f4f4f4;--gray2:#e8e8e8;--gray3:#999;--gray4:#555;
-  --red:#e53935;--red-pale:#ffeaea;--orange:#f57c00;--orange-pal:#fff3e0;--blue:#1565c0;--blue-pale:#e3f0ff;
-  --font-head:'Archivo',sans-serif;--font-mono:'Archivo',sans-serif;
-  --radius:10px;--shadow:0 2px 12px rgba(0,0,0,0.08);
-}
-body{font-family:var(--font-mono);background:#f7f7f5;color:var(--black);min-height:100vh}
-h1,h2,h3,h4{font-family:var(--font-head)}
-.app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
-.sidebar{background:var(--black);color:var(--white);padding:0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
-.sidebar-logo{padding:24px 16px 20px;border-bottom:1px solid #1a4128;text-align:center}
-.sidebar-logo img{display:block;width:100%;max-width:240px;height:auto;max-height:150px;object-fit:contain;margin:0 auto}
-.sidebar-logo .sub{font-size:10px;color:#7aa388;margin-top:10px;text-transform:uppercase;letter-spacing:1px;font-weight:600}
-.nav{padding:16px 0;flex:1}
-.nav-item{display:flex;align-items:center;gap:10px;padding:11px 20px;cursor:pointer;font-size:12px;color:#9ab8a4;transition:all .15s;border-left:3px solid transparent;font-family:var(--font-head);font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
-.nav-item:hover{color:var(--white);background:#15431f}
-.nav-item.active{color:var(--green);border-left-color:var(--green);background:#15431f}
-.nav-item svg{width:16px;height:16px;flex-shrink:0}
-.main{padding:32px;overflow-y:auto;min-height:100vh}
-.page{display:none}.page.active{display:block}
-/* Read-only režim (user role) - skrýva editovacie prvky */
-body.tf-readonly #page-import,
-body.tf-readonly button.btn-primary,
-body.tf-readonly button.btn-danger,
-body.tf-readonly button[onclick*="openPoziciaModal"],
-body.tf-readonly button[onclick*="quickWarn"],
-body.tf-readonly button[onclick*="editWarning"],
-body.tf-readonly button[onclick*="openBrutoModal"],
-body.tf-readonly button[onclick*="openAddWarnModal"],
-body.tf-readonly button[onclick*="openCestaModal"],
-body.tf-readonly button[onclick*="openResolveModal"],
-body.tf-readonly button[onclick*="deleteWarning"],
-body.tf-readonly button[onclick*="deleteCurrentImport"],
-body.tf-readonly button[onclick*="deletePozicia"],
-body.tf-readonly button[onclick*="runEvaluation"],
-body.tf-readonly .nav-item[onclick*="import"]{display:none !important;}
-body.tf-readonly span[onclick*="openCestaModal"]{pointer-events:none !important;cursor:default !important}
-body.tf-readonly input[type="text"],body.tf-readonly input[type="file"]{pointer-events:none;background:#f5f5f5 !important;}
-body.tf-readonly .tf-admin-only{display:none !important;}
-/* Bug report modal — user MUSÍ vedieť písať a odoslať */
-body.tf-readonly #modal-bug-report input[type="text"],
-body.tf-readonly #modal-bug-report textarea{pointer-events:auto !important;background:#fff !important;}
-body.tf-readonly #modal-bug-report button.btn-primary{display:inline-flex !important;}
-.page-header{margin-bottom:22px}
-.page-header h2{font-size:22px;font-weight:600;color:var(--black);letter-spacing:-0.3px}
-.page-header p{font-size:12px;color:var(--gray3);margin-top:4px}
-.card{background:var(--white);border-radius:10px;padding:18px 20px;box-shadow:none;border:1px solid var(--gray2)}
-.card-title{font-family:var(--font-mono);font-weight:600;font-size:14px;margin-bottom:14px;color:var(--black);letter-spacing:-0.2px}
-.upload-zone{border:2px dashed var(--gray2);border-radius:var(--radius);padding:36px;text-align:center;cursor:pointer;transition:all .2s;background:var(--gray)}
-.upload-zone:hover,.upload-zone.dragover{border-color:var(--green);background:var(--green-pale)}
-.upload-zone input{display:none}
-.upload-zone .icon{font-size:32px;margin-bottom:10px}
-.upload-zone p{font-size:13px;color:var(--gray3)}
-.upload-zone strong{color:var(--black);font-size:14px;display:block;margin-bottom:6px}
-.btn{font-family:var(--font-mono);font-weight:600;font-size:12px;padding:8px 14px;border-radius:6px;border:1px solid transparent;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
-.btn-primary{background:var(--green-dark);color:#fff;border-color:var(--green-dark)}.btn-primary:hover{background:#0a2412}
-.btn-secondary{background:#fff;color:var(--green-dark);border-color:var(--gray2)}.btn-secondary:hover{border-color:var(--gray3);background:var(--gray)}
-.btn-danger{background:var(--red);color:var(--white)}
-.btn-sm{padding:5px 12px;font-size:11px}
-.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:12px;font-size:10px;font-family:var(--font-mono);font-weight:600;white-space:nowrap}
-.badge-green{background:#EAF3DE;color:#173404}
-.badge-red{background:#FCEBEB;color:#501313}
-.badge-orange{background:#FAEEDA;color:#854F0B}
-.badge-blue{background:#E6F1FB;color:#042C53}
-.badge-gray{background:var(--gray);color:#5F5E5A}
-.table-wrap{overflow-x:auto;margin-top:8px}
-table{width:100%;border-collapse:collapse;font-size:12px}
-th{font-family:var(--font-head);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;padding:10px 12px;text-align:left;color:var(--gray3);background:var(--gray);border-bottom:2px solid var(--gray2)}
-td{padding:10px 12px;border-bottom:1px solid var(--gray2);vertical-align:middle;color:var(--black)}
-tr:hover td{background:#fafafa}
-tr.warning-row td{background:#fffbf0}
-tr.danger-row td{background:#fff5f5}
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:24px}
-.stat-card{background:var(--white);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);border:1px solid var(--gray2)}
-.stat-card .val{font-family:var(--font-head);font-size:28px;font-weight:800;color:var(--black)}
-.stat-card .lbl{font-size:11px;color:var(--gray3);margin-top:2px;text-transform:uppercase;letter-spacing:0.5px}
-.stat-card.accent-green .val{color:var(--green-dark)}
-.stat-card.accent-red .val{color:var(--red)}
-.stat-card.accent-orange .val{color:var(--orange)}
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center}
-.modal-overlay.open{display:flex}
-.modal{background:var(--white);border-radius:14px;padding:28px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.2)}
-.modal h3{font-family:var(--font-head);font-size:18px;font-weight:800;margin-bottom:18px}
-.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px}
-.form-group{margin-bottom:14px}
-.form-group label{display:block;font-size:11px;font-weight:600;font-family:var(--font-head);text-transform:uppercase;letter-spacing:0.5px;color:var(--gray4);margin-bottom:5px}
-.form-group input,.form-group select,.form-group textarea{width:100%;padding:9px 12px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:13px;color:var(--black);background:var(--white);outline:none;transition:border .15s}
-.form-group input:focus,.form-group select:focus{border-color:var(--green)}
-.toast{position:fixed;bottom:24px;right:24px;background:var(--black);color:var(--white);padding:12px 20px;border-radius:8px;font-size:13px;font-family:var(--font-head);font-weight:600;z-index:2000;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none}
-.toast.show{transform:translateY(0);opacity:1}
-.toast.success{background:var(--green-dark)}.toast.error{background:var(--red)}
-.pos{display:inline-block;padding:3px 8px;border-radius:4px;font-size:10px;font-family:var(--font-mono);font-weight:600;background:#E6F1FB;color:#042C53;text-transform:none;letter-spacing:0}
-.pos-md,.pos-sd,.pos-p,.pos-sm,.pos-em,.pos-tl,.pos-sc,.pos-c,.pos-tr,.pos-vip{background:#E6F1FB;color:#042C53}
-.warn-timeline{display:flex;flex-direction:column;gap:12px}
-.warn-item{background:var(--white);border-radius:8px;padding:14px 16px;border:1px solid var(--gray2);border-left:4px solid var(--orange)}
-.warn-item.active-warn{border-left-color:var(--red)}.warn-item.resolved{border-left-color:var(--green);opacity:0.7}
-.warn-item .person{font-family:var(--font-head);font-weight:700;font-size:14px}
-.warn-item .meta{font-size:11px;color:var(--gray3);margin-top:3px}
-.warn-item .actions{margin-top:10px;display:flex;gap:8px}
-.tabs{display:flex;gap:0;margin-bottom:20px;border-bottom:2px solid var(--gray2)}
-.tab{padding:10px 18px;cursor:pointer;font-family:var(--font-head);font-weight:700;font-size:13px;color:var(--gray3);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
-.tab.active{color:var(--green);border-bottom-color:var(--green)}
-.search-bar{display:flex;gap:10px;margin-bottom:16px;align-items:center}
-.search-bar input{flex:1;padding:8px 12px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:13px}
-.search-bar select{padding:8px 12px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:12px}
-.empty{text-align:center;padding:40px;color:var(--gray3);font-size:13px}
-.prispevky-table{width:100%;border-collapse:collapse;font-size:12px;font-family:var(--font-mono);background:#fff;border-radius:10px;overflow:hidden}
-.prispevky-table thead tr{background:#FAFAFA;border-bottom:1px solid var(--gray2)}
-.prispevky-table th{padding:11px 12px;text-align:center;font-weight:600;font-size:10px;color:var(--gray3);text-transform:uppercase;letter-spacing:0.5px}
-.prispevky-table td{padding:10px 8px;text-align:center;border-bottom:1px solid #F4F4F4;vertical-align:middle}
-.prispevky-table tbody tr:hover{background:#fafbfa}
-.prispevky-table tbody tr:last-child td{border-bottom:none}
-.cell-person{text-align:left !important;font-weight:600 !important;color:var(--black);padding-left:14px !important;background:#fff !important;border-left:none !important}
-.prispevok-cell{cursor:pointer;transition:transform 0.1s;line-height:1.3}
-.prispevok-cell:hover{transform:scale(1.04);box-shadow:0 2px 6px rgba(0,0,0,0.12)}
-.cell-empty{background:#fff;color:var(--gray3)}
-.cell-green{background:#d4f4dd;color:#0e6b27;font-weight:600}
-.cell-red{background:#ffd6d6;color:#a01010;font-weight:600}
-.cell-info{background:#eef5ff;color:#0d4b8c;font-weight:500}
-.cell-info-green{background:#e8f8ee;color:#0e6b27;font-weight:500}
-.cell-q-blue{background:#e3f2fd;color:#1565c0;font-weight:500}
-.cell-q-blue.cell-green{background:#c8e6c9;color:#0e6b27}
-.cell-q-blue.cell-red{background:#ffcdd2;color:#a01010}
-.prispevok-cell .cell-sum{font-size:13px;font-weight:700;display:block;line-height:1.2}
-.prispevok-cell .cell-meta{font-size:9px;display:block;line-height:1.1;margin-top:2px;opacity:0.9}
-body.tf-readonly .prispevok-cell{cursor:default}
-body.tf-readonly .prispevok-cell:hover{transform:none;box-shadow:none}
-.empty .big{font-size:32px;margin-bottom:8px}
-.fj-cell{display:inline-flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:12px;font-weight:500}
-.fj-ok{color:var(--green-dark)}.fj-fail{color:#C0392B;font-weight:600}.fj-neutral{color:var(--gray4)}
-.tip-wrap{position:relative;display:inline-flex;align-items:center}
-.tip-icon{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:var(--red);color:#fff;font-size:9px;font-weight:700;cursor:pointer;margin-left:3px;font-family:var(--font-head)}
-.tip-icon:hover+.tip-box{display:block}
-.tip-box{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--black);color:#fff;font-size:11px;padding:8px 12px;border-radius:6px;white-space:nowrap;z-index:100;font-family:var(--font-mono);line-height:1.6;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,0.2)}
-.tip-box::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--black)}
-#eval-main-table table{font-size:11px}
-#eval-main-table th{position:sticky;top:0;z-index:5;background:var(--gray);padding:8px 6px;font-size:10px}
-#eval-main-table td{padding:8px 6px}
-.eval-name-cell{min-width:140px}
-.eval-row-fail td{background:#fff8f8}.eval-row-warn td{background:#fffbf0}
-.eval-row-ok td{background:#fff}.eval-row-promo td{background:#f0fbff}
-/* Farby riadkov vo vyhodnotení:
-   - eval-row-warn = AKTÍVNE napomenutie (výraznejšie, červenkasté + ľavý okraj)
-   - eval-row-fail = nesplnené bez napomenutia (tlmené, skoro biele)
-   - eval-row-danger = napomenutý 3 mesiace (najvýraznejšie - treba znížiť) */
-#eval-main-table .eval-row-fail td{background:#FFFDFD !important}
-#eval-main-table .eval-row-warn td{background:#FDEEEE !important}
-#eval-main-table .eval-row-warn td:first-child{box-shadow:inset 3px 0 0 #E24B4A}
-#eval-main-table .eval-row-danger td{background:#FBDADA !important}
-#eval-main-table .eval-row-danger td:first-child{box-shadow:inset 4px 0 0 #C0392B}
-#eval-main-table .eval-row-promo td{background:#F8FCFF !important}
-#eval-main-table .eval-row-ok td{background:#fff !important}
-#eval-main-table tbody tr.pos-spacer{background:#FAFAFA !important}
-#eval-main-table tbody tr.pos-spacer td{background:#FAFAFA !important;color:#d8d8d8 !important;text-align:center;border-bottom:1px solid var(--gray2) !important}
-#eval-main-table tbody tr.pos-spacer:hover{background:#FAFAFA !important}
-#eval-main-table tbody tr.pos-spacer:hover td{background:#FAFAFA !important}
-#bug-report-btn:hover{background:var(--gray);border-color:var(--gray3);transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,0.12)}
-.napom-dot{display:inline-flex;gap:3px;margin-left:4px;vertical-align:middle}
-.napom-m{width:10px;height:10px;border-radius:50%;display:inline-block}
-.napom-m.used{background:var(--red)}.napom-m.free{background:var(--gray2);border:1px solid #ccc}
-.napom-m.half{background:linear-gradient(to right,var(--red) 50%,var(--gray2) 50%);border:1px solid #ccc}
-.import-month-item{padding:10px 14px;cursor:pointer;border-radius:8px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;border:1px solid var(--gray2);background:var(--white);transition:all .15s}
-.import-month-item:hover{border-color:var(--green);background:var(--green-pale)}
-.import-month-item.active{border-color:var(--green);background:var(--green-pale)}
-.import-month-item .month-name{font-family:var(--font-head);font-weight:700;font-size:13px}
-.import-month-item .month-count{font-size:11px;color:var(--gray3)}
-
-/* ============= NOVÝ DIZAJN SYSTÉM ============= */
-/* Page header */
-.page-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px;padding:0 4px;flex-wrap:wrap;gap:12px}
-.page-head h2{font-size:20px;font-weight:600;color:var(--black);margin:0}
-.page-head .page-sub{font-size:12px;color:var(--gray3);margin-top:4px}
-
-/* Period switcher (mesiac/polrok šípky) */
-.period-switch{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;font-family:var(--font-mono)}
-.period-switch button{padding:5px 10px;background:#fff;border:1px solid var(--gray2);border-radius:6px;cursor:pointer;color:var(--black);display:inline-flex;align-items:center;justify-content:center;transition:all .15s}
-.period-switch button:hover{background:var(--gray);border-color:var(--gray3)}
-.period-switch .label{min-width:110px;text-align:center;color:var(--black)}
-
-/* Metric karty */
-.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:18px}
-.metric-card{background:var(--gray);border-radius:10px;padding:14px 16px}
-.metric-card .metric-label{font-size:10px;color:var(--gray3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;font-weight:600}
-.metric-card .metric-value{font-size:22px;font-weight:600;color:var(--black);font-family:var(--font-mono)}
-.metric-card.metric-success{background:#EAF3DE}
-.metric-card.metric-success .metric-label,.metric-card.metric-success .metric-value{color:#173404}
-.metric-card.metric-danger{background:#FCEBEB}
-.metric-card.metric-danger .metric-label,.metric-card.metric-danger .metric-value{color:#501313}
-.metric-card.metric-info{background:#E6F1FB}
-.metric-card.metric-info .metric-label,.metric-card.metric-info .metric-value{color:#042C53}
-
-/* Action bar (pred tabuľkou) */
-.action-bar{display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
-.action-bar .search-wrap{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--gray3)}
-.action-bar .search-wrap input{padding:7px 12px;border:1px solid var(--gray2);border-radius:6px;font-size:12px;width:180px;font-family:var(--font-mono);background:#fff}
-.action-bar .search-wrap input:focus{outline:none;border-color:var(--green-dark);box-shadow:0 0 0 3px rgba(14,51,24,0.08)}
-
-/* Nové btn štýly */
-.btn-new{padding:8px 14px;font-size:12px;font-weight:600;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);border:1px solid transparent;transition:all .15s}
-.btn-new.btn-new-primary{background:var(--green-dark);color:#fff;border-color:var(--green-dark)}
-.btn-new.btn-new-primary:hover{background:#0a2412}
-.btn-new.btn-new-secondary{background:#fff;color:var(--green-dark);border-color:var(--gray2)}
-.btn-new.btn-new-secondary:hover{border-color:var(--gray3);background:var(--gray)}
-.btn-new.btn-new-danger{background:#FCEBEB;color:#A32D2D;border-color:#F7C1C1}
-.btn-new.btn-new-danger:hover{background:#F7C1C1}
-.btn-new.btn-new-dashed{background:#fff;color:var(--green-dark);border:1px dashed var(--green-dark)}
-.btn-new.btn-new-dashed:hover{background:var(--green-pale)}
-.btn-new i{font-size:14px}
-
-/* Nový dizajn tabuľky */
-.tbl-wrap{background:#fff;border:1px solid var(--gray2);border-radius:10px;overflow:hidden;margin-bottom:14px}
-.tbl-wrap-scroll{overflow-x:auto}
-.tbl-new{width:100%;border-collapse:collapse;font-size:12px;font-family:var(--font-mono);background:#fff}
-.tbl-new thead tr{background:#FAFAFA;border-bottom:1px solid var(--gray2)}
-.tbl-new th{padding:11px 12px;text-align:center;font-weight:600;font-size:10px;color:var(--gray3);text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap}
-.tbl-new th.th-left{text-align:left}
-.tbl-new tbody tr{border-bottom:1px solid #F4F4F4;transition:background .12s}
-.tbl-new tbody tr:hover{background:#fafbfa}
-.tbl-new tbody tr:last-child{border-bottom:none}
-.tbl-new tbody tr.row-success{background:#FBFEFA}
-.tbl-new tbody tr.row-warn{background:#FFFBFA}
-.tbl-new tbody tr.row-warn:hover,.tbl-new tbody tr.row-success:hover{background:#f8fcf6}
-.tbl-new td{padding:12px 12px;text-align:center;color:var(--gray4);vertical-align:middle}
-.tbl-new td.td-left{text-align:left}
-.tbl-new td.td-num{font-weight:600;color:var(--black);font-family:var(--font-mono)}
-.tbl-new td.td-num.td-warn{color:#A32D2D}
-.tbl-new td.td-num.td-success{color:#173404}
-
-/* Person s avatarom */
-.person-cell{display:flex;align-items:center;gap:10px;text-align:left}
-.avatar{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;font-family:var(--font-mono);flex-shrink:0}
-.avatar-default{background:var(--gray);color:var(--gray4)}
-.avatar-success{background:#EAF3DE;color:#173404}
-.avatar-warn{background:#FCEBEB;color:#501313}
-.avatar-info{background:#E6F1FB;color:#042C53}
-.person-name{font-weight:600;color:var(--black)}
-.person-sub{font-size:10px;color:var(--gray3);margin-top:1px}
-
-/* Badges (nové, oddelené od pôvodných .badge) */
-.badge-new{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;font-family:var(--font-mono);white-space:nowrap}
-.badge-new.badge-pill{border-radius:12px;padding:4px 10px}
-.badge-new.bg-pos{background:#E6F1FB;color:#042C53}
-.badge-new.bg-neutral{background:var(--gray);color:#5F5E5A}
-.badge-new.bg-success{background:#EAF3DE;color:#173404}
-.badge-new.bg-warn{background:#FAEEDA;color:#854F0B}
-.badge-new.bg-danger{background:#FCEBEB;color:#501313}
-.badge-new.bg-info{background:#E6F1FB;color:#042C53}
-
-/* Akcia menu (3 bodky) */
-.action-menu-wrap{position:relative;display:inline-block}
-.action-menu-btn{background:transparent;border:none;cursor:pointer;color:var(--gray3);padding:4px 6px;border-radius:4px;transition:all .12s}
-.action-menu-btn:hover{background:var(--gray);color:var(--black)}
-.action-menu-btn i{font-size:16px}
-.action-menu{position:absolute;right:0;top:100%;background:#fff;border:1px solid var(--gray2);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.12);min-width:170px;z-index:100;overflow:hidden;display:none}
-.action-menu.open{display:block}
-.action-menu-item{display:flex;align-items:center;gap:8px;padding:9px 14px;font-size:12px;color:var(--black);cursor:pointer;font-family:var(--font-mono);background:#fff;border:none;width:100%;text-align:left;transition:background .12s}
-.action-menu-item:hover{background:var(--gray)}
-.action-menu-item.menu-danger{color:#A32D2D}
-.action-menu-item.menu-danger:hover{background:#FCEBEB}
-.action-menu-item i{font-size:14px}
-
-/* Footer pod tabuľkou */
-.tbl-footer{text-align:center;font-size:11px;color:var(--gray3);margin-top:10px;padding:4px}
-.tbl-footer a{color:var(--green-dark);text-decoration:underline}
-
-/* CRM karty */
-.crm-card{display:grid;grid-template-columns:1fr auto auto;gap:16px;align-items:center;padding:14px 18px;background:#fff;border:1px solid var(--gray2);border-radius:10px;margin-bottom:8px;transition:all .12s}
-.crm-card.crm-unpaid{border-color:#F7C1C1;border-left:4px solid #E24B4A}
-.crm-card.crm-paid{background:#FAFAFA;border-color:#E8E8E8;grid-template-columns:1fr auto}
-.crm-card .crm-name{font-size:14px;font-weight:600;color:var(--black)}
-.crm-card.crm-paid .crm-name{font-size:13px;color:var(--gray4);font-weight:500}
-.crm-card .crm-sub{font-size:11px;color:var(--gray3);margin-top:2px}
-.crm-card .crm-amount{font-size:18px;font-weight:600;color:#A32D2D;font-family:var(--font-mono)}
-
-/* Status banner */
-.status-banner{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:12px}
-.status-banner i{font-size:16px;flex-shrink:0}
-.status-banner-success{background:#EAF3DE;color:#173404}
-.status-banner-warn{background:#FAEEDA;color:#854F0B}
-.status-banner-danger{background:#FCEBEB;color:#501313}
-
-/* Vylepšenia eval tabuľky */
-#eval-main-table table{font-size:12px;border-collapse:collapse;background:#fff;width:100%}
-#eval-main-table thead tr{background:#FAFAFA;border-bottom:1px solid var(--gray2)}
-#eval-main-table th{font-weight:600;font-size:10px;color:var(--gray3);text-transform:uppercase;letter-spacing:0.5px;padding:11px 8px;background:#FAFAFA}
-#eval-main-table td{padding:11px 8px;border-bottom:1px solid #F4F4F4}
-#eval-main-table tbody tr:hover{background:#fafbfa}
-#eval-main-table tbody tr.eval-row-fail{background:#FFFBFA}
-#eval-main-table tbody tr.eval-row-warn{background:#FFFBFA}
-#eval-main-table tbody tr.eval-row-promo{background:#F6FBFF}
-#eval-main-table .table-wrap{background:#fff;border:1px solid var(--gray2);border-radius:10px;overflow:hidden}
-#eval-main-table table{border-radius:10px;overflow:hidden}
-
-/* Avatary pre eval-name-cell */
-.eval-name-cell{min-width:160px}
-.eval-name-cell .name-wrap{display:flex;align-items:center;gap:10px}
-.eval-name-cell .avatar{width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;font-family:var(--font-mono);flex-shrink:0;background:var(--gray);color:var(--gray4)}
-.eval-name-cell .avatar.av-success{background:#EAF3DE;color:#173404}
-.eval-name-cell .avatar.av-warn{background:#FCEBEB;color:#501313}
-.eval-name-cell .avatar.av-info{background:#E6F1FB;color:#042C53}
-.eval-name-cell .name-text{font-weight:600;color:var(--black);font-size:12px}
-
-/* Vylepšené tlačidlá (existujúce .btn) */
-.btn-sm{padding:5px 10px;font-size:11px;border-radius:5px;font-weight:600}
-.btn-danger{background:#FCEBEB;color:#A32D2D;border:1px solid #F7C1C1}
-.btn-danger:hover{background:#F7C1C1}
-
-/* Tabler ikony fallback - ak by sa nenačítala CDN, neukáže nič ale neflashne raw text */
-i[class^="ti-"],i[class*=" ti-"]{font-style:normal;display:inline-flex;align-items:center}
-
-</style>
-</head>
-<body>
-<div class="app">
-<aside class="sidebar">
-  <div class="sidebar-logo">
-    <img src="5_TF_2025_rgb.png" alt="Tower Finance">
-    <div class="sub">Kariérny systém</div>
+    <div class="metric-card metric-success"><div class="metric-label">Spĺňajú štatút</div><div class="metric-value" id="stat-ok">14</div></div>
+    <div class="metric-card metric-danger"><div class="metric-label">Aktívne napomenutia</div><div class="metric-value" id="stat-warn">1</div></div>
+    <div class="metric-card metric-info"><div class="metric-label">Môžu byť povýšení</div><div class="metric-value" id="stat-promo">0</div></div>
   </div>
-  <nav class="nav">
-    <div class="nav-item active" onclick="showPage('vyhodnotenie',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>Vyhodnotenie
-    </div>
-    <div class="nav-item" onclick="showPage('import',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>Import dát
-    </div>
-    <div class="nav-item" onclick="showPage('napomenutia',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>Evidencia
-    </div>
-    <div class="nav-item" onclick="showPage('kariera',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>Kariéra
-    </div>
-    <div class="nav-item" onclick="showPage('platby',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>Platby
-    </div>
-    <div class="nav-item tf-admin-only" onclick="showPage('bugy',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="6"></circle><path d="M12 7v6m-3-6v-2a3 3 0 0 1 6 0v2M3 13h3m12 0h3M5 19l3-2m11 2l-3-2M5 7l3 2m11-2l-3 2"></path></svg>Nahlásené chyby
-    </div>
-  </nav>
-</aside>
-<main class="main">
-
-<div class="page" id="page-import">
-  <div class="page-header"><h2>Import dát</h2><p>Nahrajte mesačný Excel export s FJ spolupracovníkov</p></div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
-    <div class="card">
-      <div class="card-title">Nahrať mesačný export</div>
-      <div class="form-group">
-        <label>Mesiac importu</label>
-        <input type="month" id="import-yearmonth" style="width:100%;padding:9px 12px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:13px">
-      </div>
-      <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
-        <input type="file" id="file-input" accept=".xlsx,.xls,.csv" onchange="handleFile(this.files[0])">
-        <div class="icon">📊</div>
-        <strong>Kliknite alebo pretiahnite súbor sem</strong>
-        <p>.xlsx, .xls, .csv</p>
-      </div>
-      <div id="import-status" style="margin-top:14px;display:none"></div>
-    </div>
-    <div class="card">
-      <div class="card-title">História importov</div>
-      <p style="font-size:12px;color:var(--gray3);margin-bottom:12px">Vyhodnotenie vždy počíta plávajúci kvartál = posledné 3 mesiace (súčet FJ).</p>
-      <div id="import-selector"><div class="import-month-item active" onclick="loadImport('2026-04')"><span class="month-name">Apríl 2026</span><span class="month-count">26 ľudí</span></div><div class="import-month-item " onclick="loadImport('2026-03')"><span class="month-name">Marec 2026</span><span class="month-count">26 ľudí</span></div><div class="import-month-item " onclick="loadImport('2026-02')"><span class="month-name">Február 2026</span><span class="month-count">26 ľudí</span></div><div class="import-month-item " onclick="loadImport('2026-01')"><span class="month-name">Január 2026</span><span class="month-count">26 ľudí</span></div></div>
-      <div style="margin-top:12px"><button class="btn btn-sm btn-danger" onclick="deleteCurrentImport()">Odstrániť vybraný mesiac</button></div>
+  <div class="action-bar">
+    <button class="btn-new btn-new-primary" onclick="runEvaluation()">▶ Spustiť vyhodnotenie</button>
+    <button class="btn-new btn-new-secondary" onclick="exportReport()">⬇ Exportovať CSV</button>
+    <div class="search-wrap">
+      🔍
+      <input type="text" id="eval-search" placeholder="Hľadať..." oninput="renderEvaluation()">
+      <select id="eval-filter-pos" onchange="renderEvaluation()" style="padding:7px 10px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:12px;background:#fff">
+        <option value="">Všetky pozície</option>
+        <option>MD</option><option>SD</option><option>SM</option><option>EM</option>
+        <option>TL</option><option>SC</option><option>C</option><option>TR</option>
+        <option>VIP I</option><option>VIP II</option><option>VIP III</option>
+      </select>
+      <select id="eval-filter-cesta" onchange="renderEvaluation()" style="padding:7px 10px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:12px;background:#fff">
+        <option value="">Všetky cesty</option>
+        <option value="manazerska">Manažérska</option>
+        <option value="obchodna">Obchodná</option>
+      </select>
+      <select id="eval-filter-status" onchange="renderEvaluation()" style="padding:7px 10px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:12px;background:#fff">
+        <option value="">Všetci</option>
+        <option value="ok">Len OK</option>
+        <option value="fail">Len nesplnené</option>
+        <option value="promo">Môžu byť povýšení</option>
+      </select>
     </div>
   </div>
-  <div class="card">
-    <div class="card-title">Očakávaný formát stĺpcov</div>
-    <div class="table-wrap"><table><thead><tr><th>Stĺpec</th><th>Popis</th><th>Príklad</th></tr></thead><tbody>
-      <tr><td><code>meno sprostredkovateľa</code></td><td>Meno a priezvisko</td><td>Ondrej Broska</td></tr>
-      <tr><td><code>Pozícia</code></td><td>Aktuálna pozícia</td><td>MD, SM, EM, TL, SC, C, TR, VIP I-IV</td></tr>
-      <tr><td><code>Manažér</code></td><td>Priamy nadriadený</td><td>Erik Lehocký</td></tr>
-      <tr><td><code>Vlastné: Body</code></td><td>FJ vlastná produkcia za mesiac</td><td>823.84</td></tr>
-      <tr><td><code>Skupinové: Body</code></td><td>FJ skupiny za mesiac</td><td>13903.27</td></tr>
-      <tr><td><code>Historické: Body</code></td><td>Kumulatívne historické FJ</td><td>516.26</td></tr>
-    </tbody></table></div>
+  <div id="eval-alerts" style="margin-bottom:14px"><div class="status-banner status-banner-success" style="background:var(--blue-pale);color:#0d4b8c">📅<span>Plávajúci kvartál: <strong>Február 2026 – Apríl 2026</strong> · FJ = súčet za 3 mesiace</span></div><div class="tf-admin-only status-banner status-banner-warn">⚠<span><strong>Trainee → C: manuálna kontrola BRUTTO FJ</strong> (Denisa Véghová, JUDr. Zuzana Hujsiová)</span></div></div>
+  <div id="eval-main-table"></div>
+</div>
+<div class="page" id="page-napomenutia">
+  <div class="page-header"><h2>Evidencia</h2><p>Povýšenia, zníženia, napomenutia, mesačné vyhodnotenie</p></div>
+  <div class="tabs" id="ev-tabs">
+    <div class="tab active" onclick="switchEvidenciaTab('povysenia',this)">Povýšenia</div>
+    <div class="tab" onclick="switchEvidenciaTab('znizenia',this)">Zníženia</div>
+    <div class="tab" onclick="switchEvidenciaTab('napomenutia',this)">Napomenutia</div>
+    <div class="tab" onclick="switchEvidenciaTab('mesiac',this)">Vyhodnotenie mesiaca</div>
+  </div>
+  <div id="ev-tab-povysenia"><div id="ev-povysenia"><div class="empty"><div class="big">📈</div>Žiadne povýšenia.</div></div></div>
+  <div id="ev-tab-znizenia" style="display:none"><div id="ev-znizenia"><div class="empty"><div class="big">📉</div>Žiadne zníženia.</div></div></div>
+  <div id="ev-tab-napomenutia" style="display:none">
+    <div style="margin:16px 0"><button class="btn btn-primary" onclick="openAddWarnModal()">+ Pridť napomenutie</button></div>
+    <div id="ev-napomenutia"><div class="table-wrap"><table><thead><tr><th>Meno</th><th>Dátum</th><th>Poz.</th><th>Za čo</th><th>Zrušené k</th><th>Poznámka</th><th></th></tr></thead><tbody><tr class="eval-row-warn"><td><strong>Ing. Bibiana Gallová</strong></td><td>k 1. apríl 2026</td><td>–</td><td>Nesplnenie PB</td><td>–<br><button class="btn btn-sm btn-secondary" style="font-size:10px" onclick="openResolveModal('Ing. Bibiana Gallová')">Zrušiť</button></td><td><input type="text" value="" onchange="saveEvPoznamka('nap_1778441124340',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-size:11px;background:transparent"></td><td><button class="btn btn-sm btn-danger" onclick="deleteWarning('1778441124340')">✕</button></td></tr><tr class=""><td><strong>Ondrej Broska</strong></td><td>k 1. apríl 2026</td><td>–</td><td>Nesplnenie FJ</td><td>2026-05-10</td><td><input type="text" value="" onchange="saveEvPoznamka('nap_1778408118548',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-size:11px;background:transparent"></td><td><button class="btn btn-sm btn-danger" onclick="deleteWarning('1778408118548')">✕</button></td></tr></tbody></table></div></div>
+  </div>
+  <div id="ev-tab-mesiac" style="display:none"><div id="ev-mesiac"><div class="table-wrap"><table><thead><tr><th>Mesiac</th><th>Meno vítąza</th><th style="text-align:right">Vlastné FJ</th></tr></thead><tbody><tr><td>Apríl 2026</td><td><strong>Mgr. Kristína Mikulovská</strong> <span class="pos pos-tl">TL</span></td><td style="text-align:right">1088 FJ</td></tr><tr><td>Marec 2026</td><td><strong>Andrej Nejedlík</strong> <span class="pos pos-vip">VIP IV</span></td><td style="text-align:right">2059 FJ</td></tr><tr><td>Február 2026</td><td><strong>Dominik Lehocký</strong> <span class="pos pos-em">EM</span></td><td style="text-align:right">1140 FJ</td></tr><tr><td>Január 2026</td><td><strong>Mgr. Kristína Mikulovská</strong> <span class="pos pos-tl">TL</span></td><td style="text-align:right">986 FJ</td></tr></tbody></table></div></div></div>
+</div>
+<div class="page" id="page-kariera">
+  <div class="page-header"><h2>Kariérna tabuľka</h2><p>Podmienky udržania štatútu a povýšenia</p></div>
+  <div class="card"><div class="table-wrap">
+    <table><thead><tr><th>Pozícia</th><th>Sadzba</th><th>Udržanie štatútu</th><th>Podmienky povýšenia</th><th>Poznámka</th></tr></thead>
+    <tbody id="kariera-table-body"><tr><td colspan="5" style="background:var(--gray);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray3)">Spoločné</td></tr><tr><td><span class="pos pos-tr">TR</span> <span style="font-size:11px;color:var(--gray3)">Trainee</span></td><td>3€/FJ</td><td style="font-size:11px">–</td><td style="font-size:11px">–</td><td><input type="text" value="Úspešné absolvovanie CC" onchange="savePoznamka('TR',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-c">C</span> <span style="font-size:11px;color:var(--gray3)">Consultant</span></td><td>4€/FJ</td><td style="font-size:11px">450 FJ/kv</td><td style="font-size:11px">400 FJ vlastných</td><td><input type="text" value="400 FJ BRUTTO hist." onchange="savePoznamka('C',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-sc">SC</span> <span style="font-size:11px;color:var(--gray3)">Senior Consultant</span></td><td>5€/FJ</td><td style="font-size:11px">900 FJ/kv</td><td style="font-size:11px">900 FJ vlastných + 1500 FJ hist.</td><td><input type="text" value="900 FJ/kv + 1 500 FJ hist." onchange="savePoznamka('SC',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td colspan="5" style="background:var(--gray);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray3)">Manažérska cesta</td></tr><tr><td><span class="pos pos-tl">TL</span> <span style="font-size:11px;color:var(--gray3)">Team Leader</span></td><td>5.5€/FJ</td><td style="font-size:11px">900 FJ vlastných + 1 350 FJ skupinových + 1 PB + SC podmienky</td><td style="font-size:11px">900 FJ vlastných + 1350 FJ skupinových + 1 PB</td><td><input type="text" value="Spln. SC + 900 FJ vlastnych + 1 350 FJ skup. + 1 PB" onchange="savePoznamka('TL',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-em">EM</span> <span style="font-size:11px;color:var(--gray3)">Executive Manager</span></td><td>6€/FJ</td><td style="font-size:11px">3150 FJ/kv + 3 PB</td><td style="font-size:11px">3150 FJ vlastných + 3 PB</td><td><input type="text" value="Spln. SC + 3 150 FJ/kv + 3 PB" onchange="savePoznamka('EM',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-sm">SM</span> <span style="font-size:11px;color:var(--gray3)">Senior Manager</span></td><td>6.5€/FJ</td><td style="font-size:11px">6300 FJ/kv + 6 PB</td><td style="font-size:11px">6300 FJ vlastných + 6 PB</td><td><input type="text" value="6 300 FJ/kv + 6 PB" onchange="savePoznamka('SM',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-md">MD</span> <span style="font-size:11px;color:var(--gray3)">Managing Director</span></td><td>7€/FJ</td><td style="font-size:11px">11700 FJ/kv + 12 PB</td><td style="font-size:11px">11700 FJ vlastných + 12 PB</td><td><input type="text" value="11 700 FJ/kv + 12 PB" onchange="savePoznamka('MD',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-md">SD</span> <span style="font-size:11px;color:var(--gray3)">Senior Director</span></td><td>7.5€/FJ</td><td style="font-size:11px">22500 FJ/kv + 24 PB</td><td style="font-size:11px">22500 FJ vlastných + 24 PB</td><td><input type="text" value="22 500 FJ/kv + 24 PB" onchange="savePoznamka('SD',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-md">P</span> <span style="font-size:11px;color:var(--gray3)">Partner</span></td><td>8€/FJ</td><td style="font-size:11px">43200 FJ/kv + 48 PB</td><td style="font-size:11px">43200 FJ vlastných + 48 PB</td><td><input type="text" value="43 200 FJ/kv + 48 PB" onchange="savePoznamka('P',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td colspan="5" style="background:var(--gray);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray3)">Obchodná cesta (VIP)</td></tr><tr><td><span class="pos pos-vip">VIP I</span> <span style="font-size:11px;color:var(--gray3)">VIP Consultant I.</span></td><td>5.5€/FJ</td><td style="font-size:11px">1800 FJ/kv</td><td style="font-size:11px">1800 FJ vlastných + 6000 FJ hist.</td><td><input type="text" value="1 800 FJ/kv + 6 000 FJ hist." onchange="savePoznamka('VIP I',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-vip">VIP II</span> <span style="font-size:11px;color:var(--gray3)">VIP Consultant II.</span></td><td>6€/FJ</td><td style="font-size:11px">2100 FJ/kv</td><td style="font-size:11px">2100 FJ vlastných + 6000 FJ hist.</td><td><input type="text" value="2 100 FJ/kv + 6 000 FJ hist." onchange="savePoznamka('VIP II',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-vip">VIP III</span> <span style="font-size:11px;color:var(--gray3)">VIP Consultant III.</span></td><td>6.5€/FJ</td><td style="font-size:11px">2400 FJ/kv</td><td style="font-size:11px">2400 FJ vlastných + 6000 FJ hist.</td><td><input type="text" value="2 400 FJ/kv + 6 000 FJ hist." onchange="savePoznamka('VIP III',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-vip">VIP IV</span> <span style="font-size:11px;color:var(--gray3)">VIP Consultant IV.</span></td><td>7€/FJ</td><td style="font-size:11px">2700 FJ/kv</td><td style="font-size:11px">2700 FJ vlastných + 6000 FJ hist.</td><td><input type="text" value="2 700 FJ/kv + 6 000 FJ hist." onchange="savePoznamka('VIP IV',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr class="tf-admin-only"><td colspan="5" style="background:#fff3e0;font-size:11px;color:var(--orange);padding:10px 12px"><strong>Historické zľavy (len udržanie):</strong> ≥18 000 FJ→ochrana (neklesne pod SC) · ≥24 000 FJ→80% štatútu · ≥36 000 FJ→60% štatútu</td></tr></tbody></table>
+  </div></div>
+  <div class="card" style="margin-top:16px;padding:16px 20px">
+    <h3 style="margin:0 0 12px 0;font-family:var(--font-head);color:var(--green-dark)">Počet PB za jednotlivé pozície</h3>
+    <p style="font-size:12px;color:var(--gray3);margin-bottom:14px">Hodnota podriadeného pre PB nadriadeného</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--gray);border-radius:6px"><span class="pos pos-tr">TR</span><span style="font-size:12px;color:var(--gray3);flex:1">Trainee</span><strong style="color:var(--green-dark);font-family:var(--font-mono)">0 PB</strong></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--gray);border-radius:6px"><span class="pos pos-c">C</span><span style="font-size:12px;color:var(--gray3);flex:1">Consultant</span><strong style="color:var(--green-dark);font-family:var(--font-mono)">1 PB</strong></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--gray);border-radius:6px"><span class="pos pos-sc">SC</span><span style="font-size:12px;color:var(--gray3);flex:1">Senior Consultant</span><strong style="color:var(--green-dark);font-family:var(--font-mono)">1 PB</strong></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--gray);border-radius:6px"><span class="pos pos-tl">TL</span><span style="font-size:12px;color:var(--gray3);flex:1">Team Leader</span><strong style="color:var(--green-dark);font-family:var(--font-mono)">2 PB</strong></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--gray);border-radius:6px"><span class="pos pos-em">EM</span><span style="font-size:12px;color:var(--gray3);flex:1">Executive Manager</span><strong style="color:var(--green-dark);font-family:var(--font-mono)">3 PB</strong></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--gray);border-radius:6px"><span class="pos pos-sm">SM</span><span style="font-size:12px;color:var(--gray3);flex:1">Senior Manager</span><strong style="color:var(--green-dark);font-family:var(--font-mono)">6 PB</strong></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--gray);border-radius:6px"><span class="pos pos-md">MD</span><span style="font-size:12px;color:var(--gray3);flex:1">Managing Director</span><strong style="color:var(--green-dark);font-family:var(--font-mono)">12 PB</strong></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--gray);border-radius:6px"><span class="pos pos-md">SD</span><span style="font-size:12px;color:var(--gray3);flex:1">Senior Director</span><strong style="color:var(--green-dark);font-family:var(--font-mono)">24 PB</strong></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--gray);border-radius:6px"><span class="pos pos-md">P</span><span style="font-size:12px;color:var(--gray3);flex:1">Partner</span><strong style="color:var(--green-dark);font-family:var(--font-mono)">48 PB</strong></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--gray);border-radius:6px"><span class="pos pos-vip">VIP I</span><span style="font-size:12px;color:var(--gray3);flex:1">VIP Consultant I.</span><strong style="color:var(--green-dark);font-family:var(--font-mono)">1 PB</strong></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--gray);border-radius:6px"><span class="pos pos-vip">VIP II</span><span style="font-size:12px;color:var(--gray3);flex:1">VIP Consultant II.</span><strong style="color:var(--green-dark);font-family:var(--font-mono)">1 PB</strong></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--gray);border-radius:6px"><span class="pos pos-vip">VIP III</span><span style="font-size:12px;color:var(--gray3);flex:1">VIP Consultant III.</span><strong style="color:var(--green-dark);font-family:var(--font-mono)">1 PB</strong></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--gray);border-radius:6px"><span class="pos pos-vip">VIP IV</span><span style="font-size:12px;color:var(--gray3);flex:1">VIP Consultant IV.</span><strong style="color:var(--green-dark);font-family:var(--font-mono)">1 PB</strong></div>
+    </div>
   </div>
 </div>
-<div class="page active" id="page-vyhodnotenie">
-  <div class="page-head">
-    <div>
-      <h2>Vyhodnotenie</h2>
-      <div class="page-sub" id="dash-period">Plávajúci kvartál: Február 2026 – Apríl 2026 (3 mes.) · 26 ľudí</div>
+
+<div class="page" id="page-platby">
+  <div class="page-header">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap">
+      <div><h2>Platby</h2><p>Mesačné platby · Kvartálne faktúry · Servis · CRM</p></div>
     </div>
   </div>
-  <div class="metric-grid">
-    <div class="metric-card"><div class="metric-label">Celkom ľudí</div><div class="metric-value" id="stat-total">26</div></div>
+  <div class="tabs" id="platby-tabs" style="margin-bottom:18px">
+    <div class="tab active" onclick="switchPlatbyTab('kancelarie',this)">🏢 Kancelárie</div>
+    <div class="tab" onclick="switchPlatbyTab('servis',this)">🔧 Servis</div>
+    <div class="tab" onclick="switchPlatbyTab('crm',this)">💻 CRM</div>
+  </div>
+  <div id="platby-tab-kancelarie">
+    <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:14px">
+      <label style="font-size:11px;color:var(--gray3);text-transform:uppercase;letter-spacing:0.5px;font-weight:600">Rok:</label>
+      <select id="prispevky-rok" onchange="renderPrispevky()" style="padding:7px 10px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:13px"></select>
+    </div>
+    <div id="prispevky-content"></div>
+  </div>
+  <div id="platby-tab-servis" style="display:none">
+    <div id="servis-ba-section" style="margin-bottom:24px"></div>
+    <div id="servis-tn-section"></div>
+  </div>
+  <div id="platby-tab-crm" style="display:none">
+    <div id="crm-content"></div>
+  </div>
+</div>
+<div class="page" id="page-bugy">
+  <div class="page-head">
+    <div>
+      <h2>🐛 Nahlásené chyby</h2>
+      <div class="page-sub" id="bugy-sub">Zoznam chýb nahlásených používateľmi</div>
+    </div>
+  </div>
+  <div id="bugy-content"></div>
+</div>
+</main>
+</div>
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-prispevok">
+  <div class="modal">
+    <h3 id="prispevok-modal-title" style="margin-bottom:6px">Platba</h3>
+    <div id="prispevok-modal-period" style="font-size:12px;color:var(--gray3);margin-bottom:14px"></div>
+    <div class="form-group">
+      <label>Stav</label>
+      <select id="prispevok-status" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px">
+        <option value="">– bez záznamu –</option>
+        <option value="uhradene">✓ Uhradené</option>
+        <option value="neuhradene">✗ Neuhradené</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Dátum (voliteľné)</label>
+      <input type="date" id="prispevok-date" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal('modal-prispevok')">Zrušiť</button>
+      <button class="btn btn-primary" onclick="savePrispevok()">Uložiť</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-servis-add">
+  <div class="modal">
+    <h3>Pridať osobu do servisu</h3>
+    <div id="servis-add-period" style="font-size:12px;color:var(--gray3);margin-bottom:14px"></div>
+    <div class="form-group">
+      <label>Osoba zo zoznamu</label>
+      <select id="servis-add-person-sel" onchange="onServisAddSelChange()" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px"></select>
+    </div>
+    <div style="text-align:center;font-size:11px;color:var(--gray3);margin:8px 0">— alebo —</div>
+    <div class="form-group">
+      <label>Iná osoba (napr. asistentka)</label>
+      <input type="text" id="servis-add-person-manual" placeholder="Meno a priezvisko" oninput="onServisAddManualChange()" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal('modal-servis-add')">Zrušiť</button>
+      <button class="btn btn-primary" onclick="confirmServisAddPerson()">Pridať</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-crm-upload">
+  <div class="modal" style="max-width:560px">
+    <h3>Nahrať CRM report</h3>
+    <div style="font-size:12px;color:var(--gray3);margin-bottom:14px">Týždenný CSV export z CRM kontroly.</div>
+    <div class="form-group">
+      <label>Dátum reportu (pondelok)</label>
+      <input type="date" id="crm-upload-date" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px">
+    </div>
+    <div class="form-group">
+      <label>CSV súbor</label>
+      <input type="file" id="crm-upload-file" accept=".csv" onchange="onCrmFileSelected(this)" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px">
+    </div>
+    <div id="crm-upload-preview"></div>
+    <div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal('modal-crm-upload')">Zrušiť</button>
+      <button class="btn btn-primary" onclick="confirmCrmUpload()">Nahrať a spracovať</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-crm-fines">
+  <div class="modal" style="max-width:520px">
+    <h3 id="crm-fines-title">Pokuty</h3>
+    <div style="font-size:12px;color:var(--gray3);margin-bottom:14px">Zaškrtnite pokuty ktoré sú uhradené.</div>
+    <div id="crm-fines-list" style="max-height:400px;overflow-y:auto"></div>
+    <div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal('modal-crm-fines')">Zrušiť</button>
+      <button class="btn btn-primary" onclick="saveCrmFines()">Uložiť</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-bug-report">
+  <div class="modal" style="max-width:520px">
+    <h3>🐛 Nahlásiť chybu</h3>
+    <div style="font-size:12px;color:var(--gray3);margin-bottom:14px">Napíš čo presne nefunguje. Tvoja chyba sa pošle adminovi.</div>
+    <div class="form-group">
+      <label>Tvoje meno</label>
+      <input type="text" id="bug-name" placeholder="Napr. Lucia Budzeľová" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px">
+    </div>
+    <div class="form-group">
+      <label>Popis chyby</label>
+      <textarea id="bug-text" rows="5" placeholder="Napíš presne kde sa chyba nachádza a čo nefunguje..." style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px;resize:vertical"></textarea>
+    </div>
+    <div style="font-size:11px;color:var(--gray3);margin-bottom:10px" id="bug-page-info">Stránka: -</div>
+    <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal('modal-bug-report')">Zrušiť</button>
+      <button class="btn btn-primary" onclick="submitBugReport()">Odoslať</button>
+    </div>
+  </div>
+</div>
+<!-- Floating tlačidlo Nahlásiť chybu -->
+<button id="bug-report-btn" onclick="openBugReportModal()" title="Nahlásiť chybu" style="position:fixed;bottom:20px;right:20px;z-index:90;background:#fff;border:1px solid var(--gray2);border-radius:50px;padding:10px 16px;font-size:12px;font-weight:600;font-family:var(--font-mono);cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.08);display:inline-flex;align-items:center;gap:6px;color:var(--green-dark);transition:all .15s">🐛 Nahlásiť chybu</button>
+<div class="modal-overlay" id="modal-warn">
+  <div class="modal">
+    <h3 id="warn-modal-title">Pridať napomenutie</h3>
+    <div class="form-group"><label>Spolupracovník</label><select id="warn-person-sel" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px"></select></div>
+    <div class="form-group"><label>Dátum napomenutia</label><input type="date" id="warn-date"></div>
+    <div class="form-group"><label>Dôvod</label><select id="warn-reason" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px"><option value="fj">Nesplnenie FJ</option><option value="pb">Nesplnenie PB</option><option value="obe">Nesplnenie FJ aj PB</option><option value="pb_podriadeny">Hrozí nesplnenie PB - podriadený napomenutý</option></select></div>
+    <div class="form-group"><label>Poznámka</label><textarea id="warn-note" rows="2" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px;resize:vertical"></textarea></div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('modal-warn')">Zrušiť</button><button class="btn btn-primary" onclick="saveWarning()">Uložiť</button></div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-resolve">
+  <div class="modal">
+    <h3>Zrušiť napomenutie</h3>
+    <p style="font-size:13px;color:var(--gray3);margin-bottom:16px">Napomenutie bude označené ako vyriešené.</p>
+    <div class="form-group"><label>Dátum zrušenia</label><input type="date" id="resolve-date"></div>
+    <div class="form-group"><label>Poznámka</label><textarea id="resolve-note" rows="2" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px;resize:vertical"></textarea></div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('modal-resolve')">Späť</button><button class="btn btn-primary" onclick="confirmResolve()">Potvrdiť</button></div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-cesta">
+  <div class="modal">
+    <h3 id="cesta-modal-title">Kariérna cesta</h3>
+    <p style="font-size:13px;color:var(--gray3);margin-bottom:6px" id="cesta-modal-sub"></p>
+    <div id="cesta-warning-box" style="display:none;background:var(--orange-pale);border:1px solid var(--orange);border-radius:8px;padding:12px;margin-bottom:16px;font-size:12px;color:var(--orange)"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0">
+      <div id="cesta-btn-manazerska" onclick="selectCesta('manazerska')" style="border:2px solid var(--gray2);border-radius:10px;padding:18px;cursor:pointer;text-align:center;transition:all .2s">
+        <div style="font-size:24px;margin-bottom:8px">🏢</div>
+        <div style="font-family:var(--font-head);font-weight:700;font-size:14px;margin-bottom:4px">Manažérska</div>
+        <div style="font-size:11px;color:var(--gray3)">SC → TL → EM → SM → MD → SD → P</div>
+      </div>
+      <div id="cesta-btn-obchodna" onclick="selectCesta('obchodna')" style="border:2px solid var(--gray2);border-radius:10px;padding:18px;cursor:pointer;text-align:center;transition:all .2s">
+        <div style="font-size:24px;margin-bottom:8px">💼</div>
+        <div style="font-family:var(--font-head);font-weight:700;font-size:14px;margin-bottom:4px">Obchodná</div>
+        <div style="font-size:11px;color:var(--gray3)">SC → VIP I → VIP II → VIP III → VIP IV</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--gray3);margin-bottom:16px">Zmena kariérnej cesty je možná max. 1× ročne.</div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('modal-cesta')">Zrušiť</button><button class="btn btn-primary" id="cesta-save-btn" onclick="saveCesta()" disabled="" style="opacity:0.4">Uložiť</button></div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-bruto">
+  <div class="modal" style="max-width:420px">
+    <h3 id="bruto-modal-title" style="margin-bottom:8px">Manuálna kontrola BRUTTO</h3>
+    <p style="font-size:12px;color:var(--gray3);margin-bottom:16px">Manuálna kontrola plnenia BRUTTO podmienok</p>
+    <div id="bruto-modal-btns" style="display:flex;flex-direction:column;gap:0"></div>
+    <div style="margin-top:14px;text-align:right"><button class="btn btn-secondary btn-sm" onclick="closeModal('modal-bruto')">Zrušiť</button></div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-pozicia">
+  <div class="modal" style="max-width:380px">
+    <h3 id="poz-modal-title" style="margin-bottom:12px">Zmena pozície</h3>
+    <div class="form-group"><label>Nová pozícia</label><select id="poz-new-pos" style="width:100%;padding:8px;border:1px solid var(--gray2);border-radius:6px"></select></div>
+    <div class="form-group"><label>Dátum</label><input type="date" id="poz-date" style="width:100%"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end"><button class="btn btn-secondary btn-sm" onclick="closeModal('modal-pozicia')">Zrušiť</button><button class="btn btn-primary btn-sm" onclick="savePozicia()">Uložiť</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const KARIERA=[
+  {pos:'TR',name:'Trainee',rate:3,maintainFJ:null,maintainPB:0,promoteFJ:null,promotePB:0,promoteHistFJ:null,promoteNote:'Úspešné absolvovanie CC'},
+  {pos:'C',name:'Consultant',rate:4,maintainFJ:450,maintainPB:0,promoteFJ:400,promotePB:0,promoteHistFJ:null,promoteNote:'400 FJ BRUTTO hist.'},
+  {pos:'SC',name:'Senior Consultant',rate:5,maintainFJ:900,maintainPB:0,promoteFJ:900,promotePB:0,promoteHistFJ:1500,promoteNote:'900 FJ/kv + 1 500 FJ hist.'},
+  {pos:'TL',name:'Team Leader',rate:5.5,maintainFJ:900,maintainGroupFJ:1350,maintainPB:1,promoteFJ:900,promoteGroupFJ:1350,promotePB:1,promoteHistFJ:null,promoteNote:'Spln. SC + 900 FJ vlastnych + 1 350 FJ skup. + 1 PB',maintainSCcondition:true},
+  {pos:'EM',name:'Executive Manager',rate:6,maintainGroupFJ:3150,maintainPB:3,promoteGroupFJ:3150,promotePB:3,promoteHistFJ:null,promoteNote:'Spln. SC + 3 150 skupinových FJ/kv + 3 PB'},
+  {pos:'SM',name:'Senior Manager',rate:6.5,maintainGroupFJ:6300,maintainPB:6,promoteGroupFJ:6300,promotePB:6,promoteHistFJ:null,promoteNote:'6 300 skupinových FJ/kv + 6 PB'},
+  {pos:'MD',name:'Managing Director',rate:7,maintainGroupFJ:11700,maintainPB:12,promoteGroupFJ:11700,promotePB:12,promoteHistFJ:null,promoteNote:'11 700 skupinových FJ/kv + 12 PB'},
+  {pos:'SD',name:'Senior Director',rate:7.5,maintainGroupFJ:22500,maintainPB:24,promoteGroupFJ:22500,promotePB:24,promoteHistFJ:null,promoteNote:'22 500 skupinových FJ/kv + 24 PB'},
+  {pos:'P',name:'Partner',rate:8,maintainGroupFJ:43200,maintainPB:48,promoteGroupFJ:43200,promotePB:48,promoteHistFJ:null,promoteNote:'43 200 skupinových FJ/kv + 48 PB'},
+  {pos:'VIP I',name:'VIP Consultant I.',rate:5.5,maintainFJ:1800,maintainPB:0,promoteFJ:1800,promotePB:0,promoteHistFJ:6000,promoteNote:'1 800 FJ/kv + 6 000 FJ hist.'},
+  {pos:'VIP II',name:'VIP Consultant II.',rate:6,maintainFJ:2100,maintainPB:0,promoteFJ:2100,promotePB:0,promoteHistFJ:6000,promoteNote:'2 100 FJ/kv + 6 000 FJ hist.'},
+  {pos:'VIP III',name:'VIP Consultant III.',rate:6.5,maintainFJ:2400,maintainPB:0,promoteFJ:2400,promotePB:0,promoteHistFJ:6000,promoteNote:'2 400 FJ/kv + 6 000 FJ hist.'},
+  {pos:'VIP IV',name:'VIP Consultant IV.',rate:7,maintainFJ:2700,maintainPB:0,promoteFJ:2700,promotePB:0,promoteHistFJ:6000,promoteNote:'2 700 FJ/kv + 6 000 FJ hist.'},
+];
+const PB_VALUES={TR:0,C:1,SC:1,TL:2,EM:3,SM:6,MD:12,SD:24,P:48,'VIP I':1,'VIP II':1,'VIP III':1,'VIP IV':1};
+const OWNERS=['Mário Markech','Ondrej Broska']; // Vlastníci sa nevyhodnocujú (štatút, napomenutie, akcia, splna na = pomlčky)
+function isOwner(name){return OWNERS.includes(name);}
+const MESACE=['Január','Február','Marec','Apríl','Máj','Jún','Júl','August','September','Október','November','December'];
+const HIST_PROTECTION=18000,HIST_DISCOUNT_80=24000,HIST_DISCOUNT_60=36000;
+function isVIP(pos){return pos&&pos.startsWith('VIP')}
+function isManazerska(pos){return['TL','EM','SM','MD','SD','P'].includes(pos)}
+function getDiscountCoef(h,name,pos){
+  const vipOrObchodna=isVIP(pos)||((['TR','C','SC'].includes(pos))&&getPersonCesta(name)==='obchodna');
+  if(!vipOrObchodna)return 1;
+  if(h>=HIST_DISCOUNT_60)return 0.6;
+  if(h>=HIST_DISCOUNT_80)return 0.8;
+  return 1;
+}
+function effectiveMaintainFJ(k,h,name,pos){if(!k.maintainFJ)return null;return Math.ceil(k.maintainFJ*getDiscountCoef(h,name,pos))}
+function hasHistProtection(h){return h>=HIST_PROTECTION}
+function getKariera(pos){return KARIERA.find(k=>k.pos===pos)}
+function posClass(pos){const m={'MD':'pos-md','SD':'pos-md','P':'pos-md','SM':'pos-sm','EM':'pos-em','TL':'pos-tl','SC':'pos-sc','C':'pos-c','TR':'pos-tr'};if(pos&&pos.startsWith('VIP'))return'pos-vip';return m[pos]||'pos-tr'}
+function getInitials(name){
+  if(!name)return '?';
+  // Odstráň tituly (Mgr., Ing., JUDr., Bc., DiS.)
+  const cleaned=name.replace(/(Mgr\.|Ing\.|JUDr\.|Bc\.|DiS\.|,)/g,'').trim();
+  const parts=cleaned.split(/\s+/).filter(x=>x);
+  if(!parts.length)return '?';
+  if(parts.length===1)return parts[0].slice(0,2).toUpperCase();
+  return (parts[0][0]+parts[parts.length-1][0]).toUpperCase();
+}
+function getAvatarClass(rowStatus){
+  // rowStatus: 'promo' / 'warn' / 'fail' / 'ok'
+  if(rowStatus==='promo')return 'av-info';
+  if(rowStatus==='warn'||rowStatus==='fail')return 'av-warn';
+  if(rowStatus==='ok')return 'av-success';
+  return '';
+}
+function toggleActionMenu(btn){
+  // Zatvor všetky ostatné
+  document.querySelectorAll('.action-menu.open').forEach(m=>{if(m!==btn.nextElementSibling)m.classList.remove('open');});
+  const menu=btn.nextElementSibling;
+  if(menu&&menu.classList.contains('action-menu'))menu.classList.toggle('open');
+}
+// Zavri menu pri kliku mimo
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.action-menu-wrap')){
+    document.querySelectorAll('.action-menu.open').forEach(m=>m.classList.remove('open'));
+  }
+});
+function getActiveWarning(name){return warnings.find(w=>w.person===name&&w.status==='active')}
+function monthsSince(d){const dt=new Date(d),now=new Date();return(now.getFullYear()-dt.getFullYear())*12+(now.getMonth()-dt.getMonth())}
+function firstOfMonth(){const d=new Date();d.setDate(1);const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0');return y+'-'+m+'-01';}
+function importLabel(y,m){return`${MESACE[m]} ${y}`}
+
+// Dáta sa načítavajú z API (KV storage). Premenné sú prázdne pri inicializácii.
+let imports=[];
+let warnings=[];
+let cestaData={};
+let selectedImportKey=null;
+let people=[];
+let evalPeople=[];
+let resolveTarget=null,cestaTarget=null,selectedCestaValue=null;
+let brutoResults={};
+let pozicieHistory={};
+let poznamkyData={};
+let evidenciaPoznamky={};
+let prispevkyData={};
+let servisData={};
+let crmData={reports:{},fines:{}};
+let bugsData=[];
+let currentUserRole=null; // 'admin' alebo 'user', zistené z API
+
+// Mapovanie kľúčov localStorage → API
+const STORAGE_KEYS={
+  'tf_imports':'imports',
+  'tf_warnings':'warnings',
+  'tf_cesta':'cesta',
+  'tf_bruto':'bruto',
+  'tf_pozicie':'pozicie',
+  'tf_poznamky':'poznamky',
+  'tf_ev_poznamky':'ev_poznamky',
+  'tf_pb_dismissed':'pb_dismissed',
+  'tf_prispevky':'prispevky',
+  'tf_servis':'servis',
+  'tf_crm':'crm',
+  'tf_bugs':'bugs'
+};
+
+// Wrapper: ukladá dáta do KV cez API (admin) alebo iba lokálne (user)
+async function tfSave(localKey, value){
+  const apiKey=STORAGE_KEYS[localKey];
+  if(!apiKey){console.error('Neznámy storage kľúč:',localKey);return;}
+  if(currentUserRole!=='admin'){return;} // user nemôže ukladať
+  try{
+    const res=await fetch('/api/data/save',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({key:apiKey,value:value})
+    });
+    if(!res.ok){const err=await res.json();console.error('Chyba pri ukladaní:',err);showToast('Chyba pri ukladaní dát.','error');}
+  }catch(e){console.error('Sieťová chyba:',e);showToast('Sieťová chyba pri ukladaní.','error');}
+}
+
+// Načíta všetky dáta z API a naplní premenné
+async function tfLoadAll(){
+  try{
+    const res=await fetch('/api/data/get');
+    if(!res.ok){
+      if(res.status===401){window.location.href='/';return false;}
+      throw new Error('HTTP '+res.status);
+    }
+    const json=await res.json();
+    if(!json.ok)throw new Error('Server error');
+    currentUserRole=json.role;
+    const d=json.data||{};
+    imports=d.imports||[];
+    warnings=d.warnings||[];
+    cestaData=d.cesta||{};
+    brutoResults=d.bruto||{};
+    pozicieHistory=d.pozicie||{};
     poznamkyData=d.poznamky||{};
     evidenciaPoznamky=d.ev_poznamky||{};
     pbAlertDismissed=d.pb_dismissed||{};
