@@ -42,8 +42,8 @@ body.tf-readonly button[onclick*="deleteWarning"],
 body.tf-readonly button[onclick*="deleteCurrentImport"],
 body.tf-readonly button[onclick*="deletePozicia"],
 body.tf-readonly button[onclick*="runEvaluation"],
-body.tf-readonly span[onclick*="openCestaModal"],
 body.tf-readonly .nav-item[onclick*="import"]{display:none !important;}
+body.tf-readonly span[onclick*="openCestaModal"]{pointer-events:none !important;cursor:default !important}
 body.tf-readonly input[type="text"],body.tf-readonly input[type="file"]{pointer-events:none;background:#f5f5f5 !important;}
 body.tf-readonly .tf-admin-only{display:none !important;}
 /* Bug report modal — user MUSÍ vedieť písať a odoslať */
@@ -136,7 +136,7 @@ body.tf-readonly .prispevok-cell{cursor:default}
 body.tf-readonly .prispevok-cell:hover{transform:none;box-shadow:none}
 .empty .big{font-size:32px;margin-bottom:8px}
 .fj-cell{display:inline-flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:12px;font-weight:500}
-.fj-ok{color:var(--green-dark)}.fj-fail{color:var(--red);font-weight:700}.fj-neutral{color:var(--gray4)}
+.fj-ok{color:var(--green-dark)}.fj-fail{color:#C0392B;font-weight:600}.fj-neutral{color:var(--gray4)}
 .tip-wrap{position:relative;display:inline-flex;align-items:center}
 .tip-icon{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:var(--red);color:#fff;font-size:9px;font-weight:700;cursor:pointer;margin-left:3px;font-family:var(--font-head)}
 .tip-icon:hover+.tip-box{display:block}
@@ -148,9 +148,15 @@ body.tf-readonly .prispevok-cell:hover{transform:none;box-shadow:none}
 .eval-name-cell{min-width:140px}
 .eval-row-fail td{background:#fff8f8}.eval-row-warn td{background:#fffbf0}
 .eval-row-ok td{background:#fff}.eval-row-promo td{background:#f0fbff}
-/* Vylepšenie pre #eval-main-table — jemnejšie pozadia ako podsvietené */
-#eval-main-table .eval-row-fail td{background:#FFFBFA !important}
-#eval-main-table .eval-row-warn td{background:#FFFBFA !important}
+/* Farby riadkov vo vyhodnotení:
+   - eval-row-warn = AKTÍVNE napomenutie (výraznejšie, červenkasté + ľavý okraj)
+   - eval-row-fail = nesplnené bez napomenutia (tlmené, skoro biele)
+   - eval-row-danger = napomenutý 3 mesiace (najvýraznejšie - treba znížiť) */
+#eval-main-table .eval-row-fail td{background:#FFFDFD !important}
+#eval-main-table .eval-row-warn td{background:#FDEEEE !important}
+#eval-main-table .eval-row-warn td:first-child{box-shadow:inset 3px 0 0 #E24B4A}
+#eval-main-table .eval-row-danger td{background:#FBDADA !important}
+#eval-main-table .eval-row-danger td:first-child{box-shadow:inset 4px 0 0 #C0392B}
 #eval-main-table .eval-row-promo td{background:#F8FCFF !important}
 #eval-main-table .eval-row-ok td{background:#fff !important}
 #eval-main-table tbody tr.pos-spacer{background:#FAFAFA !important}
@@ -1073,14 +1079,17 @@ function renderDashboard(){
 <script>
 function fjCell(v,threshold,label,extra){
   if(threshold===null||threshold===undefined)return`<span class="fj-cell fj-neutral">${v.toFixed(2)}</span>`;
-  if(v>=threshold)return`<span class="fj-cell fj-ok">${v.toFixed(2)}</span>`;
-  const tip=`Potrebné: ${threshold.toFixed(2)} | Aktuálne: ${v.toFixed(2)} | Rozdiel: −${(threshold-v).toFixed(2)}${extra?' | '+extra:''}`;
-  return`<span class="fj-cell fj-fail">${v.toFixed(2)}<span class="tip-wrap"><span class="tip-icon">i</span><span class="tip-box">${label}: ${tip}</span></span></span>`;
+  if(v>=threshold){
+    const tipOk=`${label}: Potrebné ${threshold.toFixed(2)} | Aktuálne ${v.toFixed(2)} | Splnené ✓${extra?' | '+extra:''}`;
+    return`<span class="fj-cell fj-ok" title="${tipOk}" style="cursor:help">${v.toFixed(2)}</span>`;
+  }
+  const tip=`${label}: Potrebné ${threshold.toFixed(2)} | Aktuálne ${v.toFixed(2)} | Chýba ${(threshold-v).toFixed(2)}${extra?' | '+extra:''}`;
+  return`<span class="fj-cell fj-fail" title="${tip}" style="cursor:help">${v.toFixed(2)}</span>`;
 }
 function pbCell(v,threshold){
   if(!threshold)return`<span class="fj-cell fj-neutral">${v}</span>`;
-  if(v>=threshold)return`<span class="fj-cell fj-ok">${v}</span>`;
-  return`<span class="fj-cell fj-fail">${v}<span class="tip-wrap"><span class="tip-icon">i</span><span class="tip-box">PB: Potrebné ${threshold} | Aktuálne ${v} | Rozdiel −${threshold-v}</span></span></span>`;
+  if(v>=threshold)return`<span class="fj-cell fj-ok" title="PB: Potrebné ${threshold} | Aktuálne ${v} | Splnené ✓" style="cursor:help">${v}</span>`;
+  return`<span class="fj-cell fj-fail" title="PB: Potrebné ${threshold} | Aktuálne ${v} | Chýba ${threshold-v}" style="cursor:help">${v}</span>`;
 }
 function runEvaluation(){computeEvalPeople();renderEvaluation();showToast('Vyhodnotenie dokončené.','success');}
 function getPbRiskAcute(managerName){
@@ -1178,7 +1187,7 @@ function renderEvaluation(){
     if(pos==='VIP IV')return 'MD';
     if(pos==='SD'||pos==='P')return 'MD'; // SD a P spolu s MD na vrchole
     return pos;
-  }
+    }
   function getGroupOrder(groupKey){
     const o=["MD","SM","EM","TL","SC","C","TR"];
     const i=o.indexOf(groupKey);
@@ -1198,7 +1207,7 @@ function renderEvaluation(){
     // V rámci skupiny: najvyššie ownFJ hore
     return b.ownFJ-a.ownFJ;
   });
-  let html=`<div class="table-wrap"><table><thead><tr><th class="eval-name-cell">Meno</th><th>Pozícia</th><th>Manažér</th><th>Kariérna cesta</th><th style="text-align:right">Vlastné FJ (${last3.length}m)</th><th style="text-align:right">Skupinové FJ</th><th style="text-align:right">Hist.FJ</th><th style="text-align:right">PB</th><th>Štatút</th><th>Napomenutie</th><th>Spļňa štatút na</th><th>Akcia</th></tr></thead><tbody>`;
+  let html=`<div class="table-wrap"><table><thead><tr><th class="eval-name-cell">Meno</th><th>Pozícia</th><th>Manažér</th><th>Kariérna cesta</th><th style="text-align:right">Vlastné FJ (${last3.length}m)</th><th style="text-align:right">Skupinové FJ</th><th style="text-align:right">Hist.FJ</th><th style="text-align:right">PB</th><th>Štatút</th><th>Napomenutie</th><th>Spļňa štatút na</th><th class="tf-admin-only">Akcia</th></tr></thead><tbody>`;
   let _prevGroup=null;
   filtered.forEach(p=>{
     const _curGroup=getGroupKey(p.pos);
@@ -1215,7 +1224,7 @@ function renderEvaluation(){
     else if(_cesta){cestaCell='<span class="badge badge-gray" style="cursor:pointer" onclick="openCestaModal(\''+ _cestaSafe +'\')">'+ (_cesta==='manazerska'?'🏢 Man.':'💼 Obch.')+'</span>';}
     else{cestaCell='<span class="badge badge-gray" style="cursor:pointer;opacity:0.5" onclick="openCestaModal(\''+ _cestaSafe +'\')">– Nastaviť</span>';}
     if(hasHistProtection(p.histFJ))extras.push(`<span class="tf-admin-only" style="font-size:9px;color:var(--blue);font-weight:700">≥18k</span>`);
-    if(coef<1)extras.push(`<span style="font-size:9px;color:var(--blue);font-weight:700">${Math.round((1-coef)*100)}%↓</span>`);
+    if(coef<1)extras.push(`<span class="tf-admin-only" style="font-size:9px;color:var(--blue);font-weight:700">${Math.round((1-coef)*100)}%↓</span>`);
     let napomCell='<span style="font-size:11px;color:var(--gray3)">–</span>';
     if(aw){const dots=[0,1,2].map(i=>{let cls='free';if(i<ms)cls='used';else if(i===ms&&ms<3)cls='half';return`<span class="napom-m ${cls}"></span>`;}).join('');const _rText=aw.reason==='fj'?'FJ':aw.reason==='pb'?'PB':aw.reason==='pb_podriadeny'?'PB (podr.)':'FJ+PB';napomCell=`<div style="display:flex;flex-direction:column;gap:3px"><span class="badge ${ms>=3?'badge-red':ms>=2?'badge-red':'badge-orange'}" style="font-size:10px">${ms+1}/3 mes.</span><span class="napom-dot">${dots}</span><span style="font-size:9px;color:var(--gray3)">Dôvod: ${_rText}</span>${ms>=3?'<span class="badge badge-red" style="font-size:9px">⚠ ZNÍŽIŤ</span>':''}</div>`;}
     let promoCell='<span style="color:var(--gray3);font-size:11px">–</span>';
@@ -1261,7 +1270,7 @@ function renderEvaluation(){
       const _names=_pbAcute.map(r=>r.name).join(', ');
       actionCell=`<div class="tf-admin-only" style="margin-bottom:6px;padding:6px 24px 6px 8px;background:#FCEBEB;border:1px solid #F7C1C1;border-radius:6px;font-size:10px;color:#A32D2D;line-height:1.3;position:relative;text-align:left"><span onclick="dismissPbAlert('${_safeNm}','acute')" style="position:absolute;top:3px;right:5px;cursor:pointer;font-weight:700;font-size:12px;color:#A32D2D;padding:0 3px" title="Zatvoriť">&#x2715;</span><strong>⚠ Napomenúť za PB</strong><br>Podr. s nap.: ${_names}</div>`+actionCell;
     }
-    const rowCls=(!s.ok&&aw&&ms>=3?'eval-row-fail':!s.ok&&aw?'eval-row-warn':!s.ok?'eval-row-fail':(pr.canPromote===true||(pr.multiPath&&pr.paths?.length))?'eval-row-promo':'eval-row-ok');
+    const rowCls=(!s.ok&&aw&&ms>=3?'eval-row-danger':!s.ok&&aw?'eval-row-warn':!s.ok?'eval-row-fail':(pr.canPromote===true||(pr.multiPath&&pr.paths?.length))?'eval-row-promo':'eval-row-ok');
     const useGroupFJ=['EM','SM','MD','SD','P'].includes(p.pos);
     if(_posChanged){
       let dashes='';
@@ -1295,22 +1304,23 @@ function renderEvaluation(){
       const _isOk=effG>=k.maintainGroupFJ;
       const _display=p.groupFJ.toFixed(2);
       if(_isOk){
-        groupFJCell=`<span class="fj-cell fj-ok">${_display}</span>`;
+        const tipOk=`Skupinové FJ: Potrebné ${k.maintainGroupFJ.toFixed(2)} | Efektívne ${effG.toFixed(2)} | Splnené ✓`;
+        groupFJCell=`<span class="fj-cell fj-ok" title="${tipOk}" style="cursor:help">${_display}</span>`;
       }else{
-        const tip=`Potrebné: ${k.maintainGroupFJ.toFixed(2)} | Efektívne: ${effG.toFixed(2)} | Rozdiel: −${(k.maintainGroupFJ-effG).toFixed(2)}`;
-        groupFJCell=`<span class="fj-cell fj-fail">${_display}<span class="tip-wrap"><span class="tip-icon">i</span><span class="tip-box">Skupinové FJ: ${tip}</span></span></span>`;
+        const tip=`Skupinové FJ: Potrebné ${k.maintainGroupFJ.toFixed(2)} | Efektívne ${effG.toFixed(2)} | Chýba ${(k.maintainGroupFJ-effG).toFixed(2)}`;
+        groupFJCell=`<span class="fj-cell fj-fail" title="${tip}" style="cursor:help">${_display}</span>`;
       }
       // Ak má cap obmedzenie, pridaj malé info
       if(p.capDetail&&p.capDetail.length){
         const _capTooltip=p.capDetail.map(d=>d.podriadeny+' prispel '+d.prispel.toFixed(2)+', max povolených '+d.limit.toFixed(2)+' (50%)').join(' | ');
-        groupFJCell+=`<br><span title="${_capTooltip}" style="font-size:9px;color:#A32D2D;cursor:help">⓵ efektívne ${p.effectiveGroupFJ.toFixed(2)}</span>`;
+        groupFJCell+=`<br><span class="tf-admin-only" title="${_capTooltip}" style="font-size:9px;color:#A32D2D;cursor:help">⓵ efektívne ${p.effectiveGroupFJ.toFixed(2)}</span>`;
       }
     }else{
       groupFJCell=`<span class="fj-cell fj-neutral">${p.groupFJ.toFixed(2)}</span>`;
     }
-    html+=`<tr class="${_rowClsFinal}"><td class="eval-name-cell">${_personCell}</td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td style="font-size:11px;color:var(--gray3)">${p.manager||'–'}</td><td style="font-size:11px">${cestaCell}</td><td style="text-align:right">${fjCell(p.ownFJ,effFJ,'Vlastné FJ',coef<1?`zľava ${Math.round(coef*100)}%`:'')}</td><td style="text-align:right">${groupFJCell}</td><td style="text-align:right">${fjCell(p.histFJ,null,'Hist.FJ','')}</td><td style="text-align:right">${pbCell(p.pb,pbThresh)}</td><td>${_statusBadgeFinal}</td><td>${_napomCellFinal}</td><td>${_splnaFinal}</td><td>${_actionFinal}</td></tr>`;
+    html+=`<tr class="${_rowClsFinal}"><td class="eval-name-cell">${_personCell}</td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td style="font-size:11px;color:var(--gray3)">${p.manager||'–'}</td><td style="font-size:11px">${cestaCell}</td><td style="text-align:right">${fjCell(p.ownFJ,effFJ,'Vlastné FJ',coef<1?`zľava ${Math.round(coef*100)}%`:'')}</td><td style="text-align:right">${groupFJCell}</td><td style="text-align:right">${fjCell(p.histFJ,null,'Hist.FJ','')}</td><td style="text-align:right">${pbCell(p.pb,pbThresh)}</td><td>${_statusBadgeFinal}</td><td>${_napomCellFinal}</td><td>${_splnaFinal}</td><td class="tf-admin-only">${_actionFinal}</td></tr>`;
   });
-  html+=`</tbody></table></div><div style="display:flex;gap:16px;padding:10px 16px;font-size:11px;color:var(--gray3);flex-wrap:wrap;margin-top:8px;justify-content:center"><span><span class="fj-cell fj-ok">●</span> splnené</span><span><span class="fj-cell fj-fail">●</span> nesplnené (hover = detail)</span></div>`;
+  html+=`</tbody></table></div><div style="display:flex;gap:16px;padding:10px 16px;font-size:11px;color:var(--gray3);flex-wrap:wrap;margin-top:8px;justify-content:center"><span><span class="fj-cell fj-ok">●</span> splnené</span><span><span class="fj-cell fj-fail">●</span> nesplnené</span><span style="color:var(--gray3)">Prejdi myšou na číslo pre detail štatútu</span></div>`;
   document.getElementById('eval-main-table').innerHTML=html;
 }
 function renderLudia(){
@@ -1971,7 +1981,7 @@ function openPrispevokModal(type,key,name,obdobie,sumaEur){
   document.getElementById('prispevok-status').value=stat;
   document.getElementById('prispevok-date').value=data.date||firstOfMonth();
   document.getElementById('modal-prispevok').classList.add('open');
-  }
+}
 function savePrispevok(){
   const key=window._prispevokKey;
   if(!key)return;
