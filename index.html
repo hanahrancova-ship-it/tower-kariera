@@ -1207,7 +1207,7 @@ function renderEvaluation(){
     // V rámci skupiny: najvyššie ownFJ hore
     return b.ownFJ-a.ownFJ;
   });
-  let html=`<div class="table-wrap"><table><thead><tr><th class="eval-name-cell">Meno</th><th>Pozícia</th><th>Manažér</th><th>Kariérna cesta</th><th style="text-align:right">Vlastné FJ (${last3.length}m)</th><th style="text-align:right">Skupinové FJ</th><th style="text-align:right">Hist.FJ</th><th style="text-align:right">PB</th><th>Štatút</th><th class="tf-admin-only">Napomenutie</th><th>Spļňa štatút na</th><th class="tf-admin-only">Akcia</th></tr></thead><tbody>`;
+  let html=`<div class="table-wrap"><table><thead><tr><th class="eval-name-cell">Meno</th><th>Pozícia</th><th>Manažér</th><th>Kariérna cesta</th><th style="text-align:right">Vlastné FJ (${last3.length}m)</th><th style="text-align:right">Skupinové FJ</th><th style="text-align:right">Hist.FJ</th><th style="text-align:right">PB</th><th>Štatút</th><th>Napomenutie</th><th>Spļňa štatút na</th><th class="tf-admin-only">Akcia</th></tr></thead><tbody>`;
   let _prevGroup=null;
   filtered.forEach(p=>{
     const _curGroup=getGroupKey(p.pos);
@@ -1313,12 +1313,12 @@ function renderEvaluation(){
       // Ak má cap obmedzenie, pridaj malé info
       if(p.capDetail&&p.capDetail.length){
         const _capTooltip=p.capDetail.map(d=>d.podriadeny+' prispel '+d.prispel.toFixed(2)+', max povolených '+d.limit.toFixed(2)+' (50%)').join(' | ');
-        groupFJCell+=`<br><span title="${_capTooltip}" style="font-size:9px;color:#A32D2D;cursor:help">⓵ efektívne ${p.effectiveGroupFJ.toFixed(2)}</span>`;
+        groupFJCell+=`<br><span class="tf-admin-only" title="${_capTooltip}" style="font-size:9px;color:#A32D2D;cursor:help">⓵ efektívne ${p.effectiveGroupFJ.toFixed(2)}</span>`;
       }
     }else{
       groupFJCell=`<span class="fj-cell fj-neutral">${p.groupFJ.toFixed(2)}</span>`;
     }
-    html+=`<tr class="${_rowClsFinal}"><td class="eval-name-cell">${_personCell}</td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td style="font-size:11px;color:var(--gray3)">${p.manager||'–'}</td><td style="font-size:11px">${cestaCell}</td><td style="text-align:right">${fjCell(p.ownFJ,effFJ,'Vlastné FJ',coef<1?`zľava ${Math.round(coef*100)}%`:'')}</td><td style="text-align:right">${groupFJCell}</td><td style="text-align:right">${fjCell(p.histFJ,null,'Hist.FJ','')}</td><td style="text-align:right">${pbCell(p.pb,pbThresh)}</td><td>${_statusBadgeFinal}</td><td class="tf-admin-only">${_napomCellFinal}</td><td>${_splnaFinal}</td><td class="tf-admin-only">${_actionFinal}</td></tr>`;
+    html+=`<tr class="${_rowClsFinal}"><td class="eval-name-cell">${_personCell}</td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td style="font-size:11px;color:var(--gray3)">${p.manager||'–'}</td><td style="font-size:11px">${cestaCell}</td><td style="text-align:right">${fjCell(p.ownFJ,effFJ,'Vlastné FJ',coef<1?`zľava ${Math.round(coef*100)}%`:'')}</td><td style="text-align:right">${groupFJCell}</td><td style="text-align:right">${fjCell(p.histFJ,null,'Hist.FJ','')}</td><td style="text-align:right">${pbCell(p.pb,pbThresh)}</td><td>${_statusBadgeFinal}</td><td>${_napomCellFinal}</td><td>${_splnaFinal}</td><td class="tf-admin-only">${_actionFinal}</td></tr>`;
   });
   html+=`</tbody></table></div><div style="display:flex;gap:16px;padding:10px 16px;font-size:11px;color:var(--gray3);flex-wrap:wrap;margin-top:8px;justify-content:center"><span><span class="fj-cell fj-ok">●</span> splnené</span><span><span class="fj-cell fj-fail">●</span> nesplnené</span><span style="color:var(--gray3)">Prejdi myšou na číslo pre detail štatútu</span></div>`;
   document.getElementById('eval-main-table').innerHTML=html;
