@@ -362,6 +362,18 @@ i[class^="ti-"],i[class*=" ti-"]{font-style:normal;display:inline-flex;align-ite
         <label>Mesiac importu</label>
         <input type="month" id="import-yearmonth" style="width:100%;padding:9px 12px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:13px">
       </div>
+      <div class="form-group">
+        <label>Typ reportu</label>
+        <div style="display:flex;gap:14px;font-size:13px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="radio" name="import-type" value="netto" checked> <strong>NETTO</strong> (štandardné vyhodnotenie)
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="radio" name="import-type" value="brutto"> <strong>BRUTTO</strong> (pre nováčikov TR)
+          </label>
+        </div>
+        <div style="font-size:11px;color:var(--gray3);margin-top:6px">TR pozícia sa hodnotí na BRUTTO produkciu (povýšenie na C pri 400 FJ kumulatívne). Ostatné pozície na NETTO.</div>
+      </div>
       <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
         <input type="file" id="file-input" accept=".xlsx,.xls,.csv" onchange="handleFile(this.files[0])">
         <div class="icon">📊</div>
@@ -1039,13 +1051,45 @@ function computeEvalPeople(){
   // Ak v Q nie sú žiadne importy, fallback na posledné 3 (legacy správanie).
   const usedImports=getQuarterImports();
   const newest=usedImports[0];
-  evalPeople=newest.people.map(p=>{
+  // 1) Union ľudí z netto aj brutto v najnovšom importe → určenie aktuálnej pozície.
+  // Pre osobu prítomnú v oboch reportoch: ak netto.pos != 'TR' → použijeme netto (povýšený), inak brutto.
+  const baseMap=new Map();
+  for(const p of (newest.people||[])){
+    baseMap.set(p.name,{...p,_dataSource:'netto'});
+  }
+  for(const p of (newest.peopleBrutto||[])){
+    if(!baseMap.has(p.name)){
+      baseMap.set(p.name,{...p,_dataSource:'brutto'});
+    } else {
+      const existing=baseMap.get(p.name);
+      // Ak je v netto reporte ako TR, fyzicky ešte nemá netto produkciu — preberáme brutto pos+data
+      if(existing.pos==='TR'){
+        baseMap.set(p.name,{...p,_dataSource:'brutto'});
+      }
+      // Inak (C+): zostáva netto
+    }
+  }
+  // 2) Pre každú osobu zosumarizuj FJ podľa zdroja (TR=brutto, C+=netto) cez Q.
+  //    Pre TR osoby aj kumulatívny historický brutto súčet (cez VŠETKY importy).
+  evalPeople=Array.from(baseMap.values()).map(p=>{
+    const usesBrutto=(p.pos==='TR');
     let totalOwn=0,totalGroup=0,totalHist=0;
     usedImports.forEach(imp=>{
-      const match=imp.people.find(x=>x.name===p.name);
+      const arr=usesBrutto?(imp.peopleBrutto||[]):(imp.people||[]);
+      const match=arr.find(x=>x.name===p.name);
       if(match){totalOwn+=match.ownFJ||0;totalGroup+=match.groupFJ||0;totalHist=Math.max(totalHist,match.histFJ||0);}
     });
-    return{...p,ownFJ:totalOwn,groupFJ:totalGroup,histFJ:totalHist,_months:usedImports.length};
+    // Kumulatívne historické BRUTTO (pre TR → C kontrolu povýšenia)
+    let cumulativeBrutto=null;
+    if(usesBrutto){
+      cumulativeBrutto=0;
+      for(const imp of imports){
+        const arr=imp.peopleBrutto||[];
+        const match=arr.find(x=>x.name===p.name);
+        if(match)cumulativeBrutto+=match.ownFJ||0;
+      }
+    }
+    return{...p,ownFJ:totalOwn,groupFJ:totalGroup,histFJ:totalHist,_months:usedImports.length,isBrutto:usesBrutto,cumulativeBrutto};
   });
   evalPeople.forEach(p=>{
     const directs=evalPeople.filter(x=>x.manager===p.name);
@@ -1084,7 +1128,16 @@ function renderImportSelector(){
   if(!el)return;
   if(!imports.length){el.innerHTML='<div class="empty" style="padding:20px"><div class="big">📅</div>Zatiaľ žiadne importy.</div>';return;}
   const sorted=[...imports].sort((a,b)=>b.key.localeCompare(a.key));
-  el.innerHTML=sorted.map(i=>`<div class="import-month-item ${i.key===selectedImportKey?'active':''}" onclick="loadImport('${i.key}')"><span class="month-name">${i.label}</span><span class="month-count">${i.people.length} ľudí</span></div>`).join('');
+  el.innerHTML=sorted.map(i=>{
+    const nCount=(i.people||[]).length;
+    const bCount=(i.peopleBrutto||[]).length;
+    let label='';
+    if(nCount&&bCount)label=nCount+' netto · '+bCount+' brutto';
+    else if(nCount)label=nCount+' netto';
+    else if(bCount)label=bCount+' brutto';
+    else label='0 ľudí';
+    return `<div class="import-month-item ${i.key===selectedImportKey?'active':''}" onclick="loadImport('${i.key}')"><span class="month-name">${i.label}</span><span class="month-count">${label}</span></div>`;
+  }).join('');
 }
 
 function loadImport(key){
@@ -1128,15 +1181,18 @@ function handleFile(file){
   if(!file)return;
   const ym=document.getElementById('import-yearmonth').value;
   if(!ym){showToast('Vyberte mesiac importu.','error');return;}
+  const typeRadio=document.querySelector('input[name="import-type"]:checked');
+  const reportType=typeRadio?typeRadio.value:'netto';
   const reader=new FileReader();
   reader.onload=e=>{
-    try{const wb=XLSX.read(e.target.result,{type:'array', codepage: 65001});processImport(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''}),ym);}
+    try{const wb=XLSX.read(e.target.result,{type:'array', codepage: 65001});processImport(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''}),ym,reportType);}
     catch(err){showToast('Chyba: '+err.message,'error');}
   };
   reader.readAsArrayBuffer(file);
 }
 
-function processImport(rows,yearMonth){
+function processImport(rows,yearMonth,reportType){
+  reportType=reportType||'netto';
   const parsed=[];
   for(const r of rows){
     const name=r['meno sprostredkovateľa']||r['Meno']||r['meno']||'';
@@ -1149,25 +1205,41 @@ function processImport(rows,yearMonth){
     parsed.push({name,pos,manager,ownFJ,groupFJ,histFJ,pb:0});
   }
   if(!parsed.length){showToast('Žiadne platné dáta.','error');return;}
-  parsed.forEach(p=>{
-    const directs=parsed.filter(x=>x.manager===p.name);
-    p.pb=directs.reduce((s,x)=>{
-      if(hasHistProtection(x.histFJ)){const kC=getKariera('C');if(x.ownFJ<effectiveMaintainFJ(kC,x.histFJ,x.name,x.pos))return s;}
-      return s+(x.pos===p.pos?Math.floor((PB_VALUES[x.pos]||0)/2):(PB_VALUES[x.pos]||0));
-    },0);
-  });
+  // PB pre netto sa rátajú ako predtým; pre brutto nepoužívame (TR=0 PB).
+  if(reportType==='netto'){
+    parsed.forEach(p=>{
+      const directs=parsed.filter(x=>x.manager===p.name);
+      p.pb=directs.reduce((s,x)=>{
+        if(hasHistProtection(x.histFJ)){const kC=getKariera('C');if(x.ownFJ<effectiveMaintainFJ(kC,x.histFJ,x.name,x.pos))return s;}
+        return s+(x.pos===p.pos?Math.floor((PB_VALUES[x.pos]||0)/2):(PB_VALUES[x.pos]||0));
+      },0);
+    });
+  }
   const [y,m]=yearMonth.split('-');
   const label=importLabel(parseInt(y),parseInt(m)-1);
   const key=yearMonth;
   const existing=imports.findIndex(i=>i.key===key);
-  if(existing>=0){imports[existing]={key,label,date:new Date().toISOString(),people:parsed};showToast(`${label} aktualizovaný.`,'success');}
-  else{imports.push({key,label,date:new Date().toISOString(),people:parsed});showToast(`${label} uložený.`,'success');}
+  // Merge: zachovaj existujúce dáta druhej hladiny (netto/brutto), nahraď iba aktuálny typ
+  const baseEntry = existing>=0 ? {...imports[existing]} : {key,label,date:new Date().toISOString(),people:[],peopleBrutto:[]};
+  if(!Array.isArray(baseEntry.people))baseEntry.people=[];
+  if(!Array.isArray(baseEntry.peopleBrutto))baseEntry.peopleBrutto=[];
+  baseEntry.label=label;
+  baseEntry.date=new Date().toISOString();
+  if(reportType==='brutto'){
+    baseEntry.peopleBrutto=parsed;
+  } else {
+    baseEntry.people=parsed;
+  }
+  if(existing>=0){imports[existing]=baseEntry;showToast(`${label} – ${reportType.toUpperCase()} aktualizovaný.`,'success');}
+  else{imports.push(baseEntry);showToast(`${label} – ${reportType.toUpperCase()} uložený.`,'success');}
   tfSave('tf_imports',imports);
-  selectedImportKey=key;people=parsed;
+  selectedImportKey=key;
+  // Pre náhľad v "Ľudia" zobraz netto, ak je k dispozícii, inak brutto
+  people = baseEntry.people.length ? baseEntry.people : baseEntry.peopleBrutto;
   computeEvalPeople();
   const st=document.getElementById('import-status');
   st.style.display='block';
-  st.innerHTML=`<span class="badge badge-green">✓ ${label} – ${parsed.length} ľudí · kvartál z ${Math.min(imports.length,3)} mes.</span>`;
+  st.innerHTML=`<span class="badge badge-green">✓ ${label} – ${reportType.toUpperCase()} – ${parsed.length} ľudí · kvartál z ${Math.min(imports.length,3)} mes.</span>`;
   renderImportSelector();
   renderAll();
 }
@@ -1228,7 +1300,19 @@ function checkPromotionSC(p){
 
 function evalPromoTo(p,nextPos){
   const nk=getKariera(nextPos);if(!nk)return{canPromote:false,nextPos};
-  if(nextPos==='C')return{canPromote:null,nextPos,brutoCheck:true};
+  if(nextPos==='C'){
+    // TR → C: kumulatívna BRUTTO produkcia ≥ 400 FJ (z dvojitého importu).
+    // Ak nemáme brutto dáta (osoba nie je v žiadnom brutto reporte), fallback na manuálnu kontrolu.
+    const requiredBrutto=400;
+    if(p.isBrutto && typeof p.cumulativeBrutto==='number'){
+      if(p.cumulativeBrutto>=requiredBrutto){
+        return{canPromote:true,nextPos,issues:[],note:'Historicky BRUTTO '+p.cumulativeBrutto.toFixed(2)+' FJ ≥ '+requiredBrutto};
+      }
+      return{canPromote:false,nextPos,issues:['BRUTTO hist.: '+p.cumulativeBrutto.toFixed(2)+'/'+requiredBrutto],note:'Potrebných '+requiredBrutto+' FJ BRUTTO kumulatívne'};
+    }
+    // Žiadne brutto dáta — manuálna kontrola cez tlačidlo
+    return{canPromote:null,nextPos,brutoCheck:true};
+  }
   const issues=[];
   if(nextPos==='TL'){const kSC=getKariera('SC');if(p.ownFJ<kSC.promoteFJ)issues.push(`SC FJ: ${p.ownFJ.toFixed(2)}/${kSC.promoteFJ}`);if(p.histFJ<kSC.promoteHistFJ)issues.push(`SC Hist: ${p.histFJ.toFixed(2)}/${kSC.promoteHistFJ}`);}
   if(nk.promoteFJ&&p.ownFJ<nk.promoteFJ)issues.push(`FJ: ${p.ownFJ.toFixed(2)}/${nk.promoteFJ}`);
@@ -1539,13 +1623,26 @@ function renderEvaluation(){
       const _gn=`Skupinové FJ: ${p.groupFJ.toFixed(2)}\nPre túto pozíciu nie sú stanovené skupinové FJ podmienky.`;
       groupFJCell=`<span class="fj-cell fj-neutral" data-tip="${_tipEsc(_gn)}" title="${_tipEsc(_gn)}" style="cursor:help">${p.groupFJ.toFixed(2)}</span>`;
     }
-    // Vlastné FJ tooltip: zľavu vidí iba admin; pri grace zobraziť "Nevyhodnocuje sa do…"
+    // Vlastné FJ tooltip: zľavu vidí iba admin; pri grace zobraziť "Nevyhodnocuje sa do…".
+    // Pre TR (BRUTTO) zobrazíme oranžový badge a v tooltipe info o kumulatívnej historickej brutto produkcii.
     let _ownFjCell;
     if(s.grace){
       const _graceTip=(currentUserRole==='admin')
         ? 'Nováčik na pozícii C\nNevyhodnocuje sa do '+formatDmy(s.graceUntil)+'.'
         : 'Nevyhodnocuje sa.';
       _ownFjCell=`<span class="fj-cell fj-neutral" data-tip="${_tipEsc(_graceTip)}" title="${_tipEsc(_graceTip)}" style="cursor:help">${p.ownFJ.toFixed(2)}</span>`;
+    } else if(p.isBrutto){
+      // TR - BRUTTO režim
+      const _cum=(typeof p.cumulativeBrutto==='number')?p.cumulativeBrutto:0;
+      const _need=400;
+      const _remaining=Math.max(0,_need-_cum);
+      const _bruttoTip='Vlastné FJ – BRUTTO (TR)\n'
+        +'Plávajúci Q (3m): '+p.ownFJ.toFixed(2)+' FJ\n'
+        +'Historicky kumulatívne: '+_cum.toFixed(2)+' / '+_need+' FJ\n'
+        +(_cum>=_need?'✓ Spĺňa podmienku povýšenia na C':'Chýba: '+_remaining.toFixed(2)+' FJ na povýšenie na C');
+      const _cls=_cum>=_need?'fj-ok':'fj-neutral';
+      _ownFjCell='<span class="fj-cell '+_cls+'" data-tip="'+_tipEsc(_bruttoTip)+'" title="'+_tipEsc(_bruttoTip)+'" style="cursor:help">'+p.ownFJ.toFixed(2)+'</span>'+
+        ' <span class="badge badge-orange" style="font-size:9px;margin-left:3px;vertical-align:middle">BRUTTO</span>';
     } else {
       const _extra=(coef<1 && currentUserRole==='admin')?`zľava ${Math.round(coef*100)}%`:'';
       _ownFjCell=fjCell(p.ownFJ,effFJ,'Vlastné FJ',_extra);
