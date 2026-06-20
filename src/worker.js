@@ -98,9 +98,10 @@ async function handleGetData(request, env, session) {
   return json({ ok: true, data: result, role: session.role });
 }
 
-// Save data (only admin can write)
+// Save data
+// - admin: môže meniť všetky kľúče
+// - user: môže meniť IBA 'bugs' (aby fungovalo nahlasovanie chýb)
 async function handleSaveData(request, env, session) {
-  if (session.role !== 'admin') return json({ error: 'Iba admin môže meniť dáta' }, 403);
   if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
   let body;
   try {
@@ -111,6 +112,10 @@ async function handleSaveData(request, env, session) {
   const { key, value } = body;
   const allowedKeys = ['imports', 'warnings', 'cesta', 'pozicie', 'bruto', 'poznamky', 'ev_poznamky', 'pb_dismissed', 'prispevky', 'servis', 'crm', 'bugs'];
   if (!allowedKeys.includes(key)) return json({ error: 'Neznámy kľúč' }, 400);
+  // User môže zapisovať iba bug-reporty
+  if (session.role !== 'admin' && key !== 'bugs') {
+    return json({ error: 'Iba admin môže meniť tieto dáta' }, 403);
+  }
   await env.DATA.put(`app:${key}`, JSON.stringify(value));
   return json({ ok: true });
 }
