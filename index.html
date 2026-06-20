@@ -1029,12 +1029,29 @@ function getQuarterImports(){
 const NOVACIK_C_GRACE_MONTHS=3;
 function getFirstCDate(name){
   const hist=pozicieHistory[name]||[];
-  if(!hist.length)return null;
-  // Najstaršia zmena, kde toPos=='C'
-  const c=hist.filter(e=>e&&e.toPos==='C'&&e.date).slice().sort((a,b)=>a.date.localeCompare(b.date));
-  if(!c.length)return null;
-  const d=new Date(c[0].date);
-  return isNaN(d)?null:d;
+  // 1) Manuálna alebo auto-vytvorená história v pozicieHistory má prednosť
+  if(hist.length){
+    const c=hist.filter(e=>e&&e.toPos==='C'&&e.date).slice().sort((a,b)=>a.date.localeCompare(b.date));
+    if(c.length){
+      const d=new Date(c[0].date);
+      if(!isNaN(d))return d;
+    }
+  }
+  // 2) Fallback: pozri sa do importov a nájdi najstarší mesiac, kde sa osoba objavila v NETTO ako C.
+  //    Použijeme 1. deň toho mesiaca ako "prvé C dátum". Pomôže to nováčikom, ktorých sme automaticky
+  //    nezachytili (napr. netto import bol pred zavedením auto-detekcie).
+  if(Array.isArray(imports)&&imports.length){
+    const sortedAsc=[...imports].sort((a,b)=>a.key.localeCompare(b.key));
+    for(const imp of sortedAsc){
+      const arr=imp.people||[];
+      const match=arr.find(p=>p.name===name);
+      if(match&&match.pos==='C'){
+        const [y,m]=imp.key.split('-').map(Number);
+        if(y&&m)return new Date(y,m-1,1);
+      }
+    }
+  }
+  return null;
 }
 function getCGraceInfo(p){
   if(!p||p.pos!=='C')return{inGrace:false};
@@ -1233,6 +1250,24 @@ function processImport(rows,yearMonth,reportType){
   if(existing>=0){imports[existing]=baseEntry;showToast(`${label} – ${reportType.toUpperCase()} aktualizovaný.`,'success');}
   else{imports.push(baseEntry);showToast(`${label} – ${reportType.toUpperCase()} uložený.`,'success');}
   tfSave('tf_imports',imports);
+  // Auto-detekcia nových C: pre NETTO import, ak je niekto na pozícii C a nemá v pozicieHistory žiadny záznam,
+  // automaticky pridáme záznam povýšenia "TR → C" s dátumom 1. dňa mesiaca tohto importu.
+  // To aktivuje grace periódu pre nováčikov, ktorých Hana ručne nepovýšila cez tlačidlo.
+  if(reportType==='netto'){
+    const firstOfMonth=`${yearMonth}-01`;
+    let added=0;
+    for(const pp of parsed){
+      if(pp.pos!=='C')continue;
+      const existHist=pozicieHistory[pp.name];
+      if(existHist&&existHist.length>0)continue; // existujúca história sa nedotýka
+      pozicieHistory[pp.name]=[{fromPos:'TR',toPos:'C',date:firstOfMonth,type:'povysenie',autoCreated:true}];
+      added++;
+    }
+    if(added>0){
+      tfSave('tf_pozicie',pozicieHistory);
+      showToast(`Auto-pridaných ${added} nových C nováčikov do histórie povýšení (grace aktivovaná).`,'success');
+    }
+  }
   selectedImportKey=key;
   // Pre náhľad v "Ľudia" zobraz netto, ak je k dispozícii, inak brutto
   people = baseEntry.people.length ? baseEntry.people : baseEntry.peopleBrutto;
