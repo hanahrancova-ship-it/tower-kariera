@@ -344,8 +344,10 @@ i[class^="ti-"],i[class*=" ti-"]{font-style:normal;display:inline-flex;align-ite
     <div class="nav-item" onclick="showPage('platby',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>Platby
     </div>
-    <div class="nav-item tf-admin-only" onclick="showPage('bugy',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="6"></circle><path d="M12 7v6m-3-6v-2a3 3 0 0 1 6 0v2M3 13h3m12 0h3M5 19l3-2m11 2l-3-2M5 7l3 2m11-2l-3 2"></path></svg>Nahlásené chyby
+    <div class="nav-item tf-admin-only" id="nav-bugy" onclick="showPage('bugy',this)" style="position:relative">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="6"></circle><path d="M12 7v6m-3-6v-2a3 3 0 0 1 6 0v2M3 13h3m12 0h3M5 19l3-2m11 2l-3-2M5 7l3 2m11-2l-3 2"></path></svg>
+      <span style="flex:1">Nahlásené chyby</span>
+      <span id="nav-bugy-badge" style="display:none;background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;line-height:1.3;font-family:var(--font-mono)"></span>
     </div>
   </nav>
 </aside>
@@ -844,18 +846,35 @@ const STORAGE_KEYS={
 
 // Wrapper: ukladá dáta do KV cez API (admin) alebo iba lokálne (user)
 // Výnimka: 'tf_bugs' môže ukladať aj user (aby fungovalo nahlasovanie chýb).
+// Vracia: { ok: bool, error: string|null } — caller musí skontrolovať výsledok!
 async function tfSave(localKey, value){
   const apiKey=STORAGE_KEYS[localKey];
-  if(!apiKey){console.error('Neznámy storage kľúč:',localKey);return;}
-  if(currentUserRole!=='admin'&&localKey!=='tf_bugs'){return;} // user smie ukladať iba bug-reporty
+  if(!apiKey){console.error('Neznámy storage kľúč:',localKey);return {ok:false,error:'Neznámy storage kľúč: '+localKey};}
+  if(currentUserRole!=='admin'&&localKey!=='tf_bugs'){
+    // User nesmie ukladať iné dáta — vrátime tichý úspech pre kompatibilitu (read-only mód),
+    // ale logujeme do konzoly, nech je v dev tools vidieť, že sa to nezapísalo.
+    console.warn('tfSave: user nemá oprávnenie na zápis kľúča',localKey);
+    return {ok:false,error:'no_permission'};
+  }
   try{
     const res=await fetch('/api/data/save',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({key:apiKey,value:value})
     });
-    if(!res.ok){const err=await res.json();console.error('Chyba pri ukladaní:',err);showToast('Chyba pri ukladaní dát.','error');}
-  }catch(e){console.error('Sieťová chyba:',e);showToast('Sieťová chyba pri ukladaní.','error');}
+    if(!res.ok){
+      let errMsg='HTTP '+res.status;
+      try{const errBody=await res.json();if(errBody&&errBody.error)errMsg=errBody.error;}catch(_e){}
+      console.error('Chyba pri ukladaní:',errMsg);
+      showToast('Chyba pri ukladaní dát: '+errMsg,'error');
+      return {ok:false,error:errMsg};
+    }
+    return {ok:true,error:null};
+  }catch(e){
+    console.error('Sieťová chyba:',e);
+    showToast('Sieťová chyba pri ukladaní: '+(e.message||e),'error');
+    return {ok:false,error:e.message||String(e)};
+  }
 }
 
 // Načíta všetky dáta z API a naplní premenné
@@ -3208,15 +3227,57 @@ async function submitBugReport(){
   }catch(_e){/* fallback na lokálnu kópiu */}
   if(!Array.isArray(bugsData))bugsData=[];
   bugsData.push(bug);
-  await tfSave('tf_bugs',bugsData);
+  const _saveRes=await tfSave('tf_bugs',bugsData);
+  if(!_saveRes||!_saveRes.ok){
+    // Rollback lokálnu kópiu, aby pri ďalšom volaní nebol duplicitný
+    bugsData=bugsData.filter(b=>b.id!==bug.id);
+    showToast('❌ Chyba sa neuložila. Skús prosím znova alebo kontaktuj admin.','error');
+    return;
+  }
   closeModal('modal-bug-report');
-  showToast('Ďakujem, chyba bola odoslaná.','success');
+  showToast('✓ Ďakujem, chyba bola uložená a admin ju uvidí.','success');
 }
+// Aktualizuje červený badge na sidebar pri 'Nahlásené chyby' (admin only).
+// Badge ukáže počet nevyriešených bugov + tooltip s info o poslednom hlásení.
+function renderBugBadge(){
+  const badge=document.getElementById('nav-bugy-badge');
+  const navItem=document.getElementById('nav-bugy');
+  if(!badge||!navItem)return;
+  if(currentUserRole!=='admin'||!Array.isArray(bugsData)){
+    badge.style.display='none';
+    return;
+  }
+  const openBugs=bugsData.filter(b=>!b.resolved);
+  if(!openBugs.length){
+    badge.style.display='none';
+    // Aj keď je 0 otvorených, zobraziť info kedy bol posledný (helps detekciu silent-fail)
+    if(bugsData.length){
+      const latest=bugsData.slice().sort((a,b)=>b.date.localeCompare(a.date))[0];
+      const ts=new Date(latest.date);
+      const days=Math.floor((Date.now()-ts.getTime())/(1000*60*60*24));
+      navItem.title='Žiadne otvorené hlásenia. Posledné pred '+days+' dňami.';
+    } else {
+      navItem.title='Zatiaľ žiadne hlásenia – ak je to nezvyčajné, otvor stránku a spusti zdravotnú kontrolu.';
+    }
+    return;
+  }
+  badge.textContent=openBugs.length;
+  badge.style.display='inline-block';
+  // Tooltip: posledný bug
+  const latestOpen=openBugs.slice().sort((a,b)=>b.date.localeCompare(a.date))[0];
+  const ts=new Date(latestOpen.date);
+  const days=Math.floor((Date.now()-ts.getTime())/(1000*60*60*24));
+  navItem.title=openBugs.length+' otvorených hlásení · posledné pred '+(days===0?'<1 dňom':days+' dňami');
+}
+
 function renderBugy(){
+  renderBugBadge();
   const c=document.getElementById('bugy-content');
   if(!c)return;
+  // Spustiť health-check pri každom otvorení (admin only)
+  if(currentUserRole==='admin')runBugHealthCheck();
   if(!Array.isArray(bugsData)||!bugsData.length){
-    c.innerHTML='<div class="empty"><div class="big">✨</div>Žiadne nahlásené chyby.</div>';
+    c.innerHTML='<div id="bug-health-result"></div><div class="empty"><div class="big">✨</div>Žiadne nahlásené chyby.</div>';
     document.getElementById('bugy-sub').textContent='Zoznam chýb nahlásených používateľmi';
     return;
   }
@@ -3227,7 +3288,7 @@ function renderBugy(){
   });
   const openCount=bugsData.filter(b=>!b.resolved).length;
   document.getElementById('bugy-sub').textContent=openCount+' nevyriešených / '+bugsData.length+' celkom';
-  let html='';
+  let html='<div id="bug-health-result"></div>';
   for(const bug of sorted){
     const dt=new Date(bug.date);
     const dtStr=dt.getDate()+'.'+(dt.getMonth()+1)+'.'+dt.getFullYear()+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
@@ -3255,6 +3316,60 @@ function renderBugy(){
   c.innerHTML=html;
 }
 function escapeHtml(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+// Health-check pre bug-report systém (vrstva 3).
+// Postup: zapíše testovací 'ping' bug → načíta späť → odstráni → zmaže.
+// Ak celé prebehne v poriadku, zobrazí zelený banner. Ak zlyhá, červený s detailom.
+let _bugHealthRunning=false;
+async function runBugHealthCheck(){
+  if(_bugHealthRunning)return;
+  _bugHealthRunning=true;
+  const el=document.getElementById('bug-health-result');
+  if(!el){_bugHealthRunning=false;return;}
+  el.innerHTML='<div style="background:#f5f5f5;border:1px solid var(--gray2);border-radius:8px;padding:8px 14px;margin-bottom:14px;font-size:11px;color:var(--gray3)">⏳ Spúšťam zdravotnú kontrolu bug-report systému…</div>';
+  const startTs=Date.now();
+  const pingId='bug_HEALTHCHECK_'+startTs;
+  let phase='start';
+  try{
+    // 1) Načítaj aktuálny stav zo servera (čerstvé pole, bez stale dát)
+    phase='get';
+    let baseBugs=[];
+    const r1=await fetch('/api/data/get');
+    if(!r1.ok)throw new Error('GET /api/data/get vrátilo '+r1.status);
+    const j1=await r1.json();
+    if(!j1||!j1.ok)throw new Error('GET vrátilo ok=false');
+    if(Array.isArray(j1.data&&j1.data.bugs))baseBugs=j1.data.bugs;
+    else if(j1.data&&Array.isArray(j1.data.bugs))baseBugs=j1.data.bugs;
+    // 2) Pridaj testovací záznam a ulož
+    phase='save';
+    const testBug={id:pingId,name:'HEALTHCHECK',page:'_internal',text:'auto-test '+new Date().toISOString(),date:new Date().toISOString(),resolved:true,_healthcheck:true};
+    const withPing=[...baseBugs,testBug];
+    const sv=await tfSave('tf_bugs',withPing);
+    if(!sv||!sv.ok)throw new Error('Zápis zlyhal: '+(sv&&sv.error?sv.error:'neznáma'));
+    // 3) Načítaj znova a over, či test ping existuje
+    phase='verify';
+    const r2=await fetch('/api/data/get');
+    if(!r2.ok)throw new Error('GET (verify) vrátilo '+r2.status);
+    const j2=await r2.json();
+    const arr=(j2&&j2.data&&Array.isArray(j2.data.bugs))?j2.data.bugs:[];
+    const found=arr.some(b=>b.id===pingId);
+    if(!found)throw new Error('Testovací záznam sa po zápise nenašiel pri spätnom načítaní');
+    // 4) Odstráň testovací záznam (cleanup)
+    phase='cleanup';
+    const cleaned=arr.filter(b=>b.id!==pingId&&!(b.name==='HEALTHCHECK'&&b._healthcheck));
+    bugsData=cleaned; // synchronizuj lokálnu kópiu
+    const sv2=await tfSave('tf_bugs',cleaned);
+    if(!sv2||!sv2.ok)throw new Error('Cleanup zápis zlyhal: '+(sv2&&sv2.error?sv2.error:'neznáma'));
+    // 5) Hotovo
+    const took=Date.now()-startTs;
+    el.innerHTML='<div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#1b5e20"><strong>✓ Bug-report systém funguje.</strong> Test prebehol za '+took+' ms (zápis aj spätné načítanie OK).</div>';
+  }catch(e){
+    console.error('Health-check zlyhal v fáze',phase,e);
+    el.innerHTML='<div style="background:#fdecea;border:1px solid #f5c6c0;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#a32d2d"><strong>❌ Bug-report systém má problém!</strong><br>Fáza zlyhania: <strong>'+phase+'</strong> · Detail: '+escapeHtml(e.message||String(e))+'<br><span style="font-size:11px;color:#666">User-mode hlásenia chýb sa nemusia ukladať. Pozri Cloudflare Workers logy.</span></div>';
+  } finally {
+    _bugHealthRunning=false;
+  }
+}
+
 async function resolveBug(id){
   const b=bugsData.find(x=>x.id===id);
   if(!b)return;
@@ -3292,6 +3407,7 @@ async function tfInit(){
   renderImportSelector();
   renderEvaluation();
   renderDashboard();
+  renderBugBadge();
 }
 
 // Aplikuje obmedzenia podľa role
