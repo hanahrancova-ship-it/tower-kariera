@@ -843,10 +843,11 @@ const STORAGE_KEYS={
 };
 
 // Wrapper: ukladá dáta do KV cez API (admin) alebo iba lokálne (user)
+// Výnimka: 'tf_bugs' môže ukladať aj user (aby fungovalo nahlasovanie chýb).
 async function tfSave(localKey, value){
   const apiKey=STORAGE_KEYS[localKey];
   if(!apiKey){console.error('Neznámy storage kľúč:',localKey);return;}
-  if(currentUserRole!=='admin'){return;} // user nemôže ukladať
+  if(currentUserRole!=='admin'&&localKey!=='tf_bugs'){return;} // user smie ukladať iba bug-reporty
   try{
     const res=await fetch('/api/data/save',{
       method:'POST',
@@ -3197,6 +3198,14 @@ async function submitBugReport(){
     userAgent:navigator.userAgent.substring(0,200),
     screenSize:window.innerWidth+'x'+window.innerHeight
   };
+  // Pred zápisom načítaj aktuálny stav zo servera (anti-race), aby user pri zápise neprepísal cudzie záznamy
+  try{
+    const r=await fetch('/api/data/get');
+    if(r.ok){
+      const j=await r.json();
+      if(j&&j.ok&&j.data&&Array.isArray(j.data.bugs))bugsData=j.data.bugs;
+    }
+  }catch(_e){/* fallback na lokálnu kópiu */}
   if(!Array.isArray(bugsData))bugsData=[];
   bugsData.push(bug);
   await tfSave('tf_bugs',bugsData);
