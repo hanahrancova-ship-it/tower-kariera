@@ -125,6 +125,8 @@ tr.danger-row td{background:#fff5f5}
 .cell-empty{background:#fff;color:var(--gray3)}
 .cell-green{background:#d4f4dd;color:#0e6b27;font-weight:600}
 .cell-red{background:#ffd6d6;color:#a01010;font-weight:600}
+.cell-orange{background:#FAEEDA;color:#854F0B;font-weight:600}
+.cell-q-blue.cell-orange{background:#f6e3c4;color:#854F0B}
 .cell-info{background:#eef5ff;color:#0d4b8c;font-weight:500}
 .cell-info-green{background:#e8f8ee;color:#0e6b27;font-weight:500}
 .cell-q-blue{background:#e3f2fd;color:#1565c0;font-weight:500}
@@ -2017,31 +2019,59 @@ function showToast(msg,type='success'){const t=document.getElementById('toast');
 
 // ===================== PRÍSPEVKY ZA KANCELÁRIE =====================
 
-// FIX prenájom — mesačné platby (skupina 1)
+// ===== ÚČINNOSŤ ZMIEN OD 1.7.2026 =====
+// H1/2026 (Jan–Jún, Q1+Q2) = pôvodné ceny; od 1.7.2026 (H2, Q3+) = nové ceny.
+function isNewPricingMonth(year,month){ // month 1..12
+  return year>2026 || (year===2026 && month>=7);
+}
+function isNewPricingQ(year,q){ // q 1..4
+  return year>2026 || (year===2026 && q>=3);
+}
+function isNewPricingH(year,h){ // h 1..2
+  return year>2026 || (year===2026 && h>=2);
+}
+// Auto-stav mesačnej bunky bez záznamu o úhrade: 'red' (mesiac skončil, nezaplatené),
+// 'orange' (po 20. dni v mesiaci, ešte nezaplatené) alebo null (ešte nie je po termíne).
+function officeCellAuto(year,month){ // month 1..12
+  const now=new Date();
+  const monthEnd=new Date(year,month,0,23,59,59); // posledný deň mesiaca
+  const due=new Date(year,month-1,20,0,0,0);       // 20. deň v mesiaci
+  if(now>monthEnd)return 'red';
+  if(now>=due)return 'orange';
+  return null;
+}
+
+// FIX prenájom — mesačné platby (skupina 1). platba = do 30.6.2026, platbaNew = od 1.7.2026
 const PRISPEVKY_FIX=[
-  {name:'Matej Hodas',platba:130},
-  {name:'Erik Lehocký',platba:130},
-  {name:'Andrej Nejedlík',platba:130},
-  {name:'Matúš Kormaník',platba:60},
-  {name:'Juraj Tomáš Hrabovský',platba:60},
-  {name:'Denisa Véghová',platba:60},
-  {name:'Erich Chobot',platba:60}
+  {name:'Matej Hodas',platba:130,platbaNew:145},
+  {name:'Erik Lehocký',platba:130,platbaNew:145},
+  {name:'Andrej Nejedlík',platba:130,platbaNew:145},
+  {name:'Matúš Kormaník',platba:60,platbaNew:67},
+  {name:'Juraj Tomáš Hrabovský',platba:60,platbaNew:67},
+  {name:'Denisa Véghová',platba:60,platbaNew:67},
+  {name:'Erich Chobot',platba:60,platbaNew:67}
 ];
 
-// FAKTÚRY kvartálne (skupina 2)
+// FAKTÚRY kvartálne (skupina 2). maxPrispevok/minFJ = do Q2 2026, *New = od Q3 2026.
+// fromNewOnly:true → osoba začína až od 1.7.2026 (predtým sa nezobrazuje).
 const PRISPEVKY_FAKT=[
-  {name:'Erik Bednár',team:['Erik Bednár','Patrik Šuvara'],maxPrispevok:540,minFJ:2700},
-  {name:'Mgr. Kristína Mikulovská',team:['Mgr. Kristína Mikulovská','Michaela Hrbáčiková'],maxPrispevok:345,minFJ:1750},
-  {name:'Lucia Budzeľová',team:['Lucia Budzeľová'],maxPrispevok:186,minFJ:930}
+  {name:'Erik Bednár',team:['Erik Bednár','Patrik Šuvara'],maxPrispevok:540,minFJ:2700,maxPrispevokNew:540,minFJNew:2700},
+  {name:'Mgr. Kristína Mikulovská',team:['Mgr. Kristína Mikulovská','Michaela Hrbáčiková'],maxPrispevok:345,minFJ:1750,maxPrispevokNew:360,minFJNew:1800},
+  {name:'Lucia Budzeľová',team:['Lucia Budzeľová'],maxPrispevok:186,minFJ:930,maxPrispevokNew:186,minFJNew:930},
+  {name:'Július Kováč',team:['Július Kováč','Andrej Bitala','Peter Letovanec','Sára Macová'],maxPrispevok:825,minFJ:4125,maxPrispevokNew:825,minFJNew:4125,fromNewOnly:true}
 ];
 
-// FIX preddavky + Q vyrovnanie (skupina 3)
+// FIX preddavky + Q vyrovnanie (skupina 3). *New = od 1.7.2026.
 const PRISPEVKY_FIXPREDDAVKY=[
-  {id:'ba_dominik',label:'Dominik + Katka (BA)',preddavokMes:800,maxPrispevok:1200,minFJ:6000,teamRoots:['Dominik Lehocký'],teamExclude:['Adam Marček']},
-  {id:'ba_gallo',label:'Mišo Gallo (BA)',preddavokMes:800,maxPrispevok:1200,minFJ:6000,teamRoots:['Michal Gallo'],teamExclude:['Lucia Budzeľová','Denisa Véghová']}
+  {id:'ba_dominik',label:'Dominik + Katka (BA)',preddavokMes:800,maxPrispevok:1200,minFJ:6000,preddavokMesNew:889,maxPrispevokNew:1334,minFJNew:6670,teamRoots:['Dominik Lehocký'],teamExclude:['Adam Marček']},
+  {id:'ba_gallo',label:'Mišo Gallo (BA)',preddavokMes:800,maxPrispevok:1200,minFJ:6000,preddavokMesNew:889,maxPrispevokNew:1334,minFJNew:6670,teamRoots:['Michal Gallo'],teamExclude:['Lucia Budzeľová','Denisa Véghová','Július Kováč','Andrej Bitala','Peter Letovanec','Sára Macová']}
 ];
 
-// TN — 1 spoločný príspevok, rozdelený medzi 4 podiely
+// TN nový model od 1.7.2026 — každý platí 100 €/mesačne (editovateľný zoznam)
+const PRISPEVKY_TN_MES=100;
+const PRISPEVKY_TN_NEW_DEFAULT=['Peter Dohňanský','Silvia Augustínová','Erik Lehocký','Katarína Cucíková','Jakub Hertl','Kristína Mikulovská','Michaela Hrbáčiková','Erik Bednár','Patrik Šuvara'];
+
+// TN starý model (do 30.6.2026) — 1 spoločný príspevok, rozdelený medzi 4 podiely
 const PRISPEVKY_TN={
   preddavokMes:438, // platí každý zo 4 podielov
   maxPrispevok:875, // celkový max
@@ -2062,6 +2092,24 @@ const PRISPEVKY_TN={
 function getTnOverride(year,q){
   return PRISPEVKY_TN.overrides[year+'-Q'+q]||null;
 }
+
+// ===== Editovateľné zoznamy (uložené v prispevkyData pod kľúčmi __* , bez zmeny worker.js) =====
+function getFixRoster(){
+  if(Array.isArray(prispevkyData.__fixRoster))return prispevkyData.__fixRoster;
+  return PRISPEVKY_FIX.map(p=>({name:p.name,platba:p.platba,platbaNew:p.platbaNew}));
+}
+function saveFixRoster(arr){prispevkyData.__fixRoster=arr;tfSave('tf_prispevky',prispevkyData);}
+function getFaktRoster(){
+  if(Array.isArray(prispevkyData.__faktRoster))return prispevkyData.__faktRoster;
+  return PRISPEVKY_FAKT.map(p=>({...p,team:p.team.slice()}));
+}
+function saveFaktRoster(arr){prispevkyData.__faktRoster=arr;tfSave('tf_prispevky',prispevkyData);}
+function getTnNewRoster(year){
+  const k='__tnNewRoster_'+year;
+  if(Array.isArray(prispevkyData[k]))return prispevkyData[k];
+  return PRISPEVKY_TN_NEW_DEFAULT.slice();
+}
+function saveTnNewRoster(year,arr){prispevkyData['__tnNewRoster_'+year]=arr;tfSave('tf_prispevky',prispevkyData);}
 
 // Helper: spočítaj vlastné FJ človeka za daný mesiac (key = "2026-04")
 function ownFJForMonth(name,monthKey){
@@ -2132,61 +2180,110 @@ function renderPrispevky(){
   if(!c)return;
   let html='';
   // Upozornenie hore
-  html+='<div style="background:#fff8e1;border:1px solid #ffc107;border-radius:8px;padding:12px 16px;margin-bottom:18px;font-size:13px;color:#7a5800"><strong>⏰ Termín úhrad:</strong> Všetky príspevky musia byť uhradené najneskôr do <strong>20. dňa</strong> v mesiaci.</div>';
+  html+='<div style="background:#fff8e1;border:1px solid #ffc107;border-radius:8px;padding:12px 16px;margin-bottom:18px;font-size:13px;color:#7a5800"><strong>⏰ Termín úhrad:</strong> Všetky príspevky musia byť uhradené najneskôr do <strong>20. dňa</strong> v mesiaci. Po 20. svieti chýbajúca platba oranžovo, po skončení mesiaca červeno.</div>';
+  // ===== KANCELÁRIE BA =====
+  html+='<div style="border-left:4px solid var(--green);padding:8px 14px;margin-bottom:14px;background:#f4faf5;border-radius:0 8px 8px 0"><div style="font-weight:700;font-size:15px;color:var(--green-dark)">🏢 Kancelárie BA</div><div style="font-size:12px;color:var(--gray3);margin-top:2px">Spravuje <strong>K. Veselská</strong> · jednodňový prenájom <strong>28 €</strong></div></div>';
   // Skupina 2 — Faktúry (kvartálne, prvé hore)
   html+=renderPrispevkyFakt(year);
-  // Skupina 3 — Fix preddavky BA + TN
+  // Skupina 3 — Fix preddavky BA
   html+=renderPrispevkyFixPreddavky(year);
-  html+=renderPrispevkyTN(year);
-  // Skupina 1 — Fix prenájom (dole)
+  // Skupina 1 — Fix prenájom
   html+=renderPrispevkyFix(year);
+  // ===== KANCELÁRIE TN =====
+  html+='<div style="border-left:4px solid var(--green);padding:8px 14px;margin:26px 0 14px;background:#f4faf5;border-radius:0 8px 8px 0"><div style="font-weight:700;font-size:15px;color:var(--green-dark)">🏢 Kancelárie TN</div><div style="font-size:12px;color:var(--gray3);margin-top:2px">Spravuje <strong>K. Cucíková</strong> · jednodňový prenájom <strong>17 €</strong> – úhrada vopred</div></div>';
+  html+=renderPrispevkyTNNew(year);
+  html+=renderPrispevkyTN(year);
   c.innerHTML=html;
 }
 
 // Render skupiny 1 — FIX prenájom (12 mesiacov)
 function renderPrispevkyFix(year){
   const mesNames=['Jan','Feb','Mar','Apr','Máj','Jún','Júl','Aug','Sep','Okt','Nov','Dec'];
+  const roster=getFixRoster();
+  const isAdmin=currentUserRole==='admin';
   let html='<div class="card" style="margin-bottom:20px"><div class="card-title">📋 Fixné mesačné platby (prenájom BA)</div>';
+  html+='<div style="font-size:11px;color:var(--gray3);margin-bottom:10px">Od 1.7.2026: pôvodne 130 € → 145 €, 60 € → 67 €. Mesiace do júna ostávajú v starej cene.</div>';
   html+='<div style="overflow-x:auto"><table class="prispevky-table"><thead><tr><th style="min-width:180px;text-align:left">Osoba</th><th style="text-align:right">Platba</th>';
   for(let m=0;m<12;m++)html+='<th style="min-width:62px">'+mesNames[m]+'</th>';
+  if(isAdmin)html+='<th class="tf-admin-only" style="min-width:40px;text-align:center">Akcia</th>';
   html+='</tr></thead><tbody>';
-  for(const p of PRISPEVKY_FIX){
-    html+='<tr><td class="cell-person">'+p.name+'</td><td style="text-align:right;color:var(--gray3)">'+p.platba+' €</td>';
+  for(const p of roster){
+    const platbaNew=(p.platbaNew!==undefined)?p.platbaNew:p.platba;
+    const platbaTxt=(platbaNew!==p.platba)?p.platba+'→'+platbaNew:String(platbaNew);
+    html+='<tr><td class="cell-person">'+p.name+'</td><td style="text-align:right;color:var(--gray3)">'+platbaTxt+' €</td>';
     for(let m=0;m<12;m++){
+      const platba=isNewPricingMonth(year,m+1)?platbaNew:p.platba;
       const key='fix_'+year+'_'+String(m+1).padStart(2,'0')+'_'+p.name;
       const data=getPrispevok(key);
       let cls='cell-empty';
-      const sumaUlozena=(data&&data.sumaEur!==undefined)?data.sumaEur:p.platba;
+      const sumaUlozena=(data&&data.sumaEur!==undefined)?data.sumaEur:platba;
       let content=sumaUlozena+' €';
       if(data&&data.status==='uhradene'){cls='cell-green';content='<span class="cell-sum">'+sumaUlozena+' €</span><span class="cell-meta">✓ '+(data.date?formatShortDate(data.date):'')+'</span>';}
       else if(data&&data.status==='neuhradene'){cls='cell-red';content='<span class="cell-sum">'+sumaUlozena+' €</span><span class="cell-meta">✗ '+(data.date?formatShortDate(data.date):'')+'</span>';}
+      else {const auto=officeCellAuto(year,m+1);if(auto==='red'){cls='cell-red';content='<span class="cell-sum">'+platba+' €</span><span class="cell-meta">✗ nezaplatené</span>';}else if(auto==='orange'){cls='cell-orange';content='<span class="cell-sum">'+platba+' €</span><span class="cell-meta">⚠ po termíne</span>';}}
       const safeName=p.name.replace(/'/g,"\\'");
-      html+='<td class="prispevok-cell '+cls+'" onclick="openPrispevokModal(\'fix\',\''+key+'\',\''+safeName+'\',\''+mesNames[m]+' '+year+'\','+p.platba+')">'+content+'</td>';
+      html+='<td class="prispevok-cell '+cls+'" onclick="openPrispevokModal(\'fix\',\''+key+'\',\''+safeName+'\',\''+mesNames[m]+' '+year+'\','+platba+')">'+content+'</td>';
     }
+    if(isAdmin){const safeName=p.name.replace(/'/g,"\\'");html+='<td class="tf-admin-only" style="text-align:center"><button onclick="removeFixPerson(\''+safeName+'\')" style="background:transparent;border:none;cursor:pointer;color:var(--red);font-size:14px;padding:2px 6px" title="Odstrániť">🗑</button></td>';}
     html+='</tr>';
   }
-  html+='</tbody></table></div></div>';
+  html+='</tbody></table></div>';
+  if(isAdmin)html+='<div style="margin-top:12px"><button class="btn btn-primary tf-admin-only" onclick="addFixPerson()">+ Pridať osobu</button></div>';
+  html+='</div>';
   return html;
+}
+// Pridať/odobrať osobu do FIX prenájmu (BA)
+function addFixPerson(){
+  if(currentUserRole!=='admin')return;
+  const name=(prompt('Meno a priezvisko novej osoby (prenájom BA):')||'').trim();
+  if(!name)return;
+  const roster=getFixRoster();
+  if(roster.some(p=>p.name===name)){alert('Táto osoba už je v zozname.');return;}
+  const sumaStr=prompt('Mesačná platba pre '+name+' (€):','145');
+  if(sumaStr===null)return;
+  const suma=parseFloat(sumaStr);
+  if(isNaN(suma)||suma<0){alert('Neplatná suma.');return;}
+  roster.push({name,platba:suma,platbaNew:suma});
+  saveFixRoster(roster);
+  renderPrispevky();
+}
+function removeFixPerson(name){
+  if(currentUserRole!=='admin')return;
+  if(!confirm('Odstrániť '+name+' z prenájmu BA?'))return;
+  saveFixRoster(getFixRoster().filter(p=>p.name!==name));
+  renderPrispevky();
 }
 
 // Render skupiny 2 — Faktúry kvartálne
 function renderPrispevkyFakt(year){
+  const roster=getFaktRoster();
+  const isAdmin=currentUserRole==='admin';
   let html='<div class="card" style="margin-bottom:20px"><div class="card-title">🧾 Faktúry kvartálne</div>';
   html+='<div style="overflow-x:auto"><table class="prispevky-table"><thead><tr><th style="min-width:200px;text-align:left">Príjemca</th><th style="text-align:left;min-width:160px">Tím</th><th style="text-align:right">Max prísp.</th><th style="text-align:right">Min FJ/Q</th>';
   for(let q=1;q<=4;q++)html+='<th style="min-width:120px;background:#e3f2fd;color:#1565c0">Q'+q+'</th>';
+  if(isAdmin)html+='<th class="tf-admin-only" style="min-width:40px;text-align:center">Akcia</th>';
   html+='</tr></thead><tbody>';
-  for(const p of PRISPEVKY_FAKT){
-    html+='<tr><td class="cell-person">'+p.name+'</td>';
+  for(const p of roster){
+    const maxNew=(p.maxPrispevokNew!==undefined)?p.maxPrispevokNew:p.maxPrispevok;
+    const minNew=(p.minFJNew!==undefined)?p.minFJNew:p.minFJ;
+    const maxTxt=(maxNew!==p.maxPrispevok)?p.maxPrispevok+'→'+maxNew:String(maxNew);
+    const minTxt=(minNew!==p.minFJ)?p.minFJ+'→'+minNew:String(minNew);
+    html+='<tr><td class="cell-person">'+p.name+(p.fromNewOnly?' <span style="font-size:9px;color:var(--blue)">od 1.7.</span>':'')+'</td>';
     html+='<td style="font-size:11px;color:var(--gray3)">'+p.team.join(', ')+'</td>';
-    html+='<td style="text-align:right;color:var(--gray3)">'+p.maxPrispevok+' €</td>';
-    html+='<td style="text-align:right;color:var(--gray3)">'+p.minFJ+' FJ</td>';
+    html+='<td style="text-align:right;color:var(--gray3)">'+maxTxt+' €</td>';
+    html+='<td style="text-align:right;color:var(--gray3)">'+minTxt+' FJ</td>';
     for(let q=1;q<=4;q++){
+      const useNew=isNewPricingQ(year,q);
+      const maxP=useNew?maxNew:p.maxPrispevok;
+      const minP=useNew?minNew:p.minFJ;
+      // osoba platná až od 1.7.2026 → staršie kvartály preskoč
+      if(p.fromNewOnly && !useNew){html+='<td class="prispevok-cell cell-q-blue" style="color:var(--gray3)">–</td>';continue;}
       const key='fakt_'+year+'_Q'+q+'_'+p.name;
       const data=getPrispevok(key);
       // spočítaj FJ tímu za Q
       let sumFJ=0;
       for(const member of p.team)sumFJ+=ownFJForQ(member,year,q);
-      const prispevok=Math.min(sumFJ*0.2,p.maxPrispevok);
+      const prispevok=Math.min(sumFJ*0.2,maxP);
       const prispevokUlozeny=(data&&data.sumaEur!==undefined)?data.sumaEur:prispevok;
       let cls='cell-q-blue';
       let content='';
@@ -2194,7 +2291,7 @@ function renderPrispevkyFakt(year){
       else if(data&&data.status==='neuhradene'){cls='cell-q-blue cell-red';content='<span class="cell-sum">'+Math.round(prispevokUlozeny)+' €</span><span class="cell-meta">✗ '+(data.date?formatShortDate(data.date):'')+'</span>';}
       else {
         if(sumFJ>0){
-          content='<span class="cell-sum">'+Math.round(prispevok)+' €</span><span class="cell-meta">'+sumFJ.toFixed(0)+'/'+p.minFJ+' FJ</span>';
+          content='<span class="cell-sum">'+Math.round(prispevok)+' €</span><span class="cell-meta">'+sumFJ.toFixed(0)+'/'+minP+' FJ</span>';
         }else{
           content='<span style="color:var(--gray3)">–</span>';
         }
@@ -2202,12 +2299,43 @@ function renderPrispevkyFakt(year){
       const safeName=p.name.replace(/'/g,"\\'");
       html+='<td class="prispevok-cell '+cls+'" onclick="openPrispevokModal(\'fakt\',\''+key+'\',\''+safeName+'\',\'Q'+q+' '+year+'\','+prispevok.toFixed(2)+')">'+content+'</td>';
     }
+    if(isAdmin){const safeName=p.name.replace(/'/g,"\\'");html+='<td class="tf-admin-only" style="text-align:center"><button onclick="removeFaktPerson(\''+safeName+'\')" style="background:transparent;border:none;cursor:pointer;color:var(--red);font-size:14px;padding:2px 6px" title="Odstrániť">🗑</button></td>';}
     html+='</tr>';
   }
   html+='</tbody></table></div>';
   html+='<div style="font-size:11px;color:var(--gray3);margin-top:10px;padding:8px 12px;background:var(--gray);border-radius:6px">💡 Príspevok = súčet vlastných FJ tímu za Q × 0,2 (max obmedzený). Vypočíta sa automaticky z importov.</div>';
+  if(isAdmin)html+='<div style="margin-top:12px"><button class="btn btn-primary tf-admin-only" onclick="addFaktPerson()">+ Pridať príjemcu</button></div>';
   html+='</div>';
   return html;
+}
+// Pridať/odobrať príjemcu faktúr
+function addFaktPerson(){
+  if(currentUserRole!=='admin')return;
+  const name=(prompt('Meno príjemcu faktúry:')||'').trim();
+  if(!name)return;
+  const roster=getFaktRoster();
+  if(roster.some(p=>p.name===name)){alert('Tento príjemca už je v zozname.');return;}
+  const teamStr=prompt('Tím – mená oddelené čiarkou (do výkonu sa počítajú ich FJ).\nMôžeš nechať aj len meno príjemcu:',name);
+  if(teamStr===null)return;
+  const team=teamStr.split(',').map(s=>s.trim()).filter(Boolean);
+  if(!team.length)team.push(name);
+  const maxStr=prompt('Max príspevok za Q (€):','');
+  if(maxStr===null)return;
+  const maxP=parseFloat(maxStr);
+  if(isNaN(maxP)||maxP<0){alert('Neplatná suma.');return;}
+  const minStr=prompt('Min FJ za Q:',String(Math.round(maxP*5)));
+  if(minStr===null)return;
+  const minF=parseFloat(minStr);
+  if(isNaN(minF)||minF<0){alert('Neplatné FJ.');return;}
+  roster.push({name,team,maxPrispevok:maxP,minFJ:minF,maxPrispevokNew:maxP,minFJNew:minF});
+  saveFaktRoster(roster);
+  renderPrispevky();
+}
+function removeFaktPerson(name){
+  if(currentUserRole!=='admin')return;
+  if(!confirm('Odstrániť príjemcu '+name+'?'))return;
+  saveFaktRoster(getFaktRoster().filter(p=>p.name!==name));
+  renderPrispevky();
 }
 
 // Render skupiny 3 — FIX preddavky BA (Dominik+Katka, Gallo)
@@ -2224,8 +2352,14 @@ function renderPrispevkyFixPreddavky(year){
     for(const ex of grp.teamExclude)teamSet.delete(ex);
     const team=Array.from(teamSet);
     const teamSafe=team.join(', ').replace(/'/g,"\\'");
+    const preNew=(grp.preddavokMesNew!==undefined)?grp.preddavokMesNew:grp.preddavokMes;
+    const maxNew=(grp.maxPrispevokNew!==undefined)?grp.maxPrispevokNew:grp.maxPrispevok;
+    const minNew=(grp.minFJNew!==undefined)?grp.minFJNew:grp.minFJ;
+    const preTxt=(preNew!==grp.preddavokMes)?grp.preddavokMes+'→'+preNew:String(preNew);
+    const maxTxt=(maxNew!==grp.maxPrispevok)?grp.maxPrispevok+'→'+maxNew:String(maxNew);
+    const minTxt=(minNew!==grp.minFJ)?grp.minFJ+'→'+minNew:String(minNew);
     html+='<div style="margin-bottom:18px"><div style="font-weight:700;margin-bottom:8px;font-size:14px;color:var(--green-dark)">'+grp.label+'</div>';
-    html+='<div style="font-size:11px;color:var(--gray3);margin-bottom:8px">Tím ('+team.length+' osôb): <span style="cursor:help" title="'+teamSafe+'">'+team.slice(0,4).join(', ')+(team.length>4?' a ďalší ('+team.length+')':'')+'</span> · Preddavok '+grp.preddavokMes+'€/mes · Max '+grp.maxPrispevok+'€/Q · Min '+grp.minFJ+' FJ/Q</div>';
+    html+='<div style="font-size:11px;color:var(--gray3);margin-bottom:8px">Tím ('+team.length+' osôb): <span style="cursor:help" title="'+teamSafe+'">'+team.slice(0,4).join(', ')+(team.length>4?' a ďalší ('+team.length+')':'')+'</span> · Preddavok '+preTxt+'€/mes · Max '+maxTxt+'€/Q · Min '+minTxt+' FJ/Q <span style="color:var(--blue)">(zmena od 1.7.2026)</span></div>';
     html+='<div style="overflow-x:auto"><table class="prispevky-table"><thead><tr>';
     // 12 mesačných preddavkov + 4 Q vyrovnania
     for(let m=0;m<12;m++){
@@ -2237,20 +2371,24 @@ function renderPrispevkyFixPreddavky(year){
     }
     html+='</tr></thead><tbody><tr>';
     for(let m=0;m<12;m++){
+      const preddavokMes=isNewPricingMonth(year,m+1)?preNew:grp.preddavokMes;
       const key=grp.id+'_pre_'+year+'_'+String(m+1).padStart(2,'0');
       const data=getPrispevok(key);
       let cls='cell-empty';
-      const sumaUlozena=(data&&data.sumaEur!==undefined)?data.sumaEur:grp.preddavokMes;
+      const sumaUlozena=(data&&data.sumaEur!==undefined)?data.sumaEur:preddavokMes;
       let content=sumaUlozena+' €';
       if(data&&data.status==='uhradene'){cls='cell-green';content='<span class="cell-sum">'+sumaUlozena+' €</span><span class="cell-meta">✓ '+(data.date?formatShortDate(data.date):'')+'</span>';}
       else if(data&&data.status==='neuhradene'){cls='cell-red';content='<span class="cell-sum">'+sumaUlozena+' €</span><span class="cell-meta">✗ '+(data.date?formatShortDate(data.date):'')+'</span>';}
-      html+='<td class="prispevok-cell '+cls+'" onclick="openPrispevokModal(\'preddavok\',\''+key+'\',\''+grp.label.replace(/'/g,"\\'")+'\',\''+mesNames[m]+' '+year+'\','+grp.preddavokMes+')">'+content+'</td>';
+      else {const auto=officeCellAuto(year,m+1);if(auto==='red'){cls='cell-red';content='<span class="cell-sum">'+preddavokMes+' €</span><span class="cell-meta">✗ nezaplatené</span>';}else if(auto==='orange'){cls='cell-orange';content='<span class="cell-sum">'+preddavokMes+' €</span><span class="cell-meta">⚠ po termíne</span>';}}
+      html+='<td class="prispevok-cell '+cls+'" onclick="openPrispevokModal(\'preddavok\',\''+key+'\',\''+grp.label.replace(/'/g,"\\'")+'\',\''+mesNames[m]+' '+year+'\','+preddavokMes+')">'+content+'</td>';
       if(m%3===2){
         const q=Math.floor(m/3)+1;
+        const maxQ=isNewPricingQ(year,q)?maxNew:grp.maxPrispevok;
+        const minQ=isNewPricingQ(year,q)?minNew:grp.minFJ;
         // Vypočítaj nárok za Q
         let sumFJ=0;
         for(const member of team)sumFJ+=ownFJForQ(member,year,q);
-        const narok=Math.min(sumFJ*0.2,grp.maxPrispevok);
+        const narok=Math.min(sumFJ*0.2,maxQ);
         // Vyrovnanie = celý nárok (firma vypláca príspevok, NIE odčítavame preddavky)
         const vyrov=narok;
         const vyKey=grp.id+'_vyr_'+year+'_Q'+q;
@@ -2262,7 +2400,7 @@ function renderPrispevkyFixPreddavky(year){
         let vyContent='';
         if(vyData&&vyData.status==='uhradene')vyContent='<span class="cell-sum">'+(vyrovUlozena>=0?'+':'')+Math.round(vyrovUlozena)+'€</span><span class="cell-meta">✓ '+(vyData.date?formatShortDate(vyData.date):'')+'</span>';
         else if(vyData&&vyData.status==='neuhradene')vyContent='<span class="cell-sum">'+(vyrovUlozena>=0?'+':'')+Math.round(vyrovUlozena)+'€</span><span class="cell-meta">✗ '+(vyData.date?formatShortDate(vyData.date):'')+'</span>';
-        else vyContent='<span class="cell-sum">'+(vyrov>=0?'+':'')+Math.round(vyrov)+'€</span><span class="cell-meta">'+sumFJ.toFixed(0)+'/'+grp.minFJ+' FJ</span>';
+        else vyContent='<span class="cell-sum">'+(vyrov>=0?'+':'')+Math.round(vyrov)+'€</span><span class="cell-meta">'+sumFJ.toFixed(0)+'/'+minQ+' FJ</span>';
         html+='<td class="prispevok-cell '+vyCls+'" onclick="openPrispevokModal(\'vyrovnanie\',\''+vyKey+'\',\''+grp.label.replace(/'/g,"\\'")+'\',\'Q'+q+' vyrovnanie '+year+'\','+vyrov.toFixed(2)+')">'+vyContent+'</td>';
       }
     }
@@ -2274,17 +2412,20 @@ function renderPrispevkyFixPreddavky(year){
 
 // Render skupiny 3 — TN (spoločný príspevok medzi 4 podiely)
 function renderPrispevkyTN(year){
+  // Starý podielový model platí len do 30.6.2026; od 1.7.2026 ho nahrádza model 100 €/os.
+  if(year>2026)return '';
+  const lastMonth=(year===2026)?6:12; // 2026: len H1 (Jan–Jún)
   const mesNames=['Jan','Feb','Mar','Apr','Máj','Jún','Júl','Aug','Sep','Okt','Nov','Dec'];
   const tn=PRISPEVKY_TN;
   const teamSafe=tn.teamFJ.join(', ').replace(/'/g,"\\'");
-  let html='<div class="card" style="margin-bottom:20px"><div class="card-title">🏢 Fixné preddavky – TN (mesačne) + Q vyrovnanie</div>';
+  let html='<div class="card" style="margin-bottom:20px"><div class="card-title">🏢 Fixné preddavky – TN (starý model, do 30.6.2026)</div>';
   html+='<div style="font-size:11px;color:var(--gray3);margin-bottom:8px">Tím FJ ('+tn.teamFJ.length+' osôb): <span style="cursor:help" title="'+teamSafe+'">'+tn.teamFJ.slice(0,4).join(', ')+' a ďalší ('+tn.teamFJ.length+')</span> · Preddavok '+tn.preddavokMes+'€/mes/osoba · Max '+tn.maxPrispevok+'€/Q (spolu) · Min '+tn.minFJ+' FJ/Q (spolu) · Delí sa medzi '+tn.podiely.length+' podiely</div>';
   // Tabuľka: pre každý zo 4 podielov 12 mesiacov + 4 Q vyrov
   for(let i=0;i<tn.podiely.length;i++){
     const podiel=tn.podiely[i];
     html+='<div style="margin-bottom:18px"><div style="font-weight:700;margin-bottom:6px;font-size:13px">'+podiel.label+'</div>';
     html+='<div style="overflow-x:auto"><table class="prispevky-table"><thead><tr>';
-    for(let m=0;m<12;m++){
+    for(let m=0;m<lastMonth;m++){
       html+='<th style="min-width:62px">'+mesNames[m]+'</th>';
       if(m%3===2){
         const q=Math.floor(m/3)+1;
@@ -2292,7 +2433,7 @@ function renderPrispevkyTN(year){
       }
     }
     html+='</tr></thead><tbody><tr>';
-    for(let m=0;m<12;m++){
+    for(let m=0;m<lastMonth;m++){
       const q=Math.floor(m/3)+1;
       const ovr=getTnOverride(year,q);
       const preddavokMes=ovr?ovr.preddavokMes:tn.preddavokMes;
@@ -2338,6 +2479,64 @@ function renderPrispevkyTN(year){
   }
   html+='</div>';
   return html;
+}
+
+// Render TN nový model — každý platí 100 €/mes (editovateľný zoznam), od 1.7.2026
+function renderPrispevkyTNNew(year){
+  if(year<2026)return ''; // pred 2026 nový model neexistuje
+  const mesNames=['Jan','Feb','Mar','Apr','Máj','Jún','Júl','Aug','Sep','Okt','Nov','Dec'];
+  const startM=(year===2026)?7:1; // 2026: až od júla (Q3)
+  const roster=getTnNewRoster(year);
+  const isAdmin=currentUserRole==='admin';
+  let html='<div class="card" style="margin-bottom:20px"><div class="card-title">🏢 Kancelárie TN – '+PRISPEVKY_TN_MES+' €/osoba/mes (od 1.7.2026)</div>';
+  html+='<div style="font-size:11px;color:var(--gray3);margin-bottom:10px">Každý platí fixne '+PRISPEVKY_TN_MES+' €/mes. '+roster.length+' '+(roster.length===1?'osoba':(roster.length<5?'osoby':'osôb'))+'.</div>';
+  if(!roster.length){
+    html+='<div class="empty"><div class="big">👥</div>Žiadni ľudia.';
+    if(isAdmin)html+='<br><button class="btn btn-primary tf-admin-only" style="margin-top:14px" onclick="addTnNewPerson('+year+')">+ Pridať osobu</button>';
+    html+='</div></div>';
+    return html;
+  }
+  html+='<div style="overflow-x:auto"><table class="prispevky-table"><thead><tr><th style="min-width:200px;text-align:left">Osoba</th><th style="text-align:right">Platba</th>';
+  for(let m=startM;m<=12;m++)html+='<th style="min-width:62px">'+mesNames[m-1]+'</th>';
+  if(isAdmin)html+='<th class="tf-admin-only" style="min-width:40px;text-align:center">Akcia</th>';
+  html+='</tr></thead><tbody>';
+  for(const name of roster){
+    const safeName=name.replace(/'/g,"\\'");
+    html+='<tr><td class="cell-person">'+name+'</td><td style="text-align:right;color:var(--gray3)">'+PRISPEVKY_TN_MES+' €</td>';
+    for(let m=startM;m<=12;m++){
+      const key='tnnew_'+year+'_'+String(m).padStart(2,'0')+'_'+name;
+      const data=getPrispevok(key);
+      let cls='cell-empty';
+      const sumaUlozena=(data&&data.sumaEur!==undefined)?data.sumaEur:PRISPEVKY_TN_MES;
+      let content=sumaUlozena+' €';
+      if(data&&data.status==='uhradene'){cls='cell-green';content='<span class="cell-sum">'+sumaUlozena+' €</span><span class="cell-meta">✓ '+(data.date?formatShortDate(data.date):'')+'</span>';}
+      else if(data&&data.status==='neuhradene'){cls='cell-red';content='<span class="cell-sum">'+sumaUlozena+' €</span><span class="cell-meta">✗ '+(data.date?formatShortDate(data.date):'')+'</span>';}
+      else {const auto=officeCellAuto(year,m);if(auto==='red'){cls='cell-red';content='<span class="cell-sum">'+PRISPEVKY_TN_MES+' €</span><span class="cell-meta">✗ nezaplatené</span>';}else if(auto==='orange'){cls='cell-orange';content='<span class="cell-sum">'+PRISPEVKY_TN_MES+' €</span><span class="cell-meta">⚠ po termíne</span>';}}
+      html+='<td class="prispevok-cell '+cls+'" onclick="openPrispevokModal(\'tnnew\',\''+key+'\',\''+safeName+'\',\''+mesNames[m-1]+' '+year+'\','+PRISPEVKY_TN_MES+')">'+content+'</td>';
+    }
+    if(isAdmin)html+='<td class="tf-admin-only" style="text-align:center"><button onclick="removeTnNewPerson('+year+',\''+safeName+'\')" style="background:transparent;border:none;cursor:pointer;color:var(--red);font-size:14px;padding:2px 6px" title="Odstrániť">🗑</button></td>';
+    html+='</tr>';
+  }
+  html+='</tbody></table></div>';
+  if(isAdmin)html+='<div style="margin-top:12px"><button class="btn btn-primary tf-admin-only" onclick="addTnNewPerson('+year+')">+ Pridať osobu</button></div>';
+  html+='</div>';
+  return html;
+}
+function addTnNewPerson(year){
+  if(currentUserRole!=='admin')return;
+  const name=(prompt('Meno a priezvisko novej osoby (kancelárie TN, '+PRISPEVKY_TN_MES+' €/mes):')||'').trim();
+  if(!name)return;
+  const roster=getTnNewRoster(year);
+  if(roster.includes(name)){alert('Táto osoba už je v zozname.');return;}
+  roster.push(name);
+  saveTnNewRoster(year,roster);
+  renderPrispevky();
+}
+function removeTnNewPerson(year,name){
+  if(currentUserRole!=='admin')return;
+  if(!confirm('Odstrániť '+name+' z kancelárií TN?'))return;
+  saveTnNewRoster(year,getTnNewRoster(year).filter(n=>n!==name));
+  renderPrispevky();
 }
 
 // Modal — otvorenie/uloženie platby
@@ -2492,9 +2691,14 @@ function renderServisSection(typ){
   const months=monthsInH(h);
   const monthOffset=(h-1)*6; // 0 pre H1, 6 pre H2
   const title=typ==='ba'?'🏢 Servis BA':'🏢 Servis TN';
+  const baNew=isNewPricingH(year,h); // od H2/2026: BA fixne 5 €/osoba
+  const baPerOs=baNew?5:servisBaPerPerson(section);
+  const cntWord=n=>n===1?'osoba':(n<5?'osoby':'osôb');
   const subtitle=typ==='ba'
-    ?'Total <span '+(currentUserRole==='admin'?'onclick="editServisBaTotal()" style=\"cursor:pointer;text-decoration:underline;color:#1565c0\"':'')+'>'+section.total+' €</span>/mes rozdelené medzi '+section.people.length+' '+(section.people.length===1?'osobu':(section.people.length<5?'osoby':'osôb'))+(section.people.length>0?' = <strong>'+servisBaPerPerson(section)+' €/osoba</strong>':'')
-    :'Fixne '+servisTnPriceForH(year,h)+' €/osoba/mes · '+section.people.length+' '+(section.people.length===1?'osoba':(section.people.length<5?'osoby':'osôb'));
+    ?(baNew
+      ?'<strong>'+baPerOs+' € fixne mesačne</strong> / osoba · '+section.people.length+' '+cntWord(section.people.length)
+      :'Total <span '+(currentUserRole==='admin'?'onclick="editServisBaTotal()" style=\"cursor:pointer;text-decoration:underline;color:#1565c0\"':'')+'>'+section.total+' €</span>/mes rozdelené medzi '+section.people.length+' '+(section.people.length===1?'osobu':(section.people.length<5?'osoby':'osôb'))+(section.people.length>0?' = <strong>'+servisBaPerPerson(section)+' €/osoba</strong>':''))
+    :'<strong>'+servisTnPriceForH(year,h)+' € fixne mesačne</strong> / osoba · '+section.people.length+' '+cntWord(section.people.length);
   let html='<div class="card" style="margin-bottom:20px"><div class="card-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px"><span>'+title+'</span>';
   // Polrokový prepínač + tlačidlo Pridať osobu (vpravo hore)
   html+='<div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600">';
@@ -2518,7 +2722,7 @@ function renderServisSection(typ){
   html+='<th style="text-align:left;min-width:160px">Poznámka</th>';
   if(currentUserRole==='admin')html+='<th class="tf-admin-only" style="min-width:40px;text-align:center">Akcia</th>';
   html+='</tr></thead><tbody>';
-  const sumaPerOs=typ==='ba'?servisBaPerPerson(section):servisTnPriceForH(year,h);
+  const sumaPerOs=typ==='ba'?baPerOs:servisTnPriceForH(year,h);
   for(let pi=0;pi<section.people.length;pi++){
     const personName=section.people[pi];
     const safeName=personName.replace(/'/g,"\\'");
@@ -2532,6 +2736,7 @@ function renderServisSection(typ){
       let content=sumaPerOs+' €';
       if(data&&data.status==='uhradene'){cls='cell-green';content='<span class="cell-sum">'+sumaUlozena+' €</span><span class="cell-meta">✓ '+(data.date?formatShortDate(data.date):'')+'</span>';}
       else if(data&&data.status==='neuhradene'){cls='cell-red';content='<span class="cell-sum">'+sumaUlozena+' €</span><span class="cell-meta">✗ '+(data.date?formatShortDate(data.date):'')+'</span>';}
+      else {const auto=officeCellAuto(year,monthNum);if(auto==='red'){cls='cell-red';content='<span class="cell-sum">'+sumaPerOs+' €</span><span class="cell-meta">✗ nezaplatené</span>';}else if(auto==='orange'){cls='cell-orange';content='<span class="cell-sum">'+sumaPerOs+' €</span><span class="cell-meta">⚠ po termíne</span>';}}
       const mesNames=['Jan','Feb','Mar','Apr','Máj','Jún','Júl','Aug','Sep','Okt','Nov','Dec'];
       html+='<td class="prispevok-cell '+cls+'" onclick="openPrispevokModal(\'servis\',\''+key+'\',\''+safeName+'\',\''+mesNames[monthNum-1]+' '+year+'\','+sumaPerOs+')">'+content+'</td>';
     }
