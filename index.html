@@ -2708,6 +2708,8 @@ function renderServisSection(typ){
   html+='<button class="btn btn-secondary" style="padding:4px 10px;font-size:11px" onclick="shiftServisH(\''+typ+'\',1)">→</button>';
   html+='</div></div>';
   html+='<div style="font-size:12px;color:var(--gray3);margin-bottom:14px">'+subtitle+'</div>';
+  // Vždy viditeľný popis o zmene od 1.7.2026 (servis BA aj TN = 5 € fixne mesačne)
+  html+='<div style="font-size:11px;color:#1565c0;background:#e3f2fd;border-radius:6px;padding:7px 11px;margin-bottom:14px">ℹ️ <strong>Od 1.7.2026</strong> je servis (BA aj TN) <strong>5 € fixne mesačne / osoba</strong>.'+(baNew||typ==='tn'&&isNewPricingH(year,h)?' Tento polrok už podľa nového pravidla.':' Tento polrok ('+(typ==='ba'?'H'+h+'/'+year:'H'+h+'/'+year)+') ostáva podľa pôvodného nastavenia.')+'</div>';
   // Ak nie sú ľudia, prázdny stav
   if(!section.people.length){
     html+='<div class="empty"><div class="big">👥</div>Nie sú nastavení žiadni ľudia pre tento polrok.';
