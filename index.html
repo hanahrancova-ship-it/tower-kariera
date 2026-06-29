@@ -820,7 +820,9 @@ document.addEventListener('click',function(e){
     document.querySelectorAll('.action-menu.open').forEach(m=>m.classList.remove('open'));
   }
 });
-function getActiveWarning(name){return warnings.find(w=>w.person===name&&w.status==='active')}
+// Normalizácia mena pre tolerantné párovanie (medzery navyše, nezlomiteľná medzera, veľké/malé písmená)
+function _normName(s){return String(s||'').replace(/\s+/g,' ').trim().toLowerCase();}
+function getActiveWarning(name){const n=_normName(name);return warnings.find(w=>w.status==='active'&&_normName(w.person)===n);}
 function monthsSince(d){const dt=new Date(d),now=new Date();return(now.getFullYear()-dt.getFullYear())*12+(now.getMonth()-dt.getMonth())}
 function firstOfMonth(){const d=new Date();d.setDate(1);const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0');return y+'-'+m+'-01';}
 function importLabel(y,m){return`${MESACE[m]} ${y}`}
@@ -2006,7 +2008,7 @@ function openResolveModal(name){
   document.getElementById('modal-resolve').classList.add('open');
 }
 function confirmResolve(){
-  const w=warnings.find(x=>x.person===resolveTarget&&x.status==='active');
+  const w=warnings.find(x=>x.status==='active'&&_normName(x.person)===_normName(resolveTarget));
   if(!w){closeModal('modal-resolve');return;}
   w.status='resolved';w.resolvedDate=document.getElementById('resolve-date').value;w.resolvedNote=document.getElementById('resolve-note').value;
   tfSave('tf_warnings',warnings);
