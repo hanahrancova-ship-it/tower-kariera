@@ -820,9 +820,22 @@ document.addEventListener('click',function(e){
     document.querySelectorAll('.action-menu.open').forEach(m=>m.classList.remove('open'));
   }
 });
-// Normalizácia mena pre tolerantné párovanie (medzery navyše, nezlomiteľná medzera, veľké/malé písmená)
-function _normName(s){return String(s||'').replace(/\s+/g,' ').trim().toLowerCase();}
-function getActiveWarning(name){const n=_normName(name);return warnings.find(w=>w.status==='active'&&_normName(w.person)===n);}
+// Normalizácia mena: bez diakritiky, malé písmená, jednotné medzery
+function _normName(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim().toLowerCase();}
+// Tokeny mena bez titulov (Ing., Mgr., Bc., DiS. …) a interpunkcie
+const _NAME_TITLES=['ing','mgr','bc','judr','rndr','phd','dis','msc','dr','mudr','paeddr','prof','doc'];
+function _nameTokens(s){return _normName(s).replace(/[.,]/g,' ').split(' ').filter(t=>t&&!_NAME_TITLES.includes(t));}
+// Tolerantné porovnanie mien: zvládne poradie, tituly, diakritiku, medzery, veľkosť písmen
+function _namesMatch(a,b){
+  const ta=_nameTokens(a),tb=_nameTokens(b);
+  if(!ta.length||!tb.length)return false;
+  const sa=new Set(ta),sb=new Set(tb);
+  const short=ta.length<=tb.length?sa:sb,long=ta.length<=tb.length?sb:sa;
+  for(const t of short)if(!long.has(t))return false;
+  return true;
+}
+// Aktívne napomenutie = čokoľvek okrem výslovne zrušeného ('resolved')
+function getActiveWarning(name){return warnings.find(w=>w.status!=='resolved'&&_namesMatch(w.person,name));}
 function monthsSince(d){const dt=new Date(d),now=new Date();return(now.getFullYear()-dt.getFullYear())*12+(now.getMonth()-dt.getMonth())}
 function firstOfMonth(){const d=new Date();d.setDate(1);const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0');return y+'-'+m+'-01';}
 function importLabel(y,m){return`${MESACE[m]} ${y}`}
@@ -2008,7 +2021,7 @@ function openResolveModal(name){
   document.getElementById('modal-resolve').classList.add('open');
 }
 function confirmResolve(){
-  const w=warnings.find(x=>x.status==='active'&&_normName(x.person)===_normName(resolveTarget));
+  const w=warnings.find(x=>x.status!=='resolved'&&_namesMatch(x.person,resolveTarget));
   if(!w){closeModal('modal-resolve');return;}
   w.status='resolved';w.resolvedDate=document.getElementById('resolve-date').value;w.resolvedNote=document.getElementById('resolve-note').value;
   tfSave('tf_warnings',warnings);
