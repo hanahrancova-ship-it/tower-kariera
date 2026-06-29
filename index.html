@@ -149,7 +149,7 @@ body.tf-readonly .prispevok-cell:hover{transform:none;box-shadow:none}
 .tip-box{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--black);color:#fff;font-size:11px;padding:8px 12px;border-radius:6px;white-space:nowrap;z-index:100;font-family:var(--font-mono);line-height:1.6;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,0.2)}
 .tip-box::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--black)}
 #eval-main-table table{font-size:11px}
-#eval-main-table th{position:sticky;top:0;z-index:5;background:var(--gray);padding:8px 6px;font-size:10px}
+#eval-main-table th{position:sticky;top:0;z-index:5;background:var(--green-tint);padding:8px 6px;font-size:10px}
 #eval-main-table td{padding:8px 6px}
 .eval-name-cell{min-width:140px}
 .eval-row-fail td{background:#fff8f8}.eval-row-warn td{background:#fffbf0}
@@ -169,7 +169,7 @@ body.tf-readonly .prispevok-cell:hover{transform:none;box-shadow:none}
 #eval-main-table tbody tr.pos-spacer td{background:#FAFAFA !important;color:#d8d8d8 !important;text-align:center;border-bottom:1px solid var(--gray2) !important}
 #eval-main-table tbody tr.pos-spacer:hover{background:#FAFAFA !important}
 #eval-main-table tbody tr.pos-spacer:hover td{background:#FAFAFA !important}
-#bug-report-btn:hover{background:var(--gray);border-color:var(--gray3);transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,0.12)}
+#bug-report-btn:hover{background:#0a2412;border-color:#0a2412;transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,0.18)}
 .napom-dot{display:inline-flex;gap:3px;margin-left:4px;vertical-align:middle}
 .napom-m{width:10px;height:10px;border-radius:50%;display:inline-block}
 .napom-m.used{background:var(--red)}.napom-m.free{background:var(--gray2);border:1px solid #ccc}
@@ -183,7 +183,7 @@ body.tf-readonly .prispevok-cell:hover{transform:none;box-shadow:none}
 /* ============= NOVÝ DIZAJN SYSTÉM ============= */
 /* Page header */
 .page-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px;padding:0 4px;flex-wrap:wrap;gap:12px}
-.page-head h2{font-size:20px;font-weight:600;color:var(--black);margin:0}
+.page-head h2{font-size:25px;font-weight:800;color:var(--green-dark);margin:0;letter-spacing:-0.4px}
 .page-head .page-sub{font-size:12px;color:var(--gray3);margin-top:4px}
 
 /* Period switcher (mesiac/polrok šípky) */
@@ -194,7 +194,7 @@ body.tf-readonly .prispevok-cell:hover{transform:none;box-shadow:none}
 
 /* Metric karty */
 .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:18px}
-.metric-card{background:var(--gray);border-radius:10px;padding:14px 16px}
+.metric-card{background:var(--white);border:1px solid var(--green-border);border-radius:10px;padding:14px 16px}
 .metric-card .metric-label{font-size:10px;color:var(--gray3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;font-weight:600}
 .metric-card .metric-value{font-size:22px;font-weight:600;color:var(--black);font-family:var(--font-mono)}
 .metric-card.metric-success{background:#EAF3DE}
@@ -296,14 +296,14 @@ body.tf-readonly .prispevok-cell:hover{transform:none;box-shadow:none}
 
 /* Vylepšenia eval tabuľky */
 #eval-main-table table{font-size:12px;border-collapse:collapse;background:#fff;width:100%}
-#eval-main-table thead tr{background:#FAFAFA;border-bottom:1px solid var(--gray2)}
-#eval-main-table th{font-weight:600;font-size:10px;color:var(--gray3);text-transform:uppercase;letter-spacing:0.5px;padding:11px 8px;background:#FAFAFA}
+#eval-main-table thead tr{background:var(--green-tint);border-bottom:1px solid var(--green-border)}
+#eval-main-table th{font-weight:700;font-size:10px;color:var(--green-dark);text-transform:uppercase;letter-spacing:0.5px;padding:11px 8px;background:var(--green-tint)}
 #eval-main-table td{padding:11px 8px;border-bottom:1px solid #F4F4F4}
 #eval-main-table tbody tr:hover{background:#fafbfa}
 #eval-main-table tbody tr.eval-row-fail{background:#FFFBFA}
 #eval-main-table tbody tr.eval-row-warn{background:#FFFBFA}
 #eval-main-table tbody tr.eval-row-promo{background:#F6FBFF}
-#eval-main-table .table-wrap{background:#fff;border:1px solid var(--gray2);border-radius:10px;overflow:hidden}
+#eval-main-table .table-wrap{background:#fff;border:1px solid var(--green-border);border-radius:10px;overflow:hidden}
 #eval-main-table table{border-radius:10px;overflow:hidden}
 
 /* Avatary pre eval-name-cell */
@@ -699,7 +699,7 @@ i[class^="ti-"],i[class*=" ti-"]{font-style:normal;display:inline-flex;align-ite
   </div>
 </div>
 <!-- Floating tlačidlo Nahlásiť chybu -->
-<button id="bug-report-btn" onclick="openBugReportModal()" title="Nahlásiť chybu" style="position:fixed;bottom:20px;right:20px;z-index:90;background:#fff;border:1px solid var(--gray2);border-radius:50px;padding:10px 16px;font-size:12px;font-weight:600;font-family:var(--font-mono);cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.08);display:inline-flex;align-items:center;gap:6px;color:var(--green-dark);transition:all .15s">Nahlásiť chybu</button>
+<button id="bug-report-btn" onclick="openBugReportModal()" title="Nahlásiť chybu" style="position:fixed;top:16px;right:20px;z-index:1100;background:var(--green-dark);border:1px solid var(--green-dark);border-radius:8px;padding:10px 16px;font-size:12px;font-weight:700;font-family:var(--font-mono);cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:inline-flex;align-items:center;gap:6px;color:#fff;transition:all .15s">Nahlásiť chybu</button>
 <div class="modal-overlay" id="modal-warn">
   <div class="modal">
     <h3 id="warn-modal-title">Pridať napomenutie</h3>
