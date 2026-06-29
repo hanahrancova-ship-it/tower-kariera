@@ -777,6 +777,10 @@ const KARIERA=[
 const PB_VALUES={TR:0,C:1,SC:1,TL:2,EM:3,SM:6,MD:12,SD:24,P:48,'VIP I':1,'VIP II':1,'VIP III':1,'VIP IV':1};
 const OWNERS=['Mário Markech','Ondrej Broska']; // Vlastníci sa nevyhodnocujú (štatút, napomenutie, akcia, splna na = pomlčky)
 function isOwner(name){return OWNERS.includes(name);}
+// Ďalšie výnimky, ktoré sa nevyhodnocujú (napr. asistentka – ostáva na TR, bez brutto hodnotenia)
+const EVAL_EXCEPTIONS=['Denisa Véghová'];
+function isEvalException(name){return EVAL_EXCEPTIONS.some(n=>_namesMatch(n,name));}
+function isNonEval(name){return isOwner(name)||isEvalException(name);}
 const MESACE=['Január','Február','Marec','Apríl','Máj','Jún','Júl','August','September','Október','November','December'];
 const HIST_PROTECTION=18000,HIST_DISCOUNT_80=24000,HIST_DISCOUNT_60=36000;
 function isVIP(pos){return pos&&pos.startsWith('VIP')}
@@ -1730,6 +1734,18 @@ function renderEvaluation(){
       _groupFjCellFinal=`<span class="fj-cell fj-neutral" data-tip="${_tipEsc(_gTip)}" title="${_tipEsc(_gTip)}" style="cursor:help">${p.groupFJ.toFixed(2)}</span>`;
       _pbCellFinal=`<span class="fj-cell fj-neutral" data-tip="${_tipEsc(_gTip)}" title="${_tipEsc(_gTip)}" style="cursor:help">${p.pb}</span>`;
     }
+    // Nehodnotení (majitelia + výnimky ako Denisa): neutrálne čísla (nie červené), bez brutto, bez šípky, pomlčky
+    if(isNonEval(p.name)){
+      const _neu=v=>'<span class="fj-cell fj-neutral" title="Nevyhodnocuje sa" style="cursor:default">'+v+'</span>';
+      _ownFjCell=_neu(p.ownFJ.toFixed(2));
+      _groupFjCellFinal=_neu(p.groupFJ.toFixed(2));
+      _pbCellFinal=_neu(p.pb);
+      _statusBadgeFinal='<span style="color:var(--gray3)">–</span>';
+      _napomCellFinal='<span style="color:var(--gray3)">–</span>';
+      _splnaFinal='<span style="color:var(--gray3)">–</span>';
+      _actionFinal='<span style="color:var(--gray3)">–</span>';
+      _rowClsFinal='eval-row-ok';
+    }
     html+=`<tr class="${_rowClsFinal}"><td class="eval-name-cell">${_personCell}</td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td style="font-size:11px;color:var(--gray3)">${p.manager||'–'}</td><td style="font-size:11px">${cestaCell}</td><td style="text-align:right">${_ownFjCell}</td><td style="text-align:right">${_groupFjCellFinal}</td><td style="text-align:right">${fjCell(p.histFJ,null,'Hist.FJ','')}</td><td style="text-align:right">${_pbCellFinal}</td><td>${_statusBadgeFinal}</td><td>${_napomCellFinal}</td><td>${_splnaFinal}</td><td class="tf-admin-only">${_actionFinal}</td></tr>`;
   });
   html+=`</tbody></table></div><div style="display:flex;gap:16px;padding:10px 16px;font-size:11px;color:var(--gray3);flex-wrap:wrap;margin-top:8px;justify-content:center"><span><span class="fj-cell fj-ok">●</span> splnené</span><span><span class="fj-cell fj-fail">●</span> nesplnené</span><span style="color:var(--gray3)">Prejdi myšou na číslo pre detail štatútu</span></div>`;
@@ -2279,7 +2295,7 @@ function renderPrispevky(){
   // Upozornenie hore
   html+='<div style="background:#fff8e1;border:1px solid #ffc107;border-radius:8px;padding:12px 16px;margin-bottom:18px;font-size:13px;color:#7a5800"><strong>Termín úhrad:</strong> Všetky príspevky musia byť uhradené najneskôr do <strong>20. dňa</strong> v mesiaci. Po 20. svieti chýbajúca platba oranžovo, po skončení mesiaca červeno.</div>';
   // ===== KANCELÁRIE BA =====
-  html+='<div style="border-left:4px solid var(--green);padding:8px 14px;margin-bottom:14px;background:#f4faf5;border-radius:0 8px 8px 0"><div style="font-weight:800;font-size:16px;color:var(--green-dark)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:6px"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="9" y1="7" x2="9.01" y2="7"></line><line x1="15" y1="7" x2="15.01" y2="7"></line><line x1="9" y1="11" x2="9.01" y2="11"></line><line x1="15" y1="11" x2="15.01" y2="11"></line><path d="M9 22v-4h6v4"></path></svg>Kancelárie BA</div><div style="font-size:12px;color:var(--gray3);margin-top:2px">Spravuje <strong>K. Veselská</strong> · jednodňový prenájom <strong>28 €</strong></div></div>';
+  html+='<div style="border-left:4px solid var(--green);padding:8px 14px;margin-bottom:14px;background:#f4faf5;border-radius:0 8px 8px 0"><div style="font-weight:800;font-size:16px;color:var(--green-dark)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:6px"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="9" y1="7" x2="9.01" y2="7"></line><line x1="15" y1="7" x2="15.01" y2="7"></line><line x1="9" y1="11" x2="9.01" y2="11"></line><line x1="15" y1="11" x2="15.01" y2="11"></line><path d="M9 22v-4h6v4"></path></svg>Kancelárie BA</div><div style="font-size:12px;color:var(--gray3);margin-top:2px">Spravuje <strong>K. Veselská</strong></div><div style="font-size:12px;color:var(--gray3);margin-top:4px">Jednodňový prenájom: <strong>28 €</strong></div></div>';
   // Skupina 2 — Faktúry (kvartálne, prvé hore)
   html+=renderPrispevkyFakt(year);
   // Skupina 3 — Fix preddavky BA
@@ -2287,7 +2303,7 @@ function renderPrispevky(){
   // Skupina 1 — Fix prenájom
   html+=renderPrispevkyFix(year);
   // ===== KANCELÁRIE TN =====
-  html+='<div style="border-left:4px solid var(--green);padding:8px 14px;margin:26px 0 14px;background:#f4faf5;border-radius:0 8px 8px 0"><div style="font-weight:800;font-size:16px;color:var(--green-dark)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:6px"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="9" y1="7" x2="9.01" y2="7"></line><line x1="15" y1="7" x2="15.01" y2="7"></line><line x1="9" y1="11" x2="9.01" y2="11"></line><line x1="15" y1="11" x2="15.01" y2="11"></line><path d="M9 22v-4h6v4"></path></svg>Kancelárie TN</div><div style="font-size:12px;color:var(--gray3);margin-top:2px">Spravuje <strong>K. Cucíková</strong> · jednodňový prenájom <strong>17 €</strong> – úhrada vopred</div></div>';
+  html+='<div style="border-left:4px solid var(--green);padding:8px 14px;margin:26px 0 14px;background:#f4faf5;border-radius:0 8px 8px 0"><div style="font-weight:800;font-size:16px;color:var(--green-dark)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:6px"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="9" y1="7" x2="9.01" y2="7"></line><line x1="15" y1="7" x2="15.01" y2="7"></line><line x1="9" y1="11" x2="9.01" y2="11"></line><line x1="15" y1="11" x2="15.01" y2="11"></line><path d="M9 22v-4h6v4"></path></svg>Kancelárie TN</div><div style="font-size:12px;color:var(--gray3);margin-top:2px">Spravuje <strong>K. Cucíková</strong></div><div style="font-size:12px;color:var(--gray3);margin-top:4px">Jednodňový prenájom: <strong>17 €</strong></div></div>';
   html+=renderPrispevkyTNNew(year);
   html+=renderPrispevkyTN(year);
   c.innerHTML=html;
