@@ -55,7 +55,7 @@ body.tf-readonly #modal-bug-report button.btn-primary{display:inline-flex !impor
 .page-header h2{font-size:25px;font-weight:800;color:var(--green-dark);letter-spacing:-0.4px}
 .page-header p{font-size:12px;color:var(--gray3);margin-top:4px}
 .card{background:var(--white);border-radius:10px;padding:18px 20px;box-shadow:none;border:1px solid var(--green-border)}
-.card-title{font-family:var(--font-head);font-weight:800;font-size:15px;margin-bottom:14px;color:var(--green-dark);letter-spacing:-0.2px;border-left:3px solid var(--green);padding-left:10px}
+.card-title{font-family:var(--font-head);font-weight:800;font-size:15px;color:var(--green-dark);letter-spacing:-0.2px;background:var(--green-tint);margin:-18px -20px 16px;padding:12px 18px;border-bottom:1px solid var(--green-border);border-radius:10px 10px 0 0;display:flex;align-items:center;gap:8px}
 .upload-zone{border:2px dashed var(--gray2);border-radius:var(--radius);padding:36px;text-align:center;cursor:pointer;transition:all .2s;background:var(--gray)}
 .upload-zone:hover,.upload-zone.dragover{border-color:var(--green);background:var(--green-pale)}
 .upload-zone input{display:none}
@@ -3154,6 +3154,10 @@ function renderCrm(){
     if(unpaidActive.length>0)withUnpaid.push({name,fines:allFines,unpaidActive});
     else paidOnly.push({name,fines:allFines});
   }
+  // Zoraď: najnovšie pokuty hore — ľudia podľa dátumu ich najnovšej pokuty (zostupne)
+  const _maxDate=arr=>arr.reduce((m,f)=>f.date>m?f.date:m,'');
+  withUnpaid.sort((a,b)=>_maxDate(b.unpaidActive).localeCompare(_maxDate(a.unpaidActive)));
+  paidOnly.sort((a,b)=>_maxDate(b.fines).localeCompare(_maxDate(a.fines)));
   const _isAdmin=(currentUserRole==='admin');
   // Najprv ľudia s neuhradenými (červené karty + zoznam jednotlivých pokút)
   if(withUnpaid.length){
@@ -3173,7 +3177,7 @@ function renderCrm(){
       html+='</div></div>';
       // Zoznam jednotlivých neuhradených pokút — každá samostatne s vlastným tlačidlom
       html+='<div style="display:flex;flex-direction:column;gap:6px">';
-      for(const f of x.unpaidActive){
+      for(const f of [...x.unpaidActive].sort((a,b)=>b.date.localeCompare(a.date))){
         html+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;background:#fff5f5;border:1px solid #f7c1c1;border-radius:6px">';
         html+='<div style="font-size:12px"><strong>'+f.amount+' €</strong> · '+formatDate(f.date)+'</div>';
         if(_isAdmin){
