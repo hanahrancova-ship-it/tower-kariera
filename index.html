@@ -1032,27 +1032,13 @@ function getQuarterImports(){
 const NOVACIK_C_GRACE_MONTHS=3;
 function getFirstCDate(name){
   const hist=pozicieHistory[name]||[];
-  // 1) Manuálna alebo auto-vytvorená história v pozicieHistory má prednosť
-  if(hist.length){
-    const c=hist.filter(e=>e&&e.toPos==='C'&&e.date).slice().sort((a,b)=>a.date.localeCompare(b.date));
-    if(c.length){
-      const d=new Date(c[0].date);
-      if(!isNaN(d))return d;
-    }
-  }
-  // 2) Fallback: pozri sa do importov a nájdi najstarší mesiac, kde sa osoba objavila v NETTO ako C.
-  //    Použijeme 1. deň toho mesiaca ako "prvé C dátum". Pomôže to nováčikom, ktorých sme automaticky
-  //    nezachytili (napr. netto import bol pred zavedením auto-detekcie).
-  if(Array.isArray(imports)&&imports.length){
-    const sortedAsc=[...imports].sort((a,b)=>a.key.localeCompare(b.key));
-    for(const imp of sortedAsc){
-      const arr=imp.people||[];
-      const match=arr.find(p=>p.name===name);
-      if(match&&match.pos==='C'){
-        const [y,m]=imp.key.split('-').map(Number);
-        if(y&&m)return new Date(y,m-1,1);
-      }
-    }
+  // Grace ("nevyhodnocuje sa") platí IBA pri reálne zaznamenanom povýšení na C
+  // (manuálne cez tlačidlo Povýšiť / ručný zápis do evidencie). NIE z auto-detekcie ani z importov —
+  // inak by grace dostali všetci C. Auto-vytvorené záznamy (autoCreated) sa ignorujú.
+  const c=hist.filter(e=>e&&e.toPos==='C'&&e.date&&!e.autoCreated).slice().sort((a,b)=>a.date.localeCompare(b.date));
+  if(c.length){
+    const d=new Date(c[0].date);
+    if(!isNaN(d))return d;
   }
   return null;
 }
@@ -1225,6 +1211,12 @@ function processImport(rows,yearMonth,reportType){
     parsed.push({name,pos,manager,ownFJ,groupFJ,histFJ,pb:0});
   }
   if(!parsed.length){showToast('Žiadne platné dáta.','error');return;}
+  // Pred mergom: mená zo všetkých doterajších importov (na detekciu nových nováčikov)
+  const _prevNames=new Set();
+  for(const _imp of imports){
+    for(const _pp of (_imp.people||[]))_prevNames.add(_pp.name);
+    for(const _pp of (_imp.peopleBrutto||[]))_prevNames.add(_pp.name);
+  }
   // PB pre netto sa rátajú ako predtým; pre brutto nepoužívame (TR=0 PB).
   if(reportType==='netto'){
     parsed.forEach(p=>{
@@ -1253,24 +1245,15 @@ function processImport(rows,yearMonth,reportType){
   if(existing>=0){imports[existing]=baseEntry;showToast(`${label} – ${reportType.toUpperCase()} aktualizovaný.`,'success');}
   else{imports.push(baseEntry);showToast(`${label} – ${reportType.toUpperCase()} uložený.`,'success');}
   tfSave('tf_imports',imports);
-  // Auto-detekcia nových C: pre NETTO import, ak je niekto na pozícii C a nemá v pozicieHistory žiadny záznam,
-  // automaticky pridáme záznam povýšenia "TR → C" s dátumom 1. dňa mesiaca tohto importu.
-  // To aktivuje grace periódu pre nováčikov, ktorých Hana ručne nepovýšila cez tlačidlo.
-  if(reportType==='netto'){
-    const firstOfMonth=`${yearMonth}-01`;
-    let added=0;
-    for(const pp of parsed){
-      if(pp.pos!=='C')continue;
-      const existHist=pozicieHistory[pp.name];
-      if(existHist&&existHist.length>0)continue; // existujúca história sa nedotýka
-      pozicieHistory[pp.name]=[{fromPos:'TR',toPos:'C',date:firstOfMonth,type:'povysenie',autoCreated:true}];
-      added++;
-    }
-    if(added>0){
-      tfSave('tf_pozicie',pozicieHistory);
-      showToast(`Auto-pridaných ${added} nových C nováčikov do histórie povýšení (grace aktivovaná).`,'success');
+  // Upozornenie adminovi: noví nováčikovia na TR, ktorých ešte netreba zabudnúť zaradiť do platieb
+  if(currentUserRole==='admin'){
+    const _newTR=parsed.filter(p=>p.pos==='TR'&&!_prevNames.has(p.name)).map(p=>p.name);
+    if(_newTR.length){
+      alert('Nový nováčik na pozícii TR ('+_newTR.length+'):\n\n• '+_newTR.join('\n• ')+'\n\nNezabudni ho zaradiť do platieb za kancelárie (Platby → Kancelárie → Pridať osobu).');
     }
   }
+  // Auto-detekcia nových C VYPNUTÁ — robila z každého C "nováčika" (grace pre všetkých).
+  // Grace platí len pri reálnom povýšení na C (cez tlačidlo Povýšiť alebo ručný zápis v evidencii).
   selectedImportKey=key;
   // Pre náhľad v "Ľudia" zobraz netto, ak je k dispozícii, inak brutto
   people = baseEntry.people.length ? baseEntry.people : baseEntry.peopleBrutto;
@@ -1336,12 +1319,39 @@ function checkPromotionSC(p){
   return{canPromote:false,multiPath:true,allPaths:[toTL,toV1]};
 }
 
+// Posledné zníženie osoby na pozíciu TR (alebo null)
+function getLatestDemotionToTR(name){
+  const hist=pozicieHistory[name]||[];
+  const d=hist.filter(e=>e&&e.type==='znizenie'&&e.toPos==='TR'&&e.date).slice().sort((a,b)=>a.date.localeCompare(b.date));
+  return d.length?d[d.length-1]:null;
+}
+// Súčet NETTO vlastných FJ osoby od daného dátumu (vrátane jeho mesiaca)
+function nettoFJSince(name,sinceDate){
+  const sinceKey=String(sinceDate).slice(0,7); // 'RRRR-MM'
+  let sum=0;
+  for(const imp of (imports||[])){
+    if(imp.key<sinceKey)continue;
+    const pp=(imp.people||[]).find(x=>x.name===name); // people = NETTO report
+    if(pp)sum+=(pp.ownFJ||0);
+  }
+  return sum;
+}
 function evalPromoTo(p,nextPos){
   const nk=getKariera(nextPos);if(!nk)return{canPromote:false,nextPos};
   if(nextPos==='C'){
-    // TR → C: kumulatívna BRUTTO produkcia ≥ 400 FJ (z dvojitého importu).
-    // Ak nemáme brutto dáta (osoba nie je v žiadnom brutto reporte), fallback na manuálnu kontrolu.
-    const requiredBrutto=400;
+    const required=400;
+    // Ak osoba spadla z C+ na TR → opätovné povýšenie potrebuje 400 FJ NETTO,
+    // počítaných OD dátumu zníženia (nie kumulatívne brutto).
+    const demo=getLatestDemotionToTR(p.name);
+    if(demo){
+      const netto=nettoFJSince(p.name,demo.date);
+      if(netto>=required){
+        return{canPromote:true,nextPos,issues:[],note:'NETTO od zníženia ('+demo.date+'): '+netto.toFixed(2)+' ≥ '+required};
+      }
+      return{canPromote:false,nextPos,issues:['NETTO od zníženia: '+netto.toFixed(2)+'/'+required],note:'Po znížení na TR: '+required+' FJ NETTO od '+demo.date};
+    }
+    // Nováčik (nikdy nebol nad TR) → kumulatívna BRUTTO produkcia ≥ 400 FJ.
+    const requiredBrutto=required;
     if(p.isBrutto && typeof p.cumulativeBrutto==='number'){
       if(p.cumulativeBrutto>=requiredBrutto){
         return{canPromote:true,nextPos,issues:[],note:'Historicky BRUTTO '+p.cumulativeBrutto.toFixed(2)+' FJ ≥ '+requiredBrutto};
@@ -1453,6 +1463,12 @@ function isPbAlertDismissed(name,type){
   const key=name+'|'+type+'|'+warnedIds;
   return !!pbAlertDismissed[key];
 }
+// Dátum 1. dňa nasledujúceho mesiaca, napr. "1. júl 2026"
+function nextMonthLabel(){
+  const d=new Date();
+  const nm=new Date(d.getFullYear(),d.getMonth()+1,1);
+  return '1. '+_MES_SK[nm.getMonth()]+' '+nm.getFullYear();
+}
 function renderEvaluation(){
   if(!evalPeople.length){document.getElementById('eval-main-table').innerHTML='<div class="empty" style="padding:48px"><div class="big"></div>Najprv importujte dáta.</div>';return;}
   const qImports=getQuarterImports();
@@ -1558,6 +1574,12 @@ function renderEvaluation(){
       statusBadge='<div><span class="badge badge-gray" title="'+_tip+'" style="cursor:help">Nevyhodnocuje sa</span>'+_inlineDate+'</div>';
     } else {
       statusBadge=aw&&ms>=3?'<span class="badge badge-red">⚠Znížiť</span>':aw?`<span class="badge badge-red">Napomenutý k ${formatWarnDateShort(aw.date)}</span>`:s.ok?'<span class="badge badge-green">OK</span>':'<span class="badge badge-orange">Nesplnené</span>';
+      // Modrá šípka hore = bude povýšený k 1. nasledujúceho mesiaca (viditeľné aj v user prístupe)
+      const _willPromote=!aw&&(pr.canPromote===true||(pr.multiPath&&pr.paths&&pr.paths.length));
+      if(_willPromote){
+        const _pt=pr.canPromote===true?pr.nextPos:pr.paths.map(x=>x.nextPos).join(' / ');
+        statusBadge+=' <span title="Bude povýšený k '+nextMonthLabel()+' na '+_pt+'" style="cursor:help;color:#1565c0;font-weight:800;font-size:15px;vertical-align:middle;margin-left:3px">↑</span>';
+      }
     }
     const _mPath=["P","SD","MD","SM","EM","TL","SC","C","TR"];
     const _oPath=["VIP IV","VIP III","VIP II","VIP I","SC","C","TR"];
@@ -1742,13 +1764,40 @@ function renderEvidenciaPovysenia(){
   Object.entries(pozicieHistory).forEach(([name,hist])=>{
     hist.forEach((h,i)=>{
       if(h.type!=='povysenie')return;
+      if(h.autoCreated)return; // skryť falošné auto-vytvorené záznamy
       const _safe=name.replace(/'/g,"\'");
       const _key='pov_'+name+'_'+i;
       const _note=(evidenciaPoznamky[_key]||'').replace(/"/g,'&quot;');
       rows.push(`<tr><td>${name}</td><td>${h.date}</td><td><span class="pos ${posClass(h.fromPos)}">${h.fromPos}</span></td><td><span class="pos ${posClass(h.toPos)}">${h.toPos}</span></td><td><input type="text" value="${_note}" onchange="saveEvPoznamka('${_key}',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-size:11px;background:transparent"></td><td><button class="btn btn-sm btn-danger" onclick="deletePoziciaRow('${_safe}',${i})">✕</button></td></tr>`);
     });
   });
-  el.innerHTML=rows.length?'<div class="table-wrap"><table><thead><tr><th>Meno</th><th>Dátum</th><th>Z poz.</th><th>Na poz.</th><th>Poznámka</th><th></th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>':'<div class="empty"><div class="big"></div>Žiadne povýšenia.</div>';
+  const addBtn=currentUserRole==='admin'?'<div style="margin-bottom:10px"><button class="btn btn-primary btn-sm" onclick="addPovysenieManual()">+ Pridať povýšenie</button></div>':'';
+  el.innerHTML=addBtn+(rows.length?'<div class="table-wrap"><table><thead><tr><th>Meno</th><th>Dátum</th><th>Z poz.</th><th>Na poz.</th><th>Poznámka</th><th></th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>':'<div class="empty"><div class="big"></div>Žiadne povýšenia.</div>');
+}
+// Ručný zápis povýšenia do evidencie (aj pre osobu, ktorá nie je v aktuálnom importe).
+// Zapíše sa do pozicieHistory → zobrazí v evidencii a aktivuje 3-mes. grace pri povýšení na C.
+function addPovysenieManual(){
+  if(currentUserRole!=='admin')return;
+  const name=(prompt('Meno a priezvisko osoby:')||'').trim();
+  if(!name)return;
+  const toPos=(prompt('Nová pozícia (napr. C):','C')||'').trim().toUpperCase();
+  if(!toPos)return;
+  let fromPos='TR';
+  const imp=imports.find(i=>i.key===selectedImportKey);
+  const inImp=imp&&imp.people&&imp.people.find(p=>p.name===name);
+  if(inImp)fromPos=inImp.pos;
+  const fp=(prompt('Z pozície:',fromPos)||'').trim().toUpperCase();
+  if(!fp)return;
+  const date=(prompt('Dátum povýšenia (RRRR-MM-DD):',firstOfMonth())||'').trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){alert('Neplatný dátum. Použi formát RRRR-MM-DD.');return;}
+  if(!pozicieHistory[name])pozicieHistory[name]=[];
+  pozicieHistory[name].push({fromPos:fp,toPos,date,type:'povysenie'});
+  // Ak je osoba v aktuálnom importe, rovno nastav jej pozíciu (aby sa zobrazila správne)
+  if(inImp){inImp.pos=toPos;tfSave('tf_imports',imports);}
+  tfSave('tf_pozicie',pozicieHistory);
+  computeEvalPeople();
+  renderDashboard();renderEvaluation();renderEvidencia();
+  showToast('Povýšenie zapísané'+(inImp?'':' (osoba nie je v importe — pozícia sa zobrazí po jej nahratí).'),'success');
 }
 function renderEvidenciaZnizenia(){
   const el=document.getElementById('ev-znizenia');if(!el)return;
@@ -2041,6 +2090,26 @@ function officeCellAuto(year,month){ // month 1..12
   if(now>=due)return 'orange';
   return null;
 }
+// Nováčik: zazMonth = mesiac zazmluvnenia (RRRR-MM). 1. mesiac = zazmluvnenie (neplatí),
+// 2. mesiac = neplatí nájom, od 3. mesiaca platí. Vráti 'before' | 'zaz' | 'free' | 'pay'.
+function novacikPhase(zazMonth,year,month){ // month 1..12
+  if(!zazMonth)return 'pay';
+  const parts=String(zazMonth).split('-').map(Number);
+  const zy=parts[0],zm=parts[1];
+  if(!zy||!zm)return 'pay';
+  const cell=year*12+(month-1), zaz=zy*12+(zm-1);
+  if(cell<zaz)return 'before';
+  if(cell===zaz)return 'zaz';
+  if(cell===zaz+1)return 'free';
+  return 'pay';
+}
+// HTML bunky pre nováčika (nie je klikateľná, bez sumy). Vráti '' ak je fáza 'pay'.
+function novacikCellHtml(phase){
+  if(phase==='before')return '<td class="prispevok-cell" style="color:#ccc">–</td>';
+  if(phase==='zaz')return '<td class="prispevok-cell" style="background:#eef5ff;color:#0d4b8c;font-size:9px;font-weight:700" title="Zazmluvnenie">Zazml.</td>';
+  if(phase==='free')return '<td class="prispevok-cell" style="background:#f4f4f4;color:#777;font-size:9px;font-weight:700" title="Neplatí nájom">Neplatí</td>';
+  return '';
+}
 
 // FIX prenájom — mesačné platby (skupina 1). platba = do 30.6.2026, platbaNew = od 1.7.2026
 const PRISPEVKY_FIX=[
@@ -2107,8 +2176,8 @@ function getFaktRoster(){
 function saveFaktRoster(arr){prispevkyData.__faktRoster=arr;tfSave('tf_prispevky',prispevkyData);}
 function getTnNewRoster(year){
   const k='__tnNewRoster_'+year;
-  if(Array.isArray(prispevkyData[k]))return prispevkyData[k];
-  return PRISPEVKY_TN_NEW_DEFAULT.slice();
+  const raw=Array.isArray(prispevkyData[k])?prispevkyData[k]:PRISPEVKY_TN_NEW_DEFAULT;
+  return raw.map(it=>typeof it==='string'?{name:it}:it); // normalizuj na objekty {name, zazMonth?}
 }
 function saveTnNewRoster(year,arr){prispevkyData['__tnNewRoster_'+year]=arr;tfSave('tf_prispevky',prispevkyData);}
 
@@ -2213,6 +2282,8 @@ function renderPrispevkyFix(year){
     const platbaTxt=(platbaNew!==p.platba)?p.platba+'→'+platbaNew:String(platbaNew);
     html+='<tr><td class="cell-person">'+p.name+'</td><td style="text-align:right;color:var(--gray3)">'+platbaTxt+' €</td>';
     for(let m=0;m<12;m++){
+      const phase=novacikPhase(p.zazMonth,year,m+1);
+      if(phase!=='pay'){html+=novacikCellHtml(phase);continue;}
       const platba=isNewPricingMonth(year,m+1)?platbaNew:p.platba;
       const key='fix_'+year+'_'+String(m+1).padStart(2,'0')+'_'+p.name;
       const data=getPrispevok(key);
@@ -2244,7 +2315,10 @@ function addFixPerson(){
   if(sumaStr===null)return;
   const suma=parseFloat(sumaStr);
   if(isNaN(suma)||suma<0){alert('Neplatná suma.');return;}
-  roster.push({name,platba:suma,platbaNew:suma});
+  const zaz=(prompt('Nováčik? Mesiac ZAZMLUVNENIA (RRRR-MM).\n1. mesiac = zazmluvnenie, 2. mesiac = neplatí nájom, od 3. mesiaca platí.\nNechaj prázdne, ak platí hneď:','')||'').trim();
+  const person={name,platba:suma,platbaNew:suma};
+  if(/^\d{4}-\d{2}$/.test(zaz))person.zazMonth=zaz;
+  roster.push(person);
   saveFixRoster(roster);
   renderPrispevky();
 }
@@ -2507,10 +2581,13 @@ function renderPrispevkyTNNew(year){
   for(let m=startM;m<=12;m++)html+='<th style="min-width:62px">'+mesNames[m-1]+'</th>';
   if(isAdmin)html+='<th class="tf-admin-only" style="min-width:40px;text-align:center">Akcia</th>';
   html+='</tr></thead><tbody>';
-  for(const name of roster){
+  for(const person of roster){
+    const name=person.name;
     const safeName=name.replace(/'/g,"\\'");
     html+='<tr><td class="cell-person">'+name+'</td><td style="text-align:right;color:var(--gray3)">'+PRISPEVKY_TN_MES+' €</td>';
     for(let m=startM;m<=12;m++){
+      const phase=novacikPhase(person.zazMonth,year,m);
+      if(phase!=='pay'){html+=novacikCellHtml(phase);continue;}
       const key='tnnew_'+year+'_'+String(m).padStart(2,'0')+'_'+name;
       const data=getPrispevok(key);
       let cls='cell-empty';
@@ -2534,15 +2611,18 @@ function addTnNewPerson(year){
   const name=(prompt('Meno a priezvisko novej osoby (kancelárie TN, '+PRISPEVKY_TN_MES+' €/mes):')||'').trim();
   if(!name)return;
   const roster=getTnNewRoster(year);
-  if(roster.includes(name)){alert('Táto osoba už je v zozname.');return;}
-  roster.push(name);
+  if(roster.some(p=>p.name===name)){alert('Táto osoba už je v zozname.');return;}
+  const zaz=(prompt('Nováčik? Mesiac ZAZMLUVNENIA (RRRR-MM).\n1. mesiac = zazmluvnenie, 2. mesiac = neplatí, od 3. mesiaca platí.\nNechaj prázdne, ak platí hneď:','')||'').trim();
+  const person={name};
+  if(/^\d{4}-\d{2}$/.test(zaz))person.zazMonth=zaz;
+  roster.push(person);
   saveTnNewRoster(year,roster);
   renderPrispevky();
 }
 function removeTnNewPerson(year,name){
   if(currentUserRole!=='admin')return;
   if(!confirm('Odstrániť '+name+' z kancelárií TN?'))return;
-  saveTnNewRoster(year,getTnNewRoster(year).filter(n=>n!==name));
+  saveTnNewRoster(year,getTnNewRoster(year).filter(p=>p.name!==name));
   renderPrispevky();
 }
 
