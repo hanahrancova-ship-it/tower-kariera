@@ -820,7 +820,22 @@ document.addEventListener('click',function(e){
     document.querySelectorAll('.action-menu.open').forEach(m=>m.classList.remove('open'));
   }
 });
-function getActiveWarning(name){return warnings.find(w=>w.person===name&&w.status==='active')}
+// Normalizácia mena: bez diakritiky, malé písmená, jednotné medzery
+function _normName(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[\u200B-\u200D\uFEFF\u00AD\u2060\u180E]/g,'').replace(/[^a-z0-9\u00e0-\u017f ]/gi,' ').replace(/\s+/g,' ').trim().toLowerCase();}
+// Tokeny mena bez titulov (Ing., Mgr., Bc., DiS. …) a interpunkcie
+const _NAME_TITLES=['ing','mgr','bc','judr','rndr','phd','dis','msc','dr','mudr','paeddr','prof','doc'];
+function _nameTokens(s){return _normName(s).replace(/[.,]/g,' ').split(' ').filter(t=>t&&!_NAME_TITLES.includes(t));}
+// Tolerantné porovnanie mien: zvládne poradie, tituly, diakritiku, medzery, veľkosť písmen
+function _namesMatch(a,b){
+  const ta=_nameTokens(a),tb=_nameTokens(b);
+  if(!ta.length||!tb.length)return false;
+  const sa=new Set(ta),sb=new Set(tb);
+  const short=ta.length<=tb.length?sa:sb,long=ta.length<=tb.length?sb:sa;
+  for(const t of short)if(!long.has(t))return false;
+  return true;
+}
+// Aktívne napomenutie = čokoľvek okrem výslovne zrušeného ('resolved')
+function getActiveWarning(name){return warnings.find(w=>w.status!=='resolved'&&_namesMatch(w.person,name));}
 function monthsSince(d){const dt=new Date(d),now=new Date();return(now.getFullYear()-dt.getFullYear())*12+(now.getMonth()-dt.getMonth())}
 function firstOfMonth(){const d=new Date();d.setDate(1);const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0');return y+'-'+m+'-01';}
 function importLabel(y,m){return`${MESACE[m]} ${y}`}
@@ -1827,6 +1842,7 @@ function renderEvidenciaNapomenutia(){
     const _reason=w.reason==='fj'?'Nesplnenie FJ':w.reason==='pb'?'Nesplnenie PB':w.reason==='pb_podriadeny'?'Hrozí nesplnenie PB - podriadený napomenutý':'Nesplnenie FJ+PB';
     let _zrusCell=_zrus;
     if(w.status==='active')_zrusCell+='<br><button class="btn btn-sm btn-secondary" style="font-size:10px" onclick="openResolveModal(\'' +_safe+ '\')">Zrušiť</button>';
+    else if(w.status==='resolved')_zrusCell+='<br><button class="btn btn-sm btn-secondary" style="font-size:10px" onclick="reactivateWarning(\''+w.id+'\')">Obnoviť</button>';
     return`<tr class="${_rowClass}"><td><strong>${w.person}</strong></td><td>${formatWarnDate(w.date)}</td><td>${_wpos}</td><td>${_reason}</td><td>${_zrusCell}</td><td><input type="text" value="${_note}" onchange="saveEvPoznamka('nap_${w.id}',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-size:11px;background:transparent"></td><td style="white-space:nowrap"><button class="btn btn-sm btn-secondary" onclick="editWarning('${w.id}')" style="margin-right:4px">Upraviť</button><button class="btn btn-sm btn-danger" onclick="deleteWarning('${w.id}')">&#x2715;</button></td></tr>`;
   });
   el.innerHTML='<div class="table-wrap"><table><thead><tr><th>Meno</th><th>Dátum</th><th>Poz.</th><th>Za čo</th><th>Zrušené k</th><th>Poznámka</th><th></th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>';
@@ -2006,7 +2022,7 @@ function openResolveModal(name){
   document.getElementById('modal-resolve').classList.add('open');
 }
 function confirmResolve(){
-  const w=warnings.find(x=>x.person===resolveTarget&&x.status==='active');
+  const w=warnings.find(x=>x.status!=='resolved'&&_namesMatch(x.person,resolveTarget));
   if(!w){closeModal('modal-resolve');return;}
   w.status='resolved';w.resolvedDate=document.getElementById('resolve-date').value;w.resolvedNote=document.getElementById('resolve-note').value;
   tfSave('tf_warnings',warnings);
@@ -2018,6 +2034,17 @@ function deleteWarning(id){
   tfSave('tf_warnings',warnings);
   renderEvidencia();
   showToast('Záznam odstránený.','success');
+}
+// Obnoviť zrušené napomenutie → znova aktívne (zobrazí sa vo Vyhodnotení)
+function reactivateWarning(id){
+  if(currentUserRole!=='admin')return;
+  const w=warnings.find(x=>x.id===id);
+  if(!w)return;
+  if(!confirm('Obnoviť napomenutie pre '+w.person+'? Znova bude aktívne.'))return;
+  w.status='active';delete w.resolvedDate;delete w.resolvedNote;
+  tfSave('tf_warnings',warnings);
+  renderEvidencia();renderEvaluation();renderDashboard();
+  showToast('Napomenutie obnovené.','success');
 }
 function openCestaModal(name){
   cestaTarget=name;selectedCestaValue=null;
