@@ -1132,10 +1132,12 @@ function computeEvalPeople(){
   });
   evalPeople.forEach(p=>{
     const directs=evalPeople.filter(x=>x.manager===p.name);
-    p.pb=directs.reduce((s,x)=>{
-      if(hasHistProtection(x.histFJ)){const kC=getKariera('C');if(x.ownFJ<effectiveMaintainFJ(kC,x.histFJ,x.name,x.pos))return s;}
-      return s+(x.pos===p.pos?Math.floor((PB_VALUES[x.pos]||0)/2):(PB_VALUES[x.pos]||0));
-    },0);
+    const _pbOf=x=>{
+      if(hasHistProtection(x.histFJ)){const kC=getKariera('C');if(x.ownFJ<effectiveMaintainFJ(kC,x.histFJ,x.name,x.pos))return 0;}
+      return (x.pos===p.pos?Math.floor((PB_VALUES[x.pos]||0)/2):(PB_VALUES[x.pos]||0));
+    };
+    p.pb=directs.reduce((s,x)=>s+_pbOf(x),0);                                   // napomínaní SA rátajú do PB
+    p.pbWithoutWarned=directs.reduce((s,x)=>s+(getActiveWarning(x.name)?0:_pbOf(x)),0); // bez napomínaných (kontrola rizika)
     // Efektívne skupinové FJ (pre kontrolu plnenia):
     // Ak má podriadeného s rovnakou pozíciou, jeho prínos sa zaráta max 50% z manažérovho groupFJ
     // Zobrazené groupFJ na dashboarde ostáva nezmenené
@@ -1332,7 +1334,10 @@ function checkStatus(p){
   if(k.maintainSCcondition){const kSC=getKariera('SC'),scEff=effectiveMaintainFJ(kSC,h,p.name,p.pos);if(p.ownFJ<scEff)issues.push(`SC FJ: ${p.ownFJ.toFixed(2)}/${scEff}`);}
   if(k.maintainFJ){const eff=effectiveMaintainFJ(k,h,p.name,p.pos);if(p.ownFJ<eff)issues.push(`FJ: ${p.ownFJ.toFixed(2)}/${eff}${(coef<1&&_showDiscount)?' (zľava '+Math.round((1-coef)*100)+'%)':''}`);}
   if(k.maintainGroupFJ){const effGFJ=p.effectiveGroupFJ!==undefined?p.effectiveGroupFJ:p.groupFJ;if(effGFJ<k.maintainGroupFJ){let msg=`Skup. FJ: ${effGFJ.toFixed(2)}/${k.maintainGroupFJ}`;if(p.capDetail&&p.capDetail.length){msg+=' (po obmedzení '+p.capDetail.map(d=>d.podriadeny+' max 50%').join(', ')+')';}issues.push(msg);}}
-  if(k.maintainPB&&p.pb<k.maintainPB)issues.push(`PB: ${p.pb}/${k.maintainPB}`);
+  if(k.maintainPB){
+    if(p.pb<k.maintainPB)issues.push(`PB: ${p.pb}/${k.maintainPB}`);
+    else if(p.pbWithoutWarned!==undefined&&p.pbWithoutWarned<k.maintainPB)issues.push(`PB závisí od napomínaných podr. (bez nich ${p.pbWithoutWarned}/${k.maintainPB})`);
+  }
   const type=issues.length===0?'ok':issues[0].startsWith('PB')?'pb':'fj';
   return{ok:issues.length===0,msg:issues.join(' · '),type,issues};
 }
