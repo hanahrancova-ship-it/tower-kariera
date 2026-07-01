@@ -1100,17 +1100,18 @@ function computeEvalPeople(){
       baseMap.set(p.name,{...p,_dataSource:'brutto'});
     } else {
       const existing=baseMap.get(p.name);
-      // Ak je v netto reporte ako TR, fyzicky ešte nemá netto produkciu — preberáme brutto pos+data
-      if(existing.pos==='TR'){
+      // Ak je v netto reporte ako TR a je to NOVÁČIK (nikdy nespadol na TR), fyzicky ešte nemá netto
+      // produkciu — preberáme brutto. Ak SPADOL na TR (má zníženie na TR), ostáva na netto (nových 400 FJ netto).
+      if(existing.pos==='TR' && !getLatestDemotionToTR(p.name)){
         baseMap.set(p.name,{...p,_dataSource:'brutto'});
       }
-      // Inak (C+): zostáva netto
+      // Inak (C+ alebo spadnutý na TR): zostáva netto
     }
   }
-  // 2) Pre každú osobu zosumarizuj FJ podľa zdroja (TR=brutto, C+=netto) cez Q.
-  //    Pre TR osoby aj kumulatívny historický brutto súčet (cez VŠETKY importy).
+  // 2) Pre každú osobu zosumarizuj FJ podľa zdroja (nováčik TR=brutto, C+ aj spadnutý TR=netto) cez Q.
+  //    Pre nováčikov TR aj kumulatívny historický brutto súčet (cez VŠETKY importy).
   evalPeople=Array.from(baseMap.values()).map(p=>{
-    const usesBrutto=(p.pos==='TR');
+    const usesBrutto=(p.pos==='TR' && !getLatestDemotionToTR(p.name)); // spadnutý na TR → netto, nie brutto
     let totalOwn=0,totalGroup=0,totalHist=0;
     usedImports.forEach(imp=>{
       const arr=usesBrutto?(imp.peopleBrutto||[]):(imp.people||[]);
