@@ -1405,7 +1405,7 @@ function evalPromoTo(p,nextPos){
 
 function getPersonCesta(name){const h=cestaData[name];if(!h||!h.length)return null;return h[h.length-1].cesta;}
 function getCestaHistory(name){return cestaData[name]||[];}
-function canChangeCesta(name){const h=getCestaHistory(name);if(!h.length)return true;return(new Date()-new Date(h[h.length-1].date))/(1000*60*60*24)>=365;}
+function canChangeCesta(name){const h=getCestaHistory(name).filter(e=>!e.auto);if(!h.length)return true;return(new Date()-new Date(h[h.length-1].date))/(1000*60*60*24)>=365;}
 
 function renderAll(){renderEvaluation();renderEvidencia();}
 
@@ -2029,6 +2029,13 @@ function savePozicia(){
   if(!pozicieHistory[name])pozicieHistory[name]=[];
   pozicieHistory[name].push({fromPos,toPos,date,type});
   tfSave('tf_imports',imports);tfSave('tf_pozicie',pozicieHistory);
+  // Zachovaj kariérnu cestu — raz nastavená (aj implikovaná pozíciou VIP/manažér) sa znížením nezruší.
+  const _impliedCesta=isVIP(fromPos)?'obchodna':(isManazerska(fromPos)?'manazerska':null);
+  if(_impliedCesta&&getPersonCesta(name)!==_impliedCesta){
+    if(!cestaData[name])cestaData[name]=[];
+    cestaData[name].push({cesta:_impliedCesta,date:date||firstOfMonth(),note:'Zachované pri zmene pozície',auto:true});
+    tfSave('tf_cesta',cestaData);
+  }
   // Zníženie zatvára aktívne napomenutie (je jeho dôsledkom)
   let _warnClosed=false;
   if(type==='znizenie'){const aw=getActiveWarning(name);if(aw){aw.status='resolved';aw.resolvedDate=date||firstOfMonth();aw.resolvedNote='Znížený/á na '+toPos;tfSave('tf_warnings',warnings);_warnClosed=true;}}
