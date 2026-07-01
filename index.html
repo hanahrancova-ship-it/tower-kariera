@@ -2006,30 +2006,35 @@ function savePozicia(){
   const toPos=document.getElementById('poz-new-pos').value;
   const date=document.getElementById('poz-date').value;
   if(!toPos||!date){showToast('Vyplnte všetky polia.','error');return;}
-  const imp=imports.find(i=>i.key===selectedImportKey);
-  if(!imp){showToast('Nenajdeny import.','error');return;}
-  const person=imp.people.find(p=>p.name===name);
+  // Import, z ktorého sa skladá tabuľka Vyhodnotenie (najnovší v kvartáli)
+  const qImports=getQuarterImports();
+  const targetImp=(qImports&&qImports[0])||imports.find(i=>i.key===selectedImportKey);
+  if(!targetImp){showToast('Nenájdený import.','error');return;}
+  // Nájdi osobu v NETTO aj BRUTTO zozname (tolerantné meno)
+  const findPer=imp=>imp?((imp.people||[]).find(p=>_namesMatch(p.name,name))||(imp.peopleBrutto||[]).find(p=>_namesMatch(p.name,name))||null):null;
+  const per=findPer(targetImp);
+  if(!per){showToast('Osoba sa nenašla v aktuálnom importe.','error');return;}
+  const fromPos=per.pos;
   // Upozornenie pri znížení človeka s historickou ochranou (≥18k FJ) pod SC
-  if(type==='znizenie'&&person&&hasHistProtection(person.histFJ||0)){
+  if(type==='znizenie'&&hasHistProtection(per.histFJ||0)){
     const POS_ORDER_DOWN=["P","SD","MD","SM","EM","TL","VIP IV","VIP III","VIP II","VIP I","SC","C","TR"];
-    const _idxTo=POS_ORDER_DOWN.indexOf(toPos);
-    const _idxSC=POS_ORDER_DOWN.indexOf("SC");
-    if(_idxTo>_idxSC){ // nižšie ako SC
+    if(POS_ORDER_DOWN.indexOf(toPos)>POS_ORDER_DOWN.indexOf("SC")){
       if(!confirm(`⚠ ${name} má historickú ochranu (≥18 000 FJ). Podľa pravidiel by nemal klesnúť pod SC. Naozaj chcete znížiť na ${toPos}?`))return;
     }
   }
-  if(person){
-    const fromPos=person.pos;
-    if(!pozicieHistory[name])pozicieHistory[name]=[];
-    pozicieHistory[name].push({fromPos,toPos,date,type});
-    person.pos=toPos;
-    tfSave('tf_imports',imports);
-    tfSave('tf_pozicie',pozicieHistory);
-  }
+  // Zmeň pozíciu v najnovšom kvartálnom importe (netto aj brutto, kde sa nachádza)
+  (targetImp.people||[]).forEach(p=>{if(_namesMatch(p.name,name))p.pos=toPos;});
+  (targetImp.peopleBrutto||[]).forEach(p=>{if(_namesMatch(p.name,name))p.pos=toPos;});
+  if(!pozicieHistory[name])pozicieHistory[name]=[];
+  pozicieHistory[name].push({fromPos,toPos,date,type});
+  tfSave('tf_imports',imports);tfSave('tf_pozicie',pozicieHistory);
+  // Zníženie zatvára aktívne napomenutie (je jeho dôsledkom)
+  let _warnClosed=false;
+  if(type==='znizenie'){const aw=getActiveWarning(name);if(aw){aw.status='resolved';aw.resolvedDate=date||firstOfMonth();aw.resolvedNote='Znížený/á na '+toPos;tfSave('tf_warnings',warnings);_warnClosed=true;}}
   closeModal('modal-pozicia');
   computeEvalPeople();
   renderDashboard();renderEvaluation();renderEvidencia();
-  showToast(type==='povysenie'?'Povýšenie uložené.':'Zníženie uložené.','success');
+  showToast((type==='povysenie'?'Povýšenie uložené.':'Zníženie uložené.')+(_warnClosed?' Napomenutie zrušené.':''),'success');
 }
 function openBrutoModal(name,pos){
   window._brutoName=name;window._brutoPos=pos;
