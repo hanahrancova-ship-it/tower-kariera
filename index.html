@@ -1630,7 +1630,7 @@ function renderEvaluation(){
     const _sCesta=_manPos.includes(p.pos)?"manazerska":_vipPos.includes(p.pos)?"obchodna":(getPersonCesta(p.name)||"manazerska");
     const _path=_sCesta==="obchodna"?_oPath:_mPath;
     const _ci=_path.indexOf(p.pos);
-    const splnaStatutCell=s.ok?p.pos:(_ci>=0&&_ci<_path.length-1?_path[_ci+1]:"");
+    const splnaStatutCell=s.ok?p.pos:bestPositionForCesta(p,_sCesta);
     // 3-bodky menu (action menu)
     const _safeNm=p.name.replace(/'/g,"\\'");
     let menuItems='';
@@ -1875,14 +1875,23 @@ function renderEvidenciaNapomenutia(){
     const ms=monthsSince(w.date);
     const _safe=w.person.replace(/'/g,"\\'");
     const _note=(evidenciaPoznamky['nap_'+w.id]||w.note||'').replace(/"/g,'&quot;');
-    const _zrus=w.status==='resolved'?(w.resolvedDate||'–'):'–';
     const _wpos=w.pos||'–';
+    const _resolved=w.status==='resolved';
+    const _isAuto=_resolved&&w.resolvedType==='auto';      // zrušené znížením (automaticky po 3 mes.)
+    const _isManual=_resolved&&w.resolvedType==='manual';  // zrušené ručne (splnenie podmienok)
     const _rowClass=w.status==='active'&&ms>=3?'eval-row-fail':w.status==='active'?'eval-row-warn':'';
+    const _rowStyle=_isAuto?' style="opacity:0.5"':''; // automatické zrušenie → vysedené
     const _reason=w.reason==='fj'?'Nesplnenie FJ':w.reason==='pb'?'Nesplnenie PB':w.reason==='pb_podriadeny'?'Hrozí nesplnenie PB - podriadený napomenutý':'Nesplnenie FJ+PB';
-    let _zrusCell=_zrus;
-    if(w.status==='active')_zrusCell+='<br><button class="btn btn-sm btn-secondary" style="font-size:10px" onclick="openResolveModal(\'' +_safe+ '\')">Zrušiť</button>';
-    else if(w.status==='resolved')_zrusCell+='<br><button class="btn btn-sm btn-secondary" style="font-size:10px" onclick="reactivateWarning(\''+w.id+'\')">Obnoviť</button>';
-    return`<tr class="${_rowClass}"><td><strong>${w.person}</strong></td><td>${formatWarnDate(w.date)}</td><td>${_wpos}</td><td>${_reason}</td><td>${_zrusCell}</td><td><input type="text" value="${_note}" onchange="saveEvPoznamka('nap_${w.id}',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-size:11px;background:transparent"></td><td style="white-space:nowrap"><button class="btn btn-sm btn-secondary" onclick="editWarning('${w.id}')" style="margin-right:4px">Upraviť</button><button class="btn btn-sm btn-danger" onclick="deleteWarning('${w.id}')">&#x2715;</button></td></tr>`;
+    let _zrusCell;
+    if(w.status==='active'){
+      _zrusCell='–<br><button class="btn btn-sm btn-secondary" style="font-size:10px" onclick="openResolveModal(\'' +_safe+ '\')">Zrušiť</button>';
+    }else{
+      if(_isManual)_zrusCell='<span style="color:#0e6b27;font-weight:600">Zrušené manuálne k '+(w.resolvedDate||'–')+'</span><br><span style="font-size:10px;color:var(--gray3)">splnenie podmienok</span>';
+      else if(_isAuto)_zrusCell='<span style="color:var(--gray3)">Zrušené (znížením) k '+(w.resolvedDate||'–')+'</span>';
+      else _zrusCell='Zrušené k '+(w.resolvedDate||'–');
+      _zrusCell+='<br><button class="btn btn-sm btn-secondary" style="font-size:10px" onclick="reactivateWarning(\''+w.id+'\')">Obnoviť</button>';
+    }
+    return`<tr class="${_rowClass}"${_rowStyle}><td><strong>${w.person}</strong></td><td>${formatWarnDate(w.date)}</td><td>${_wpos}</td><td>${_reason}</td><td>${_zrusCell}</td><td><input type="text" value="${_note}" onchange="saveEvPoznamka('nap_${w.id}',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-size:11px;background:transparent"></td><td style="white-space:nowrap"><button class="btn btn-sm btn-secondary" onclick="editWarning('${w.id}')" style="margin-right:4px">Upraviť</button><button class="btn btn-sm btn-danger" onclick="deleteWarning('${w.id}')">&#x2715;</button></td></tr>`;
   });
   el.innerHTML='<div class="table-wrap"><table><thead><tr><th>Meno</th><th>Dátum</th><th>Poz.</th><th>Za čo</th><th>Zrušené k</th><th>Poznámka</th><th></th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>';
 }
@@ -2038,7 +2047,7 @@ function savePozicia(){
   }
   // Zníženie zatvára aktívne napomenutie (je jeho dôsledkom)
   let _warnClosed=false;
-  if(type==='znizenie'){const aw=getActiveWarning(name);if(aw){aw.status='resolved';aw.resolvedDate=date||firstOfMonth();aw.resolvedNote='Znížený/á na '+toPos;tfSave('tf_warnings',warnings);_warnClosed=true;}}
+  if(type==='znizenie'){const aw=getActiveWarning(name);if(aw){aw.status='resolved';aw.resolvedDate=date||firstOfMonth();aw.resolvedNote='Znížený/á na '+toPos;aw.resolvedType='auto';tfSave('tf_warnings',warnings);_warnClosed=true;}}
   closeModal('modal-pozicia');
   computeEvalPeople();
   renderDashboard();renderEvaluation();renderEvidencia();
@@ -2075,7 +2084,7 @@ function openResolveModal(name){
 function confirmResolve(){
   const w=warnings.find(x=>x.status!=='resolved'&&_namesMatch(x.person,resolveTarget));
   if(!w){closeModal('modal-resolve');return;}
-  w.status='resolved';w.resolvedDate=document.getElementById('resolve-date').value;w.resolvedNote=document.getElementById('resolve-note').value;
+  w.status='resolved';w.resolvedDate=document.getElementById('resolve-date').value;w.resolvedNote=document.getElementById('resolve-note').value;w.resolvedType='manual';
   tfSave('tf_warnings',warnings);
   closeModal('modal-resolve');renderEvidencia();renderEvaluation();
   showToast('Napomenutie zrušené.','success');
@@ -2092,7 +2101,7 @@ function reactivateWarning(id){
   const w=warnings.find(x=>x.id===id);
   if(!w)return;
   if(!confirm('Obnoviť napomenutie pre '+w.person+'? Znova bude aktívne.'))return;
-  w.status='active';delete w.resolvedDate;delete w.resolvedNote;
+  w.status='active';delete w.resolvedDate;delete w.resolvedNote;delete w.resolvedType;
   tfSave('tf_warnings',warnings);
   renderEvidencia();renderEvaluation();renderDashboard();
   showToast('Napomenutie obnovené.','success');
@@ -2154,7 +2163,7 @@ function repositionForCesta(name,cesta){
   let _warnClosed=false;
   if(isLower){
     const aw=getActiveWarning(name);
-    if(aw){aw.status='resolved';aw.resolvedDate=firstOfMonth();aw.resolvedNote='Znížená pri zmene kariérnej cesty na '+newPos;tfSave('tf_warnings',warnings);_warnClosed=true;}
+    if(aw){aw.status='resolved';aw.resolvedDate=firstOfMonth();aw.resolvedNote='Znížená pri zmene kariérnej cesty na '+newPos;aw.resolvedType='auto';tfSave('tf_warnings',warnings);_warnClosed=true;}
   }
   alert('Kariérna cesta zmenená na '+(cesta==='obchodna'?'Obchodnú':'Manažérsku')+'.\n\n'+name+' bol/a na pozícii '+ep.pos+', ktorá na tejto ceste neexistuje — preto je preradený/á na '+newPos+' (najvyššia pozícia, na ktorú aktuálne spĺňa podmienky).'+(_warnClosed?'\n\nAktívne napomenutie bolo tým uzatvorené (zrušené).':''));
 }
