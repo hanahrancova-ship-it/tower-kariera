@@ -2096,13 +2096,49 @@ function selectCesta(val){
   const current=getPersonCesta(cestaTarget),sb=document.getElementById('cesta-save-btn');
   if(val!==current){sb.disabled=false;sb.style.opacity='1';}else{sb.disabled=true;sb.style.opacity='0.4';}
 }
+// Spĺňa osoba (podľa aktuálnych FJ/PB) podmienky danej pozície?
+function qualifiesForPosition(p,pos){
+  const k=getKariera(pos);if(!k)return false;
+  if(pos==='TR')return true;
+  if(k.maintainFJ){const e=effectiveMaintainFJ(k,p.histFJ||0,p.name,pos);if((p.ownFJ||0)<e)return false;}
+  if(k.maintainGroupFJ){const g=(p.effectiveGroupFJ!==undefined)?p.effectiveGroupFJ:(p.groupFJ||0);if(g<k.maintainGroupFJ)return false;}
+  if(k.maintainPB&&(p.pb||0)<k.maintainPB)return false;
+  if(isVIP(pos)&&(p.histFJ||0)<6000)return false; // VIP vyžaduje 6 000 FJ hist.
+  return true;
+}
+// Najvyššia pozícia na danej ceste, na ktorú osoba spĺňa podmienky
+function bestPositionForCesta(p,cesta){
+  const path=cesta==='obchodna'?['VIP IV','VIP III','VIP II','VIP I','SC','C','TR']:['P','SD','MD','SM','EM','TL','SC','C','TR'];
+  for(const pos of path){if(qualifiesForPosition(p,pos))return pos;}
+  return 'TR';
+}
+// Ak aktuálna pozícia nesedí na novú cestu (napr. TL → obchodná), prepočítaj na pozíciu podľa podmienok
+function repositionForCesta(name,cesta){
+  const ep=evalPeople.find(x=>x.name===name);
+  if(!ep)return;
+  const incompatible=(cesta==='obchodna'&&isManazerska(ep.pos))||(cesta==='manazerska'&&isVIP(ep.pos));
+  if(!incompatible)return;
+  const newPos=bestPositionForCesta(ep,cesta);
+  if(!newPos||newPos===ep.pos)return;
+  const ORDER=["P","SD","MD","SM","EM","TL","VIP IV","VIP III","VIP II","VIP I","SC","C","TR"];
+  const isLower=ORDER.indexOf(newPos)>ORDER.indexOf(ep.pos);
+  if(!pozicieHistory[name])pozicieHistory[name]=[];
+  pozicieHistory[name].push({fromPos:ep.pos,toPos:newPos,date:firstOfMonth(),type:isLower?'znizenie':'povysenie'});
+  const imp=imports.find(i=>i.key===selectedImportKey);
+  if(imp&&Array.isArray(imp.people)){const per=imp.people.find(x=>x.name===name);if(per)per.pos=newPos;}
+  tfSave('tf_imports',imports);tfSave('tf_pozicie',pozicieHistory);
+  alert('Kariérna cesta zmenená na '+(cesta==='obchodna'?'Obchodnú':'Manažérsku')+'.\n\n'+name+' bol/a na pozícii '+ep.pos+', ktorá na tejto ceste neexistuje — preto je preradený/á na '+newPos+' (najvyššia pozícia, na ktorú aktuálne spĺňa podmienky).');
+}
 function saveCesta(){
   if(!cestaTarget||!selectedCestaValue)return;
-  if(!canChangeCesta(cestaTarget)&&getPersonCesta(cestaTarget)){if(!confirm('Od poslednej zmeny neuplynul rok. Naozaj zmeniť?'))return;}
+  if(!canChangeCesta(cestaTarget)&&getPersonCesta(cestaTarget)){if(!confirm('⚠ Kariérna cesta sa má meniť len 1× za rok — od poslednej zmeny ešte neuplynul rok.\n\nChceš zmenu urobiť aj tak?'))return;}
   if(!cestaData[cestaTarget])cestaData[cestaTarget]=[];
   cestaData[cestaTarget].push({cesta:selectedCestaValue,date:new Date().toISOString().split('T')[0],note:''});
   tfSave('tf_cesta',cestaData);
-  closeModal('modal-cesta');renderLudia();renderEvaluation();
+  // Prepočet pozície ak stará pozícia na novej ceste neexistuje
+  repositionForCesta(cestaTarget,selectedCestaValue);
+  closeModal('modal-cesta');
+  computeEvalPeople();renderDashboard();renderEvaluation();renderEvidencia();renderLudia();
   showToast(`Kariérna cesta: ${selectedCestaValue==='manazerska'?'Manažérska':'Obchodná'}`,'success');
 }
 function exportReport(){
@@ -2783,15 +2819,15 @@ function monthsInH(h){
 function getServisBaSection(year,h){
   const k=hKey(year,h);
   let s=servisData['ba_'+k];
-  if(s)return s;
+  if(s&&s.people&&s.people.length)return s; // uložený s neprázdnym zoznamom
   // Default pre H1/2026 (počiatočný zoznam)
   if(year===2026&&h===1)return {people:SERVIS_BA_DEFAULT_H1_2026.slice(),total:SERVIS_BA_DEFAULT_TOTAL,poznamky:{}};
   // Pred 2026 → prázdne (zabráni nekonečnej rekurzii)
-  if(year<2026)return {people:[],total:SERVIS_BA_DEFAULT_TOTAL,poznamky:{}};
-  // Inak zdeď ľudí z predošlého polroka (carry-forward; neukladá sa, kým neupravíš)
+  if(year<2026)return s||{people:[],total:SERVIS_BA_DEFAULT_TOTAL,poznamky:{}};
+  // Prázdny alebo nenastavený polrok → zdeď ľudí z predošlého polroka (add/remove ostáva)
   const prev=shiftH(year,h,-1);
   const prevS=getServisBaSection(prev.year,prev.h);
-  return {people:prevS.people.slice(),total:SERVIS_BA_DEFAULT_TOTAL,poznamky:{}};
+  return {people:prevS.people.slice(),total:(s&&s.total)||SERVIS_BA_DEFAULT_TOTAL,poznamky:(s&&s.poznamky)||{}};
 }
 
 // Uloží zoznam BA pre polrok
@@ -2804,12 +2840,12 @@ function saveServisBaSection(year,h,section){
 function getServisTnSection(year,h){
   const k=hKey(year,h);
   let s=servisData['tn_'+k];
-  if(s)return s;
-  if(year<2026||(year===2026&&h===1))return {people:[],poznamky:{}};
-  // Zdeď ľudí z predošlého polroka (carry-forward)
+  if(s&&s.people&&s.people.length)return s;
+  if(year<2026||(year===2026&&h===1))return s||{people:[],poznamky:{}};
+  // Prázdny alebo nenastavený polrok → zdeď ľudí z predošlého polroka
   const prev=shiftH(year,h,-1);
   const prevS=getServisTnSection(prev.year,prev.h);
-  return {people:prevS.people.slice(),poznamky:{}};
+  return {people:prevS.people.slice(),poznamky:(s&&s.poznamky)||{}};
 }
 function saveServisTnSection(year,h,section){
   servisData['tn_'+hKey(year,h)]=section;
