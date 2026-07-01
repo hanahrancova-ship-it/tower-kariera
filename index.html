@@ -992,9 +992,21 @@ const _MES_SK=['január','február','marec','apríl','máj','jún','júl','augus
 function _pad2(n){return String(n).padStart(2,'0');}
 function formatDmy(d){if(!d)return'';const dt=(d instanceof Date)?d:new Date(d);if(isNaN(dt))return'';return dt.getDate()+'.'+(dt.getMonth()+1)+'.'+dt.getFullYear();}
 function formatDmyHm(d){if(!d)return'';const dt=(d instanceof Date)?d:new Date(d);if(isNaN(dt))return'';return formatDmy(dt)+' '+_pad2(dt.getHours())+':'+_pad2(dt.getMinutes());}
+// Kotva plávajúceho kvartálu = najnovší NAHRANÝ mesiac (nie dnešný dátum).
+// Vďaka tomu sa okno neposúva na prázdny budúci mesiac — napr. na 1.7. (keď je najnovší import jún)
+// ukazuje apríl+máj+jún, nie máj+jún+júl.
+function getQuarterAnchor(){
+  if(imports&&imports.length){
+    const keys=imports.map(i=>i.key).filter(Boolean).sort();
+    const last=keys[keys.length-1];
+    const parts=(last||'').split('-').map(Number);
+    if(parts[0]&&parts[1])return new Date(parts[0],parts[1]-1,1);
+  }
+  return new Date();
+}
 function getQuarterStart(today){
-  // 1. deň mesiaca pred 2 mesiacmi (rolling 3-mes okno)
-  const t=today||new Date();
+  // 1. deň mesiaca pred 2 mesiacmi (rolling 3-mes okno) od kotvy = najnovší import
+  const t=today||getQuarterAnchor();
   return new Date(t.getFullYear(), t.getMonth()-2, 1);
 }
 function getLastImportDate(){
@@ -1005,8 +1017,9 @@ function getLastImportDate(){
   return null;
 }
 function getQuarterEndDate(){
-  // Koniec Q = dátum posledného importu (fallback: dnes)
-  return getLastImportDate()||new Date();
+  // Koniec Q = posledný deň kotvového (najnovšieho nahraného) mesiaca
+  const a=getQuarterAnchor();
+  return new Date(a.getFullYear(), a.getMonth()+1, 0);
 }
 function getQuarterHeaderHTML(){
   const qs=getQuarterStart();
@@ -1028,7 +1041,7 @@ function getQuarterHeaderTextDashboard(){
 }
 // Vráti zoznam mesiacových kľúčov ("YYYY-MM") patriacich do aktuálneho plávajúceho kvartálu
 function getQuarterMonthKeys(today){
-  const t=today||new Date();
+  const t=today||getQuarterAnchor();
   const keys=[];
   for(let i=2;i>=0;i--){
     const d=new Date(t.getFullYear(), t.getMonth()-i, 1);
