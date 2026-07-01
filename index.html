@@ -1064,10 +1064,10 @@ function getQuarterImports(){
 const NOVACIK_C_GRACE_MONTHS=3;
 function getFirstCDate(name){
   const hist=pozicieHistory[name]||[];
-  // Grace ("nevyhodnocuje sa") platí IBA pri reálne zaznamenanom povýšení na C
-  // (manuálne cez tlačidlo Povýšiť / ručný zápis do evidencie). NIE z auto-detekcie ani z importov —
-  // inak by grace dostali všetci C. Auto-vytvorené záznamy (autoCreated) sa ignorujú.
-  const c=hist.filter(e=>e&&e.toPos==='C'&&e.date&&!e.autoCreated).slice().sort((a,b)=>a.date.localeCompare(b.date));
+  // Grace ("nevyhodnocuje sa") platí IBA pri reálnom POVÝŠENÍ na C (nováčik TR→C).
+  // NIE pri ZNÍŽENÍ na C (Chobot, Hertl…), NIE z auto-detekcie/importov, NIE opakovane
+  // (berie sa najstarší záznam — ak prvé C bolo dávno, grace už neplatí).
+  const c=hist.filter(e=>e&&e.toPos==='C'&&e.type==='povysenie'&&e.date&&!e.autoCreated).slice().sort((a,b)=>a.date.localeCompare(b.date));
   if(c.length){
     const d=new Date(c[0].date);
     if(!isNaN(d))return d;
