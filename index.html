@@ -1270,10 +1270,15 @@ function processImport(rows,yearMonth,reportType){
   if(!Array.isArray(baseEntry.peopleBrutto))baseEntry.peopleBrutto=[];
   baseEntry.label=label;
   baseEntry.date=new Date().toISOString();
+  // Pri opakovanom nahratí toho istého mesiaca ZACHOVAJ pozície (manuálne zmeny) — zmeň len FJ.
+  const _mergePreservePos=(oldArr,np)=>{
+    const byName={};(oldArr||[]).forEach(p=>{byName[_normName(p.name)]=p;});
+    return np.map(x=>{const o=byName[_normName(x.name)];return (o&&o.pos)?{...x,pos:o.pos}:x;});
+  };
   if(reportType==='brutto'){
-    baseEntry.peopleBrutto=parsed;
+    baseEntry.peopleBrutto=_mergePreservePos(baseEntry.peopleBrutto,parsed);
   } else {
-    baseEntry.people=parsed;
+    baseEntry.people=_mergePreservePos(baseEntry.people,parsed);
   }
   if(existing>=0){imports[existing]=baseEntry;showToast(`${label} – ${reportType.toUpperCase()} aktualizovaný.`,'success');}
   else{imports.push(baseEntry);showToast(`${label} – ${reportType.toUpperCase()} uložený.`,'success');}
