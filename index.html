@@ -1589,7 +1589,7 @@ function renderEvaluation(){
     if(hasHistProtection(p.histFJ))extras.push(`<span class="tf-admin-only" style="font-size:9px;color:var(--blue);font-weight:700">≥18k</span>`);
     if(coef<1)extras.push(`<span class="tf-admin-only" style="font-size:9px;color:var(--blue);font-weight:700">${Math.round((1-coef)*100)}%↓</span>`);
     let napomCell='<span style="font-size:11px;color:var(--gray3)">–</span>';
-    if(aw){const dots=[0,1,2].map(i=>{let cls='free';if(i<ms)cls='used';else if(i===ms&&ms<3)cls='half';return`<span class="napom-m ${cls}"></span>`;}).join('');const _rText=aw.reason==='fj'?'FJ':aw.reason==='pb'?'PB':aw.reason==='pb_podriadeny'?'PB (podr.)':'FJ+PB';napomCell=`<div style="display:flex;flex-direction:column;gap:3px"><span class="badge ${ms>=3?'badge-red':ms>=2?'badge-red':'badge-orange'}" style="font-size:10px">${ms+1}/3 mes.</span><span class="napom-dot">${dots}</span><span style="font-size:9px;color:var(--gray3)">Dôvod: ${_rText}</span>${ms>=3?'<span class="badge badge-red" style="font-size:9px">⚠ ZNÍŽIŤ</span>':''}</div>`;}
+    if(aw){const dots=[0,1,2].map(i=>{let cls='free';if(i<ms)cls='used';else if(i===ms&&ms<3)cls='half';return`<span class="napom-m ${cls}"></span>`;}).join('');const _rText=aw.reason==='fj'?'FJ':aw.reason==='pb'?'PB':aw.reason==='pb_podriadeny'?'PB (podr.)':'FJ+PB';napomCell=`<div style="display:flex;flex-direction:column;gap:3px"><span class="badge ${ms>=3?'badge-red':ms>=2?'badge-red':'badge-orange'}" style="font-size:10px">${ms+1}/3 mes.</span><span class="napom-dot">${dots}</span><span style="font-size:9px;color:var(--gray3)">Dôvod: ${_rText}</span>${s.ok?'<span class="badge badge-green" style="font-size:9px">✓ spĺňa – zrušiť</span>':(ms>=3?'<span class="badge badge-red" style="font-size:9px">⚠ ZNÍŽIŤ</span>':'')}</div>`;}
     let promoCell='<span style="color:var(--gray3);font-size:11px">–</span>';
     if(pr.brutoCheck)promoCell='<span class="badge badge-orange" style="font-size:9px">C–brutto⚠</span>';
     else if(pr.canPromote===true)promoCell=`<span class="badge badge-blue" style="font-size:10px">→${pr.nextPos}✓</span>`;
@@ -1605,7 +1605,16 @@ function renderEvaluation(){
       const _inlineDate=(currentUserRole==='admin')?'<div class="tf-admin-only" style="font-size:10px;color:var(--gray4);margin-top:3px;font-weight:600">do '+formatDmy(s.graceUntil)+'</div>':'';
       statusBadge='<div><span class="badge badge-gray" title="'+_tip+'" style="cursor:help">Nevyhodnocuje sa</span>'+_inlineDate+'</div>';
     } else {
-      statusBadge=aw&&ms>=3?'<span class="badge badge-red">⚠Znížiť</span>':aw?`<span class="badge badge-red">Napomenutý k ${formatWarnDateShort(aw.date)}</span>`:s.ok?'<span class="badge badge-green">OK</span>':'<span class="badge badge-orange">Nesplnené</span>';
+      if(aw&&s.ok){
+        // Má napomenutie, ale UŽ spĺňa podmienky → napomenutie sa má zrušiť (nie znížiť)
+        statusBadge='<span class="badge badge-green">Spĺňa</span>'+(currentUserRole==='admin'?' <button class="btn btn-sm btn-secondary tf-admin-only" style="font-size:10px" onclick="openResolveModal(\''+p.name.replace(/'/g,"\\'")+'\')">Zrušiť napomenutie</button>':'');
+      }else if(aw&&ms>=3){
+        statusBadge='<span class="badge badge-red">⚠Znížiť</span>';
+      }else if(aw){
+        statusBadge='<span class="badge badge-red">Napomenutý k '+formatWarnDateShort(aw.date)+'</span>';
+      }else{
+        statusBadge=s.ok?'<span class="badge badge-green">OK</span>':'<span class="badge badge-orange">Nesplnené</span>';
+      }
       // Modrá šípka hore = bude povýšený k 1. nasledujúceho mesiaca (viditeľné aj v user prístupe)
       const _willPromote=!aw&&(pr.canPromote===true||(pr.multiPath&&pr.paths&&pr.paths.length));
       if(_willPromote){
@@ -1659,7 +1668,7 @@ function renderEvaluation(){
       actionCell = '<div class="tf-admin-only" style="margin-bottom:6px;padding:6px 8px;background:#FCEBEB;border:1px solid #F4B6B6;border-radius:6px;font-size:10px;color:#A32D2D;line-height:1.3;text-align:left"><strong>⬇ Znížiť pozíciu</strong></div>' + actionCell;
     }
     // Akékoľvek aktívne napomenutie podfarbí riadok (aj keď momentálne plní vlastné FJ — napr. PB napomenutie).
-    const rowCls=s.grace?'eval-row-ok':(aw&&ms>=3?'eval-row-danger':aw?'eval-row-warn':!s.ok?'eval-row-fail':(pr.canPromote===true||(pr.multiPath&&pr.paths?.length))?'eval-row-promo':'eval-row-ok');
+    const rowCls=s.grace?'eval-row-ok':(aw?((!s.ok&&ms>=3)?'eval-row-danger':'eval-row-warn'):!s.ok?'eval-row-fail':(pr.canPromote===true||(pr.multiPath&&pr.paths?.length))?'eval-row-promo':'eval-row-ok');
     const useGroupFJ=['EM','SM','MD','SD','P'].includes(p.pos);
     if(_posChanged){
       let dashes='';
