@@ -2097,10 +2097,11 @@ function selectCesta(val){
   if(val!==current){sb.disabled=false;sb.style.opacity='1';}else{sb.disabled=true;sb.style.opacity='0.4';}
 }
 // Spĺňa osoba (podľa aktuálnych FJ/PB) podmienky danej pozície?
+// Pri presune/určení pozície sa používa SUROVÝ prah (zľava platí len pri udržaní sa na pozícii, nie pri presune).
 function qualifiesForPosition(p,pos){
   const k=getKariera(pos);if(!k)return false;
   if(pos==='TR')return true;
-  if(k.maintainFJ){const e=effectiveMaintainFJ(k,p.histFJ||0,p.name,pos);if((p.ownFJ||0)<e)return false;}
+  if(k.maintainFJ&&(p.ownFJ||0)<k.maintainFJ)return false;
   if(k.maintainGroupFJ){const g=(p.effectiveGroupFJ!==undefined)?p.effectiveGroupFJ:(p.groupFJ||0);if(g<k.maintainGroupFJ)return false;}
   if(k.maintainPB&&(p.pb||0)<k.maintainPB)return false;
   if(isVIP(pos)&&(p.histFJ||0)<6000)return false; // VIP vyžaduje 6 000 FJ hist.
@@ -2127,7 +2128,13 @@ function repositionForCesta(name,cesta){
   const imp=imports.find(i=>i.key===selectedImportKey);
   if(imp&&Array.isArray(imp.people)){const per=imp.people.find(x=>x.name===name);if(per)per.pos=newPos;}
   tfSave('tf_imports',imports);tfSave('tf_pozicie',pozicieHistory);
-  alert('Kariérna cesta zmenená na '+(cesta==='obchodna'?'Obchodnú':'Manažérsku')+'.\n\n'+name+' bol/a na pozícii '+ep.pos+', ktorá na tejto ceste neexistuje — preto je preradený/á na '+newPos+' (najvyššia pozícia, na ktorú aktuálne spĺňa podmienky).');
+  // Zníženie je dôsledkom napomenutia → aktívne napomenutie sa tým uzatvára (zruší)
+  let _warnClosed=false;
+  if(isLower){
+    const aw=getActiveWarning(name);
+    if(aw){aw.status='resolved';aw.resolvedDate=firstOfMonth();aw.resolvedNote='Znížená pri zmene kariérnej cesty na '+newPos;tfSave('tf_warnings',warnings);_warnClosed=true;}
+  }
+  alert('Kariérna cesta zmenená na '+(cesta==='obchodna'?'Obchodnú':'Manažérsku')+'.\n\n'+name+' bol/a na pozícii '+ep.pos+', ktorá na tejto ceste neexistuje — preto je preradený/á na '+newPos+' (najvyššia pozícia, na ktorú aktuálne spĺňa podmienky).'+(_warnClosed?'\n\nAktívne napomenutie bolo tým uzatvorené (zrušené).':''));
 }
 function saveCesta(){
   if(!cestaTarget||!selectedCestaValue)return;
