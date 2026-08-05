@@ -3224,6 +3224,62 @@ function ensureCrm(){
   if(!crmData.resets)crmData.resets={}; // { 'Meno': ['YYYY-MM-DD', ...] }
 }
 function saveCrm(){tfSave('tf_crm',crmData);}
+// Príspevky na OZ: pokuty sú stupňovité (10→20→30→…). Ak má osoba v cykle uhradenú
+// napr. 50 €, reálne zaplatila celý rebríček 10+20+30+40+50 = 150 €. Reset ukončuje
+// cyklus — každý cyklus (úsek medzi resetmi) sa počíta samostatne podľa najvyššej
+// UHRADENEJ pokuty v ňom.
+function ozContributionSums(){
+  ensureCrm();
+  const byPerson={};
+  for(const f of Object.values(crmData.fines||{})){
+    if(!f.person||!(f.amount>0))continue;
+    (byPerson[f.person]=byPerson[f.person]||[]).push(f);
+  }
+  let total=0;const perYear={};
+  for(const person in byPerson){
+    const fines=byPerson[person].sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+    const resets=((crmData.resets&&crmData.resets[person])||[]).slice().sort();
+    // rozdeľ pokuty na cykly podľa resetov
+    let rest=fines;
+    const cycles=[];
+    for(const b of resets){
+      const cur=rest.filter(f=>f.date<=b);
+      rest=rest.filter(f=>f.date>b);
+      if(cur.length)cycles.push(cur);
+    }
+    if(rest.length)cycles.push(rest);
+    for(const cyc of cycles){
+      const paid=cyc.filter(f=>f.paid);
+      if(!paid.length)continue;
+      const maxA=Math.max(...paid.map(f=>f.amount));
+      // rebríček 10+20+…+maxA (ak by suma nebola násobok 10, pripočíta sa aj samotná)
+      let contrib=0;
+      for(let a=10;a<=maxA;a+=10)contrib+=a;
+      if(maxA%10!==0)contrib+=maxA%10;
+      total+=contrib;
+      const sortedPaid=paid.slice().sort((a,b)=>String(a.paidDate||a.date).localeCompare(String(b.paidDate||b.date)));
+      const y=String(sortedPaid[sortedPaid.length-1].paidDate||sortedPaid[sortedPaid.length-1].date||'').slice(0,4);
+      perYear[y]=(perYear[y]||0)+contrib;
+    }
+  }
+  return {total,perYear};
+}
+// Oprava celkovej sumy pre OZ: admin zadá SPRÁVNU celkovú sumu doteraz; rozdiel oproti
+// pokutám spočítaným v appke sa uloží ako historický základ (ozBase). Nové pokuty sa pripočítavajú navrch.
+function editOzBase(){
+  if(currentUserRole!=='admin')return;
+  ensureCrm();
+  const computed=ozContributionSums().total;
+  const curBase=parseFloat(crmData.ozBase)||0;
+  const val=prompt('Z pokút v appke je spočítané: '+computed.toFixed(2)+' € (+ terajší základ '+curBase.toFixed(2)+' €).\n\nZadaj SPRÁVNU celkovú sumu doteraz odvedenú na OZ (€):',(computed+curBase).toFixed(2));
+  if(val===null)return;
+  const n=parseFloat(String(val).replace(',','.').replace(/\s/g,''));
+  if(isNaN(n)||n<0){alert('Neplatná suma.');return;}
+  crmData.ozBase=Math.round((n-computed)*100)/100;
+  saveCrm();
+  renderCrm();
+  showToast('Celková suma pre OZ nastavená na '+n.toFixed(2).replace('.',',')+' €.','success');
+}
 
 // Vráti dátum posledného resetu osoby (alebo null)
 function lastResetDate(name){
@@ -3451,16 +3507,18 @@ function renderCrm(){
   if(!c)return;
   let html='';
   // OZ TOWER Evolution — každá UHRADENÁ pokuta ide na OZ; počíta sa po označení „uhradené"
-  const _paidFines=Object.values(crmData.fines||{}).filter(f=>f.paid&&f.amount>0);
+  const _ozSums=ozContributionSums(); // stupňovitý rebríček pokút po cykloch (10+20+…)
   const _curYear=String(new Date().getFullYear());
-  const _yearSum=_paidFines.filter(f=>String(f.paidDate||f.date||'').slice(0,4)===_curYear).reduce((s,f)=>s+f.amount,0);
-  const _totalSum=_paidFines.reduce((s,f)=>s+f.amount,0);
+  const _yearSum=_ozSums.perYear[_curYear]||0;
+  // ozBase = historický základ (pokuty uhradené pred zavedením evidencie v appke) — nastaví admin klikom na sumu
+  const _ozBase=parseFloat(crmData.ozBase)||0;
+  const _totalSum=_ozSums.total+_ozBase;
   html+='<div style="display:flex;justify-content:flex-start;margin-bottom:14px">'
     +'<div style="background:var(--green-dark);border-radius:20px;padding:18px 30px;text-align:center;min-width:240px;box-shadow:0 4px 16px rgba(14,51,24,0.25)">'
     +'<div style="font-weight:800;font-size:13px;color:#fff;letter-spacing:1.5px">TOWER EVOLUTION</div>'
     +'<div style="font-size:10px;font-weight:700;margin-bottom:10px"><span style="color:#7DC943">#pomáhame</span><span style="color:#fff">radi</span></div>'
     +'<div style="font-size:11px;color:rgba(255,255,255,0.75)">Na OZ ste doteraz prispeli sumou</div>'
-    +'<div style="font-size:28px;font-weight:800;color:#3CD64E;line-height:1.2">'+_totalSum.toFixed(2).replace('.',',')+' €</div>'
+    +'<div style="font-size:28px;font-weight:800;color:#3CD64E;line-height:1.2'+(currentUserRole==='admin'?';cursor:pointer':'')+'"'+(currentUserRole==='admin'?' title="Klikni pre opravu celkovej sumy (nastaví historický základ)" onclick="editOzBase()"':'')+'>'+_totalSum.toFixed(2).replace('.',',')+' €</div>'
     +'<div style="font-size:10px;color:rgba(255,255,255,0.55);margin-top:4px">z toho v roku '+_curYear+': '+_yearSum.toFixed(2).replace('.',',')+' €</div>'
     +'</div></div>';
   // Status banner
