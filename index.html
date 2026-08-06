@@ -3519,7 +3519,6 @@ function renderCrm(){
     +'<div style="font-size:10px;font-weight:700;margin-bottom:10px"><span style="color:#7DC943">#pomáhame</span><span style="color:#fff">radi</span></div>'
     +'<div style="font-size:11px;color:rgba(255,255,255,0.75)">Na OZ ste doteraz prispeli sumou</div>'
     +'<div style="font-size:28px;font-weight:800;color:#3CD64E;line-height:1.2'+(currentUserRole==='admin'?';cursor:pointer':'')+'"'+(currentUserRole==='admin'?' title="Klikni pre opravu celkovej sumy (nastaví historický základ)" onclick="editOzBase()"':'')+'>'+_totalSum.toFixed(2).replace('.',',')+' €</div>'
-    +'<div style="font-size:10px;color:rgba(255,255,255,0.55);margin-top:4px">z toho v roku '+_curYear+': '+_yearSum.toFixed(2).replace('.',',')+' €</div>'
     +'</div></div>';
   // Status banner
   const reports=Object.keys(crmData.reports).sort();
