@@ -720,6 +720,20 @@ i[class^="ti-"],i[class*=" ti-"]{font-style:normal;display:inline-flex;align-ite
     <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('modal-resolve')">Späť</button><button class="btn btn-primary" onclick="confirmResolve()">Potvrdiť</button></div>
   </div>
 </div>
+<div class="modal-overlay" id="modal-mgr">
+  <div class="modal" style="max-width:420px">
+    <h3 id="mgr-modal-title" style="margin-bottom:6px">Nadriadený</h3>
+    <div id="mgr-modal-sub" style="font-size:12px;color:var(--gray3);margin-bottom:14px"></div>
+    <div class="form-group">
+      <label>Vyber nadriadeného</label>
+      <select id="mgr-select" style="width:100%;padding:9px 12px;border:1px solid var(--green-border);border-radius:7px;font-family:var(--font-mono);font-size:13px"></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-mgr')">Zrušiť</button>
+      <button class="btn btn-primary" onclick="saveManagerOverride()">Uložiť</button>
+    </div>
+  </div>
+</div>
 <div class="modal-overlay" id="modal-cesta">
   <div class="modal">
     <h3 id="cesta-modal-title">Kariérna cesta</h3>
@@ -1104,12 +1118,27 @@ function editManager(name){
   const ep=evalPeople.find(p=>p.name===name);
   const excelMgr=ep?(ep._mgrExcel||''):'';
   const cur=getManagerOverride(name);
-  const val=prompt('Nadriadený pre '+name+':\n(z Excelu: '+(excelMgr||'–')+')\n\nZadaj meno reálneho nadriadeného. Nechaj prázdne pre návrat k hodnote z Excelu.',cur!==null?cur:'');
-  if(val===null)return;
-  const t=val.trim();
+  window._mgrTarget=name;
+  document.getElementById('mgr-modal-title').textContent='Nadriadený: '+name;
+  document.getElementById('mgr-modal-sub').textContent='Z Excelu: '+(excelMgr||'–')+(cur!==null?' · aktuálne upravené na: '+cur:'');
+  // Rolovacia lista všetkých ľudí (okrem samotnej osoby) — žiadne preklepy v menách
+  const sel=document.getElementById('mgr-select');
+  const names=evalPeople.map(p=>p.name).filter(n=>n!==name).sort((a,b)=>a.localeCompare(b,'sk'));
+  let opts='<option value="">— podľa Excelu ('+(excelMgr||'–')+') —</option>';
+  for(const n of names)opts+='<option value="'+n.replace(/"/g,'&quot;')+'"'+(cur===n?' selected':'')+'>'+n+'</option>';
+  sel.innerHTML=opts;
+  if(cur===null)sel.value='';
+  document.getElementById('modal-mgr').classList.add('open');
+}
+function saveManagerOverride(){
+  if(currentUserRole!=='admin')return;
+  const name=window._mgrTarget;
+  if(!name)return;
+  const t=document.getElementById('mgr-select').value;
   if(t===''){delete poznamkyData['__mgr_'+name];}
   else{poznamkyData['__mgr_'+name]=t;}
   tfSave('tf_poznamky',poznamkyData);
+  closeModal('modal-mgr');
   computeEvalPeople();
   renderDashboard();renderEvaluation();renderEvidencia();
   showToast(t===''?'Nadriadený vrátený na hodnotu z Excelu.':'Nadriadený pre '+name+': '+t,'success');
@@ -1383,6 +1412,9 @@ function checkStatus(p){
 // Najvyššia pozícia, na ktorú osoba AKTUÁLNE spĺňa podmienky povýšenia (môže preskočiť stupne).
 // Napr. VIP II so splnenými podmienkami na VIP IV → vráti 'VIP IV', nie 'VIP III'.
 function bestPromotionTarget(p){
+  // TR ide VŽDY len cez C (400 FJ brutto) — jeho FJ sú brutto a nedajú sa porovnávať
+  // s netto prahmi vyšších pozícií. Preskakovanie stupňov platí až od pozície C vyššie.
+  if(p.pos==='TR'||p.isBrutto)return null;
   const posM=['TR','C','SC','TL','EM','SM','MD','SD','P'],posV=['TR','C','SC','VIP I','VIP II','VIP III','VIP IV'];
   let path;
   if(isVIP(p.pos))path=posV;
