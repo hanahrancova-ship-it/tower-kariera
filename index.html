@@ -1085,11 +1085,35 @@ function getCGraceInfo(p){
   if(!p||p.pos!=='C')return{inGrace:false};
   const firstC=getFirstCDate(p.name);
   if(!firstC)return{inGrace:false};
+  // Opakované povýšenie na C (po páde na TR) grace NEMÁ — platí len pri úplne prvom TR→C.
+  // Ak existuje zníženie na TR s dátumom pred týmto povýšením, ide o návrat, nie o nováčika.
+  const _demo=getLatestDemotionToTR(p.name);
+  if(_demo&&!isNaN(new Date(_demo.date))&&new Date(_demo.date)<=firstC)return{inGrace:false};
   const until=new Date(firstC);
   until.setMonth(until.getMonth()+NOVACIK_C_GRACE_MONTHS);
   return{inGrace:(new Date())<until, until, firstC};
 }
 
+// Manuálny override nadriadeného — uložený v poznamkyData pod kľúčom '__mgr_<meno>' (bez zmeny worker.js)
+function getManagerOverride(name){
+  const v=poznamkyData['__mgr_'+name];
+  return (v===undefined||v===null||String(v).trim()==='')?null:v;
+}
+function editManager(name){
+  if(currentUserRole!=='admin')return;
+  const ep=evalPeople.find(p=>p.name===name);
+  const excelMgr=ep?(ep._mgrExcel||''):'';
+  const cur=getManagerOverride(name);
+  const val=prompt('Nadriadený pre '+name+':\n(z Excelu: '+(excelMgr||'–')+')\n\nZadaj meno reálneho nadriadeného. Nechaj prázdne pre návrat k hodnote z Excelu.',cur!==null?cur:'');
+  if(val===null)return;
+  const t=val.trim();
+  if(t===''){delete poznamkyData['__mgr_'+name];}
+  else{poznamkyData['__mgr_'+name]=t;}
+  tfSave('tf_poznamky',poznamkyData);
+  computeEvalPeople();
+  renderDashboard();renderEvaluation();renderEvidencia();
+  showToast(t===''?'Nadriadený vrátený na hodnotu z Excelu.':'Nadriadený pre '+name+': '+t,'success');
+}
 function computeEvalPeople(){
   if(!imports.length){evalPeople=[];return;}
   // Použi výhradne importy z aktuálneho plávajúceho kvartálu (Apr–Jún ak je dnes Jún).
@@ -1136,6 +1160,13 @@ function computeEvalPeople(){
       }
     }
     return{...p,ownFJ:totalOwn,groupFJ:totalGroup,histFJ:totalHist,_months:usedImports.length,isBrutto:usesBrutto,cumulativeBrutto};
+  });
+  // Manuálne prepísanie nadriadeného (admin) — Excel ťahá "prvého manažéra", ale reálny nadriadený
+  // môže byť iný (napr. nie je na manažérskej pozícii). Override platí pre PB aj org. štruktúru.
+  evalPeople.forEach(p=>{
+    p._mgrExcel=p.manager||'';
+    const _mo=getManagerOverride(p.name);
+    if(_mo!==null)p.manager=_mo;
   });
   evalPeople.forEach(p=>{
     const directs=evalPeople.filter(x=>x.manager===p.name);
@@ -1349,6 +1380,25 @@ function checkStatus(p){
   return{ok:issues.length===0,msg:issues.join(' · '),type,issues};
 }
 
+// Najvyššia pozícia, na ktorú osoba AKTUÁLNE spĺňa podmienky povýšenia (môže preskočiť stupne).
+// Napr. VIP II so splnenými podmienkami na VIP IV → vráti 'VIP IV', nie 'VIP III'.
+function bestPromotionTarget(p){
+  const posM=['TR','C','SC','TL','EM','SM','MD','SD','P'],posV=['TR','C','SC','VIP I','VIP II','VIP III','VIP IV'];
+  let path;
+  if(isVIP(p.pos))path=posV;
+  else if(isManazerska(p.pos))path=posM;
+  else if(p.pos==='SC'){const c=getPersonCesta(p.name);if(c==='obchodna')path=posV;else if(c==='manazerska')path=posM;else return null;}
+  else path=posM;
+  const i=path.indexOf(p.pos);
+  if(i<0)return null;
+  let best=null;
+  for(let k=i+1;k<path.length;k++){
+    if(path[k]==='C')continue; // TR→C má vlastnú brutto logiku
+    const r=evalPromoTo(p,path[k]);
+    if(r.canPromote===true)best=path[k];
+  }
+  return best;
+}
 function checkPromotion(p){
   const posM=['TR','C','SC','TL','EM','SM','MD','SD','P'],posV=['TR','C','SC','VIP I','VIP II','VIP III','VIP IV'];
   let nextPos=null;
@@ -1610,7 +1660,7 @@ function renderEvaluation(){
     if(aw){const dots=[0,1,2].map(i=>{let cls='free';if(i<ms)cls='used';else if(i===ms&&ms<3)cls='half';return`<span class="napom-m ${cls}"></span>`;}).join('');const _rText=aw.reason==='fj'?'FJ':aw.reason==='pb'?'PB':aw.reason==='pb_podriadeny'?'PB (podr.)':'FJ+PB';napomCell=`<div style="display:flex;flex-direction:column;gap:3px"><span class="badge ${ms>=3?'badge-red':ms>=2?'badge-red':'badge-orange'}" style="font-size:10px">${ms+1}/3 mes.</span><span class="napom-dot">${dots}</span><span style="font-size:9px;color:var(--gray3)">Dôvod: ${_rText}</span>${s.ok?'<span class="badge badge-green" style="font-size:9px">✓ spĺňa – zrušiť</span>':(ms>=3?'<span class="badge badge-red" style="font-size:9px">⚠ ZNÍŽIŤ</span>':'')}</div>`;}
     let promoCell='<span style="color:var(--gray3);font-size:11px">–</span>';
     if(pr.brutoCheck)promoCell='<span class="badge badge-orange" style="font-size:9px">C–brutto⚠</span>';
-    else if(pr.canPromote===true)promoCell=`<span class="badge badge-blue" style="font-size:10px">→${pr.nextPos}✓</span>`;
+    else if(pr.canPromote===true)promoCell=`<span class="badge badge-blue" style="font-size:10px">→${bestPromotionTarget(p)||pr.nextPos}✓</span>`;
     else if(pr.multiPath&&pr.paths?.length)promoCell=pr.paths.map(x=>`<span class="badge badge-blue" style="font-size:10px">→${x.nextPos}✓</span>`).join('<br>');
     else if(pr.multiPath&&pr.allPaths){const best=pr.allPaths.sort((a,b)=>(a.issues?.length||0)-(b.issues?.length||0))[0];promoCell=`<span style="font-size:10px;color:var(--gray3)">${best.nextPos}:${(best.issues||[]).slice(0,1).join(',')}</span>`;}
     else if(pr.issues?.length)promoCell=`<span style="font-size:10px;color:var(--gray3)">${pr.issues.slice(0,1).join(',')}</span>`;
@@ -1642,7 +1692,7 @@ function renderEvaluation(){
       // Modrá šípka hore = bude povýšený k 1. nasledujúceho mesiaca (viditeľné aj v user prístupe)
       const _willPromote=!aw&&(pr.canPromote===true||(pr.multiPath&&pr.paths&&pr.paths.length));
       if(_willPromote){
-        const _pt=pr.canPromote===true?pr.nextPos:pr.paths.map(x=>x.nextPos).join(' / ');
+        const _pt=pr.canPromote===true?(bestPromotionTarget(p)||pr.nextPos):pr.paths.map(x=>x.nextPos).join(' / ');
         statusBadge+=' <span title="Bude povýšený k '+nextMonthLabel()+' na '+_pt+'" style="cursor:help;color:#1565c0;font-weight:800;font-size:15px;vertical-align:middle;margin-left:3px">↑</span>';
       }
     }
@@ -1690,7 +1740,7 @@ function renderEvaluation(){
     }
     // Pripravený na povýšenie (admin) — modrý box pri osobe
     if(!isOwner(p.name) && !s.grace && !aw && (pr.canPromote===true || (pr.multiPath && pr.paths && pr.paths.length))){
-      const _target = pr.canPromote===true ? pr.nextPos : pr.paths.map(x=>x.nextPos).join(' alebo ');
+      const _target = pr.canPromote===true ? (bestPromotionTarget(p)||pr.nextPos) : pr.paths.map(x=>x.nextPos).join(' alebo ');
       actionCell = '<div class="tf-admin-only" style="margin-bottom:6px;padding:6px 8px;background:#E6F1FB;border:1px solid #B4D2F0;border-radius:6px;font-size:10px;color:#0d4b8c;line-height:1.3;text-align:left"><strong>⬆ Povýšiť na '+_target+'</strong></div>' + actionCell;
     }
     // Pripravený na zníženie (admin) — červený box pri osobe (napomenutie 3/3)
@@ -1798,7 +1848,7 @@ function renderEvaluation(){
       _actionFinal='<span style="color:var(--gray3)">–</span>';
       _rowClsFinal='eval-row-ok';
     }
-    html+=`<tr class="${_rowClsFinal}"><td class="eval-name-cell">${_personCell}</td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td style="font-size:11px;color:var(--gray3)">${p.manager||'–'}</td><td style="font-size:11px">${cestaCell}</td><td style="text-align:right">${_ownFjCell}</td><td style="text-align:right">${_groupFjCellFinal}</td><td style="text-align:right">${fjCell(p.histFJ,null,'Hist.FJ','')}</td><td style="text-align:right">${_pbCellFinal}</td><td>${_statusBadgeFinal}</td><td>${_napomCellFinal}</td><td>${_splnaFinal}</td><td class="tf-admin-only">${_actionFinal}</td></tr>`;
+    html+=`<tr class="${_rowClsFinal}"><td class="eval-name-cell">${_personCell}</td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td style="font-size:11px;color:var(--gray3)">${currentUserRole==='admin'?`<span class="tf-admin-only" style="cursor:pointer;text-decoration:underline dotted" title="Upraviť nadriadeného (Excel: ${(p._mgrExcel||'–').replace(/"/g,'')})" onclick="editManager('${_safeNm}')">${p.manager||'–'} ✎</span>${getManagerOverride(p.name)!==null?'<div style="font-size:9px;color:#1565c0">upravené</div>':''}`:(p.manager||'–')}</td><td style="font-size:11px">${cestaCell}</td><td style="text-align:right">${_ownFjCell}</td><td style="text-align:right">${_groupFjCellFinal}</td><td style="text-align:right">${fjCell(p.histFJ,null,'Hist.FJ','')}</td><td style="text-align:right">${_pbCellFinal}</td><td>${_statusBadgeFinal}</td><td>${_napomCellFinal}</td><td>${_splnaFinal}</td><td class="tf-admin-only">${_actionFinal}</td></tr>`;
   });
   html+=`</tbody></table></div><div style="display:flex;gap:16px;padding:10px 16px;font-size:11px;color:var(--gray3);flex-wrap:wrap;margin-top:8px;justify-content:center"><span><span class="fj-cell fj-ok">●</span> splnené</span><span><span class="fj-cell fj-fail">●</span> nesplnené</span><span style="color:var(--gray3)">Prejdi myšou na číslo pre detail štatútu</span></div>`;
   document.getElementById('eval-main-table').innerHTML=html;
@@ -2216,7 +2266,7 @@ function exportReport(){
   let csv=`Meno,Pozícia,Kariérna cesta,Manažér,Vlastné FJ (${last3.length}m),Hist FJ,Skupin.FJ,PB,Zľava %,Hist.ochrana,Štatút,Povýšenie,Napomenutie\n`;
   evalPeople.forEach(p=>{
     const s=checkStatus(p),pr=checkPromotion(p),aw=getActiveWarning(p.name),coef=getDiscountCoef(p.histFJ,p.name,p.pos);
-    const promoStr=pr.canPromote?pr.nextPos:pr.multiPath&&pr.paths?.length?pr.paths.map(x=>x.nextPos).join('/'):'–';
+    const promoStr=pr.canPromote?(bestPromotionTarget(p)||pr.nextPos):pr.multiPath&&pr.paths?.length?pr.paths.map(x=>x.nextPos).join('/'):'–';
     csv+=`"${p.name}","${p.pos}","${getPersonCesta(p.name)||'neurčená'}","${p.manager}",${p.ownFJ.toFixed(2)},${p.histFJ.toFixed(2)},${p.groupFJ.toFixed(2)},${p.pb},${coef<1?Math.round((1-coef)*100):0},"${hasHistProtection(p.histFJ)?'Áno':'Nie'}","${s.ok?'OK':'Nesplnené'}","${promoStr}","${aw?'Áno':'Nie'}"\n`;
   });
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));a.download=`TF_${period}_${new Date().toISOString().split('T')[0]}.csv`;a.click();
