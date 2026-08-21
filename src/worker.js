@@ -89,7 +89,7 @@ async function handleLogout(request, env) {
 
 // Get all data (everyone with session can read)
 async function handleGetData(request, env, session) {
-  const keys = ['imports', 'warnings', 'cesta', 'pozicie', 'bruto', 'poznamky', 'ev_poznamky', 'pb_dismissed', 'prispevky', 'servis', 'crm', 'bugs'];
+  const keys = ['imports', 'warnings', 'cesta', 'pozicie', 'bruto', 'poznamky', 'ev_poznamky', 'pb_dismissed', 'prispevky', 'servis', 'crm', 'bugs', 'strategic'];
   const result = {};
   for (const k of keys) {
     const v = await env.DATA.get(`app:${k}`);
@@ -110,7 +110,7 @@ async function handleSaveData(request, env, session) {
     return json({ error: 'Invalid JSON' }, 400);
   }
   const { key, value } = body;
-  const allowedKeys = ['imports', 'warnings', 'cesta', 'pozicie', 'bruto', 'poznamky', 'ev_poznamky', 'pb_dismissed', 'prispevky', 'servis', 'crm', 'bugs'];
+  const allowedKeys = ['imports', 'warnings', 'cesta', 'pozicie', 'bruto', 'poznamky', 'ev_poznamky', 'pb_dismissed', 'prispevky', 'servis', 'crm', 'bugs', 'strategic'];
   if (!allowedKeys.includes(key)) return json({ error: 'Neznámy kľúč' }, 400);
   // User môže zapisovať iba bug-reporty
   if (session.role !== 'admin' && key !== 'bugs') {
