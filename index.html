@@ -347,6 +347,9 @@ i[class^="ti-"],i[class*=" ti-"]{font-style:normal;display:inline-flex;align-ite
     <div class="nav-item" onclick="showPage('platby',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>Platby
     </div>
+    <div class="nav-item tf-admin-only" onclick="showPage('strateg',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"></path><path d="M7 14l4-4 3 3 5-6"></path></svg>Strategický meeting
+    </div>
     <div class="nav-item tf-admin-only" id="nav-bugy" onclick="showPage('bugy',this)" style="position:relative">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="6"></circle><path d="M12 7v6m-3-6v-2a3 3 0 0 1 6 0v2M3 13h3m12 0h3M5 19l3-2m11 2l-3-2M5 7l3 2m11-2l-3 2"></path></svg>
       <span style="flex:1">Nahlásené chyby</span>
@@ -461,11 +464,20 @@ i[class^="ti-"],i[class*=" ti-"]{font-style:normal;display:inline-flex;align-ite
   </div>
   <div id="ev-tab-mesiac" style="display:none"><div id="ev-mesiac"><div class="table-wrap"><table><thead><tr><th>Mesiac</th><th>Meno vítąza</th><th style="text-align:right">Vlastné FJ</th></tr></thead><tbody><tr><td>Apríl 2026</td><td><strong>Mgr. Kristína Mikulovská</strong> <span class="pos pos-tl">TL</span></td><td style="text-align:right">1088 FJ</td></tr><tr><td>Marec 2026</td><td><strong>Andrej Nejedlík</strong> <span class="pos pos-vip">VIP IV</span></td><td style="text-align:right">2059 FJ</td></tr><tr><td>Február 2026</td><td><strong>Dominik Lehocký</strong> <span class="pos pos-em">EM</span></td><td style="text-align:right">1140 FJ</td></tr><tr><td>Január 2026</td><td><strong>Mgr. Kristína Mikulovská</strong> <span class="pos pos-tl">TL</span></td><td style="text-align:right">986 FJ</td></tr></tbody></table></div></div></div>
 </div>
+<div class="page" id="page-strateg">
+  <div class="page-header"><h2>Strategický meeting</h2><p>FJ a provízie · len pre admin</p></div>
+  <div class="tabs" id="strateg-tabs">
+    <div class="tab active" onclick="switchStrategTab('fj',this)">FJ</div>
+    <div class="tab" onclick="switchStrategTab('provizie',this)">Provízie</div>
+  </div>
+  <div id="strateg-tab-fj"><div id="strateg-fj-content"></div></div>
+  <div id="strateg-tab-provizie" style="display:none"><div class="empty"><div class="big"></div>Provízie – pripravujeme (najprv FJ časť).</div></div>
+</div>
 <div class="page" id="page-kariera">
   <div class="page-header"><h2>Kariérna tabuľka</h2><p>Podmienky udržania štatútu a povýšenia</p></div>
   <div class="card"><div class="table-wrap">
     <table><thead><tr><th>Pozícia</th><th>Sadzba</th><th>Udržanie štatútu</th><th>Podmienky povýšenia</th><th>Poznámka</th></tr></thead>
-    <tbody id="kariera-table-body"><tr><td colspan="5" style="background:var(--gray);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray3)">Spoločné</td></tr><tr><td><span class="pos pos-tr">TR</span> <span style="font-size:11px;color:var(--gray3)">Trainee</span></td><td>3€/FJ</td><td style="font-size:11px">–</td><td style="font-size:11px">–</td><td><input type="text" value="Úspešné absolvovanie CC" onchange="savePoznamka('TR',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-c">C</span> <span style="font-size:11px;color:var(--gray3)">Consultant</span></td><td>4€/FJ</td><td style="font-size:11px">450 FJ/kv</td><td style="font-size:11px">400 FJ vlastných</td><td><input type="text" value="400 FJ BRUTTO hist." onchange="savePoznamka('C',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-sc">SC</span> <span style="font-size:11px;color:var(--gray3)">Senior Consultant</span></td><td>5€/FJ</td><td style="font-size:11px">900 FJ/kv</td><td style="font-size:11px">900 FJ vlastných + 1500 FJ hist.</td><td><input type="text" value="900 FJ/kv + 1 500 FJ hist." onchange="savePoznamka('SC',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td colspan="5" style="background:var(--gray);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray3)">Manažérska cesta</td></tr><tr><td><span class="pos pos-tl">TL</span> <span style="font-size:11px;color:var(--gray3)">Team Leader</span></td><td>5.5€/FJ</td><td style="font-size:11px">900 FJ vlastných + 1 350 FJ skupinových + 1 PB + SC podmienky</td><td style="font-size:11px">900 FJ vlastných + 1350 FJ skupinových + 1 PB</td><td><input type="text" value="Spln. SC + 900 FJ vlastnych + 1 350 FJ skup. + 1 PB" onchange="savePoznamka('TL',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-em">EM</span> <span style="font-size:11px;color:var(--gray3)">Executive Manager</span></td><td>6€/FJ</td><td style="font-size:11px">3150 FJ/kv + 3 PB</td><td style="font-size:11px">3150 FJ vlastných + 3 PB</td><td><input type="text" value="3 150 FJ/kv + 3 PB" onchange="savePoznamka('EM',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-sm">SM</span> <span style="font-size:11px;color:var(--gray3)">Senior Manager</span></td><td>6.5€/FJ</td><td style="font-size:11px">6300 FJ/kv + 6 PB</td><td style="font-size:11px">6300 FJ vlastných + 6 PB</td><td><input type="text" value="6 300 FJ/kv + 6 PB" onchange="savePoznamka('SM',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-md">MD</span> <span style="font-size:11px;color:var(--gray3)">Managing Director</span></td><td>7€/FJ</td><td style="font-size:11px">11700 FJ/kv + 12 PB</td><td style="font-size:11px">11700 FJ vlastných + 12 PB</td><td><input type="text" value="11 700 FJ/kv + 12 PB" onchange="savePoznamka('MD',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-md">SD</span> <span style="font-size:11px;color:var(--gray3)">Senior Director</span></td><td>7.5€/FJ</td><td style="font-size:11px">22500 FJ/kv + 24 PB</td><td style="font-size:11px">22500 FJ vlastných + 24 PB</td><td><input type="text" value="22 500 FJ/kv + 24 PB" onchange="savePoznamka('SD',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-md">P</span> <span style="font-size:11px;color:var(--gray3)">Partner</span></td><td>8€/FJ</td><td style="font-size:11px">43200 FJ/kv + 48 PB</td><td style="font-size:11px">43200 FJ vlastných + 48 PB</td><td><input type="text" value="43 200 FJ/kv + 48 PB" onchange="savePoznamka('P',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td colspan="5" style="background:var(--gray);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray3)">Obchodná cesta (VIP)</td></tr><tr><td><span class="pos pos-vip">VIP I</span> <span style="font-size:11px;color:var(--gray3)">VIP Consultant I.</span></td><td>5.5€/FJ</td><td style="font-size:11px">1800 FJ/kv</td><td style="font-size:11px">1800 FJ vlastných + 6000 FJ hist.</td><td><input type="text" value="1 800 FJ/kv + 6 000 FJ hist." onchange="savePoznamka('VIP I',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-vip">VIP II</span> <span style="font-size:11px;color:var(--gray3)">VIP Consultant II.</span></td><td>6€/FJ</td><td style="font-size:11px">2100 FJ/kv</td><td style="font-size:11px">2100 FJ vlastných + 6000 FJ hist.</td><td><input type="text" value="2 100 FJ/kv + 6 000 FJ hist." onchange="savePoznamka('VIP II',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-vip">VIP III</span> <span style="font-size:11px;color:var(--gray3)">VIP Consultant III.</span></td><td>6.5€/FJ</td><td style="font-size:11px">2400 FJ/kv</td><td style="font-size:11px">2400 FJ vlastných + 6000 FJ hist.</td><td><input type="text" value="2 400 FJ/kv + 6 000 FJ hist." onchange="savePoznamka('VIP III',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-vip">VIP IV</span> <span style="font-size:11px;color:var(--gray3)">VIP Consultant IV.</span></td><td>7€/FJ</td><td style="font-size:11px">2700 FJ/kv</td><td style="font-size:11px">2700 FJ vlastných + 6000 FJ hist.</td><td><input type="text" value="2 700 FJ/kv + 6 000 FJ hist." onchange="savePoznamka('VIP IV',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr class="tf-admin-only"><td colspan="5" style="background:#fff3e0;font-size:11px;color:var(--orange);padding:10px 12px"><strong>Historické zľavy (len udržanie):</strong> ≥18 000 FJ→ochrana (neklesne pod SC) · ≥24 000 FJ→80% štatútu · ≥36 000 FJ→60% štatútu</td></tr></tbody></table>
+    <tbody id="kariera-table-body"><tr><td colspan="5" style="background:var(--gray);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray3)">Spoločné</td></tr><tr><td><span class="pos pos-tr">TR</span> <span style="font-size:11px;color:var(--gray3)">Trainee</span></td><td>3€/FJ</td><td style="font-size:11px">–</td><td style="font-size:11px">–</td><td><input type="text" value="Úspešné absolvovanie CC" onchange="savePoznamka('TR',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-c">C</span> <span style="font-size:11px;color:var(--gray3)">Consultant</span></td><td>4€/FJ</td><td style="font-size:11px">450 FJ/kv</td><td style="font-size:11px">400 FJ vlastných</td><td><input type="text" value="400 FJ BRUTTO hist." onchange="savePoznamka('C',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-sc">SC</span> <span style="font-size:11px;color:var(--gray3)">Senior Consultant</span></td><td>5€/FJ</td><td style="font-size:11px">900 FJ/kv</td><td style="font-size:11px">900 FJ vlastných + 1500 FJ hist.</td><td><input type="text" value="900 FJ/kv + 1 500 FJ hist." onchange="savePoznamka('SC',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td colspan="5" style="background:var(--gray);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray3)">Manažérska cesta</td></tr><tr><td><span class="pos pos-tl">TL</span> <span style="font-size:11px;color:var(--gray3)">Team Leader</span></td><td>5.5€/FJ</td><td style="font-size:11px">900 FJ vlastných + 1 350 FJ skupinových + 1 PB + SC podmienky</td><td style="font-size:11px">450 FJ vlastných + 1350 FJ skupinových + 1 PB</td><td><input type="text" value="Spln. SC + 450 FJ vlastnych + 1 350 FJ skup. + 1 PB" onchange="savePoznamka('TL',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-em">EM</span> <span style="font-size:11px;color:var(--gray3)">Executive Manager</span></td><td>6€/FJ</td><td style="font-size:11px">3150 FJ/kv + 3 PB</td><td style="font-size:11px">3150 FJ vlastných + 3 PB</td><td><input type="text" value="3 150 FJ/kv + 3 PB" onchange="savePoznamka('EM',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-sm">SM</span> <span style="font-size:11px;color:var(--gray3)">Senior Manager</span></td><td>6.5€/FJ</td><td style="font-size:11px">6300 FJ/kv + 6 PB</td><td style="font-size:11px">6300 FJ vlastných + 6 PB</td><td><input type="text" value="6 300 FJ/kv + 6 PB" onchange="savePoznamka('SM',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-md">MD</span> <span style="font-size:11px;color:var(--gray3)">Managing Director</span></td><td>7€/FJ</td><td style="font-size:11px">11700 FJ/kv + 12 PB</td><td style="font-size:11px">11700 FJ vlastných + 12 PB</td><td><input type="text" value="11 700 FJ/kv + 12 PB" onchange="savePoznamka('MD',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-md">SD</span> <span style="font-size:11px;color:var(--gray3)">Senior Director</span></td><td>7.5€/FJ</td><td style="font-size:11px">22500 FJ/kv + 24 PB</td><td style="font-size:11px">22500 FJ vlastných + 24 PB</td><td><input type="text" value="22 500 FJ/kv + 24 PB" onchange="savePoznamka('SD',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-md">P</span> <span style="font-size:11px;color:var(--gray3)">Partner</span></td><td>8€/FJ</td><td style="font-size:11px">43200 FJ/kv + 48 PB</td><td style="font-size:11px">43200 FJ vlastných + 48 PB</td><td><input type="text" value="43 200 FJ/kv + 48 PB" onchange="savePoznamka('P',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td colspan="5" style="background:var(--gray);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray3)">Obchodná cesta (VIP)</td></tr><tr><td><span class="pos pos-vip">VIP I</span> <span style="font-size:11px;color:var(--gray3)">VIP Consultant I.</span></td><td>5.5€/FJ</td><td style="font-size:11px">1800 FJ/kv</td><td style="font-size:11px">1800 FJ vlastných + 6000 FJ hist.</td><td><input type="text" value="1 800 FJ/kv + 6 000 FJ hist." onchange="savePoznamka('VIP I',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-vip">VIP II</span> <span style="font-size:11px;color:var(--gray3)">VIP Consultant II.</span></td><td>6€/FJ</td><td style="font-size:11px">2100 FJ/kv</td><td style="font-size:11px">2100 FJ vlastných + 6000 FJ hist.</td><td><input type="text" value="2 100 FJ/kv + 6 000 FJ hist." onchange="savePoznamka('VIP II',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-vip">VIP III</span> <span style="font-size:11px;color:var(--gray3)">VIP Consultant III.</span></td><td>6.5€/FJ</td><td style="font-size:11px">2400 FJ/kv</td><td style="font-size:11px">2400 FJ vlastných + 6000 FJ hist.</td><td><input type="text" value="2 400 FJ/kv + 6 000 FJ hist." onchange="savePoznamka('VIP III',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr><td><span class="pos pos-vip">VIP IV</span> <span style="font-size:11px;color:var(--gray3)">VIP Consultant IV.</span></td><td>7€/FJ</td><td style="font-size:11px">2700 FJ/kv</td><td style="font-size:11px">2700 FJ vlastných + 6000 FJ hist.</td><td><input type="text" value="2 700 FJ/kv + 6 000 FJ hist." onchange="savePoznamka('VIP IV',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-family:var(--font-mono);font-size:11px;background:transparent"></td></tr><tr class="tf-admin-only"><td colspan="5" style="background:#fff3e0;font-size:11px;color:var(--orange);padding:10px 12px"><strong>Historické zľavy (len udržanie):</strong> ≥18 000 FJ→ochrana (neklesne pod SC) · ≥24 000 FJ→80% štatútu · ≥36 000 FJ→60% štatútu</td></tr></tbody></table>
   </div></div>
   <div class="card" style="margin-top:16px;padding:16px 20px">
     <h3 style="margin:0 0 12px 0;font-family:var(--font-head);color:var(--green-dark)">Počet PB za jednotlivé pozície</h3>
@@ -510,7 +522,7 @@ i[class^="ti-"],i[class*=" ti-"]{font-style:normal;display:inline-flex;align-ite
         <li style="margin-bottom:6px">V platnosti ostáva, že <strong>TL musí spĺňať podmienky na SC</strong>.</li>
         <li style="margin-bottom:6px">Po splnení <strong>18 000 FJ</strong> historicky SP nemôže padnúť na nižšiu pozíciu ako je <strong>SC</strong> (zásluhovosť). Ak však SP podľa kariéry nespĺňa ani štatút na C, neráta sa svojmu nadriadenému ako personálny bod.</li>
         <li style="margin-bottom:6px">Po splnení historickej produkcie 24 000 FJ+ môže SP v obchodníckej kariére požiadať o zníženie štatútov podľa koeficientu prislúchajúceho jeho historickej produkcii. Znížené štatúty pri obchodníkoch sa týkajú <strong>len udržania</strong> na pozícii, nie povýšenia na danú pozíciu.</li>
-        <li style="margin-bottom:0">Prvé povýšenie na pozíciu <strong>C</strong> ostáva na <strong>400 FJ brutto</strong>. Následne pre SP platia štatúty netto kariéry. T.z. <strong>po uplynutí 3 mesiacov</strong> sa prvýkrát vyhodnocuje, či spĺňa podmienky na pozíciu C; v prípade nesplnenia podmienok dostáva napomenutie.</li>
+        <li style="margin-bottom:0">Prvé povýšenie na pozíciu <strong>C</strong> ostáva na <strong>400 FJ brutto</strong>. Následne pre SP platia štatúty netto kariéry. T.z. <strong>po uplynutí 3 mesiacov</strong> sa prvýkrát vyhodnocuje, či spĺňa podmienky na pozíciu C; v prípade nesplnenia podmienok dostáva napomenutie. V prípade, že spolupracovník už bol povýšený na C a spadne na TR, musí splniť podmienku 400 FJ ale <strong>NETTO</strong>.</li>
       </ul>
 
       <h4 style="font-family:var(--font-head);color:var(--green-dark);margin:18px 0 8px 0;font-size:12.5px;text-transform:uppercase;letter-spacing:0.5px">Dodatok ku kariérnym cestám</h4>
@@ -778,7 +790,7 @@ const KARIERA=[
   {pos:'TR',name:'Trainee',rate:3,maintainFJ:null,maintainPB:0,promoteFJ:null,promotePB:0,promoteHistFJ:null,promoteNote:'Úspešné absolvovanie CC'},
   {pos:'C',name:'Consultant',rate:4,maintainFJ:450,maintainPB:0,promoteFJ:400,promotePB:0,promoteHistFJ:null,promoteNote:'400 FJ BRUTTO hist.'},
   {pos:'SC',name:'Senior Consultant',rate:5,maintainFJ:900,maintainPB:0,promoteFJ:900,promotePB:0,promoteHistFJ:1500,promoteNote:'900 FJ/kv + 1 500 FJ hist.'},
-  {pos:'TL',name:'Team Leader',rate:5.5,maintainFJ:900,maintainGroupFJ:1350,maintainPB:1,promoteFJ:900,promoteGroupFJ:1350,promotePB:1,promoteHistFJ:null,promoteNote:'Spln. SC + 900 FJ vlastnych + 1 350 FJ skup. + 1 PB',maintainSCcondition:true},
+  {pos:'TL',name:'Team Leader',rate:5.5,maintainFJ:900,maintainGroupFJ:1350,maintainPB:1,promoteFJ:450,promoteGroupFJ:1350,promotePB:1,promoteHistFJ:null,promoteNote:'Spln. SC + 450 FJ vlastnych + 1 350 FJ skup. + 1 PB',maintainSCcondition:true},
   {pos:'EM',name:'Executive Manager',rate:6,maintainGroupFJ:3150,maintainPB:3,promoteGroupFJ:3150,promotePB:3,promoteHistFJ:null,promoteNote:'3 150 skupinových FJ/kv + 3 PB'},
   {pos:'SM',name:'Senior Manager',rate:6.5,maintainGroupFJ:6300,maintainPB:6,promoteGroupFJ:6300,promotePB:6,promoteHistFJ:null,promoteNote:'6 300 skupinových FJ/kv + 6 PB'},
   {pos:'MD',name:'Managing Director',rate:7,maintainGroupFJ:11700,maintainPB:12,promoteGroupFJ:11700,promotePB:12,promoteHistFJ:null,promoteNote:'11 700 skupinových FJ/kv + 12 PB'},
@@ -874,6 +886,7 @@ let evidenciaPoznamky={};
 let prispevkyData={};
 let servisData={};
 let crmData={reports:{},fines:{}};
+let strategicData={};
 let bugsData=[];
 let currentUserRole=null; // 'admin' alebo 'user', zistené z API
 
@@ -890,7 +903,8 @@ const STORAGE_KEYS={
   'tf_prispevky':'prispevky',
   'tf_servis':'servis',
   'tf_crm':'crm',
-  'tf_bugs':'bugs'
+  'tf_bugs':'bugs',
+  'tf_strategic':'strategic'
 };
 
 // Wrapper: ukladá dáta do KV cez API (admin) alebo iba lokálne (user)
@@ -949,6 +963,7 @@ async function tfLoadAll(){
     prispevkyData=d.prispevky||{};
     servisData=d.servis||{};
     crmData=d.crm||{reports:{},fines:{}};
+    strategicData=d.strategic||{};
     bugsData=Array.isArray(d.bugs)?d.bugs:[];
     return true;
   }catch(e){
@@ -1269,6 +1284,7 @@ function showPage(id,el){
   if(id==='vyhodnotenie')renderEvaluation();
   if(id==='import')renderImportSelector();
   if(id==='platby')renderPrispevky();
+  if(id==='strateg')renderStrateg();
   if(id==='bugy')renderBugy();
 }
 function switchPlatbyTab(name,el){
@@ -1309,8 +1325,10 @@ function processImport(rows,yearMonth,reportType){
     const ownFJ=parseFloat(r['Vlastné: Body']||r['Vlastne: Body']||0)||0;
     const groupFJ=parseFloat(r['Skupinové: Body']||r['Skupinove: Body']||0)||0;
     const histFJ=parseFloat(r['Historické: Body']||r['Historicke: Body']||0)||0;
+    const ownKus=parseFloat(r['Vlastné: Kus']||r['Vlastne: Kus']||0)||0;
+    const groupKus=parseFloat(r['Skupinové: Kus']||r['Skupinove: Kus']||0)||0;
     if(!name||!pos)continue;
-    parsed.push({name,pos,manager,ownFJ,groupFJ,histFJ,pb:0});
+    parsed.push({name,pos,manager,ownFJ,groupFJ,histFJ,ownKus,groupKus,pb:0});
   }
   if(!parsed.length){showToast('Žiadne platné dáta.','error');return;}
   // Pred mergom: mená zo všetkých doterajších importov (na detekciu nových nováčikov)
@@ -1494,7 +1512,8 @@ function evalPromoTo(p,nextPos){
     return{canPromote:null,nextPos,brutoCheck:true};
   }
   const issues=[];
-  if(nextPos==='TL'){const kSC=getKariera('SC');if(p.ownFJ<kSC.promoteFJ)issues.push(`SC FJ: ${p.ownFJ.toFixed(2)}/${kSC.promoteFJ}`);if(p.histFJ<kSC.promoteHistFJ)issues.push(`SC Hist: ${p.histFJ.toFixed(2)}/${kSC.promoteHistFJ}`);}
+  // TL: vlastné FJ rieši promoteFJ (450); zo SC podmienok ostáva historická produkcia 1 500 FJ
+  if(nextPos==='TL'){const kSC=getKariera('SC');if(p.histFJ<kSC.promoteHistFJ)issues.push(`SC Hist: ${p.histFJ.toFixed(2)}/${kSC.promoteHistFJ}`);}
   if(nk.promoteFJ&&p.ownFJ<nk.promoteFJ)issues.push(`FJ: ${p.ownFJ.toFixed(2)}/${nk.promoteFJ}`);
   if(nk.promoteGroupFJ){const effGFJ=p.effectiveGroupFJ!==undefined?p.effectiveGroupFJ:p.groupFJ;if(effGFJ<nk.promoteGroupFJ)issues.push(`Skup. FJ: ${effGFJ.toFixed(2)}/${nk.promoteGroupFJ}`);}
   if(nk.promotePB&&p.pb<nk.promotePB)issues.push(`PB: ${p.pb}/${nk.promotePB}`);
@@ -4284,4 +4303,289 @@ function tfApplyRoleUI(){
 tfInit();
 </script> 
 
+<script>
+// ===================== STRATEGICKÝ MEETING (len admin) =====================
+// FJ tabuľky: manažéri × mesiace, sk./os. FJ + počet zmlúv (Kus), BRUTTO/NETTO.
+// Zdroj: mesačné ranklisty (imports). História do 02/2026 je pevne prepísaná zo sheetov.
+// Ručné opravy (override) a zoznam manažérov sa ukladajú do KV kľúča 'strategic'.
+let strategMode='b'; // 'b'=BRUTTO, 'n'=NETTO
+let strategYear=null;
+let strategFirmaYear=null;
+const STRAT_MES=['Január','Február','Marec','Apríl','Máj','Jún','Júl','August','September','Október','November','December'];
+const STRAT_DEFAULT_GROUPS=[
+ {id:'mo',label:'M+O (+Dohno, bez Andreja)',osNames:['Mário Markech','Ondrej Broska'],skNames:['Mário Markech','Ondrej Broska','Peter Dohňanský'],skSource:'group'},
+ {id:'dl',label:'D. Lehocký',osNames:['Dominik Lehocký'],skNames:['Dominik Lehocký'],skSource:'group'},
+ {id:'el',label:'E. Lehocký',osNames:['Erik Lehocký'],skNames:['Erik Lehocký'],skSource:'group'},
+ {id:'mg',label:'M. Gallo',osNames:['Michal Gallo'],skNames:['Michal Gallo'],skSource:'group'},
+ {id:'an',label:'A. Nejedlík',osNames:['Andrej Nejedlík'],skNames:['Andrej Nejedlík'],skSource:'group'},
+ {id:'firma',label:'Firma',osNames:['Mário Markech','Ondrej Broska'],skNames:['Mário Markech','Ondrej Broska','Mgr. Kristína Mikulovská','Peter Dohňanský','Michaela Hrbáčiková','Jakub Hertl','Adriana Ružovičová','Tobias Šalvata'],skSource:'own'}
+];
+// História BRUTTO po manažéroch (zo sheetu): [skFJ,skZml,osFJ,osZml]; null = '-'
+const STRAT_HIST_B={
+'2025-01':{mo:[2186.35,54,347.9,5],dl:[1043.57,31,157.85,10],el:[2575.70,78,80.44,2],mg:[1691.01,51,28.1,9],an:[257.01,6,257.01,6],firma:[6504.35,180,null,null]},
+'2025-02':{mo:[2512.13,78,406.18,8],dl:[2029.25,44,447.66,12],el:[4499.89,118,214.37,7],mg:[2794.12,75,412.15,10],an:[447.84,7,447.84,7],firma:[9929.72,266,null,null]},
+'2025-03':{mo:[3828.78,85,898.22,20],dl:[2101.94,48,411.92,14],el:[4773.67,128,212,6],mg:[2756.68,77,721.29,12],an:[1446.41,19,1446.41,19],firma:[12155.58,283,null,null]},
+'2025-04':{mo:[3820.66,98,652.41,21],dl:[625.64,28,110.53,6],el:[5278.32,124,540.9,14],mg:[2984.89,64,374,8],an:[null,null,24.11,1],firma:[9748.81,252,null,null]},
+'2025-05':{mo:[3799.63,82,749.67,22],dl:[1891.01,37,343.11,7],el:[3694.00,118,79.82,4],mg:[1959.72,74,193.83,4],an:[null,null,836.21,11],firma:[10221.37,251,null,null]},
+'2025-06':{mo:[2906.98,107,593.39,22],dl:[1496.35,46,108.15,6],el:[6131.92,150,528.48,14],mg:[3281.78,79,410.15,10],an:[null,null,438.85,7],firma:[10974.63,313,null,null]},
+'2025-07':{mo:[3236.76,87,356.72,17],dl:[1164.16,42,347.08,20],el:[6389.53,175,334.61,7],mg:[4522.6,134,396.25,14],an:[null,null,894.44,17],firma:[13082.88,331,null,null]},
+'2025-08':{mo:[3385,88,145.31,5],dl:[1263,42,311.14,17],el:[1978.45,42,286.28,7],mg:[3005.26,83,524.46,11],an:[null,null,614.41,7],firma:[10249.53,265,null,null]},
+'2025-09':{mo:[3407.45,103,282.41,5],dl:[1712.92,46,798.34,20],el:[1276.25,32,158.4,6],mg:[4405.5,105,504.9,13],an:[null,null,1633.5,14],firma:[12440.13,301,null,null]},
+'2025-10':{mo:[3495.03,101,721.75,14],dl:[976.30,50,222,16],el:[1866.82,42,94.45,2],mg:[3560.50,90,498.8,13],an:[null,null,359.9,10],firma:[10260.37,295,null,null]},
+'2025-11':{mo:[3303.71,84,274.35,15],dl:[1879.20,47,594.15,14],el:[5897.26,129,518.82,6],mg:[3638.42,89,188,7],an:[null,null,1185.80,30],firma:[12265.97,290,null,null]},
+'2025-12':{mo:[3351.73,77,747.69,23],dl:[5491.38,96,1615.93,31],el:[9234.13,168,363.49,8],mg:[6418.71,117,341.76,7],an:[null,null,1772.03,19],firma:[19857.94,361,null,null]},
+'2026-01':{mo:[2418.85,42,171.5,8],dl:[1509.00,46,658,25],el:[3922.80,111,288,11],mg:[2278.00,57,9.3,2],an:[null,null,124.8,2],firma:[7977.20,205,null,null]},
+'2026-02':{mo:[1612.79,68,402.91,10],dl:[1832.67,46,741.41,23],el:[3965.36,114,137.82,7],mg:[2450.02,74,327.2,10],an:[null,null,589.65,14],firma:[8011.23,245,null,null]}
+};
+// História FIRMA spolu (BRUTTO) od 2017: kľúč 'RRRR-MM' → [FJ, zmluvy]
+const STRAT_FIRMA_HIST={
+'2017-03':[2102.65,74],'2017-04':[1416.55,48],'2017-05':[1642.07,56],'2017-06':[1734.52,57],'2017-07':[2328.33,92],'2017-08':[1808.57,50],'2017-09':[1841.43,52],'2017-10':[1330.88,37],'2017-11':[2668.81,95],'2017-12':[1997.59,68],
+'2018-01':[2002.14,56],'2018-02':[1874.73,51],'2018-03':[2366.59,81],'2018-04':[2070.03,65],'2018-05':[4356.02,122],'2018-06':[3078.77,67],'2018-07':[1769.40,52],'2018-08':[2329.84,70],'2018-09':[3009.59,88],'2018-10':[2356.16,78],'2018-11':[3279.39,84],'2018-12':[2463.92,76],
+'2019-01':[5174.91,224],'2019-02':[6128.37,220],'2019-03':[5176.33,213],'2019-04':[4866.15,198],'2019-05':[4940.09,169],'2019-06':[3484.84,138],'2019-07':[3102.51,114],'2019-08':[3097.41,145],'2019-09':[4969.21,144],'2019-10':[5763.69,153],'2019-11':[4437.58,118],'2019-12':[5239.17,134],
+'2020-01':[6801.21,172],'2020-02':[5264.86,149],'2020-03':[3766.24,127],'2020-04':[5304.71,137],'2020-05':[5988.46,168],'2020-06':[7146.92,199],'2020-07':[4762.54,160],'2020-08':[5182.97,153],'2020-09':[6105.55,161],'2020-10':[5734.99,170],'2020-11':[6706.92,158],'2020-12':[7433.84,174],
+'2021-01':[7226.14,158],'2021-02':[6007.31,173],'2021-03':[11052.12,260],'2021-04':[6639.06,147],'2021-05':[8137.07,182],'2021-06':[8732.66,238],'2021-07':[7788.11,226],'2021-08':[7679.89,229],'2021-09':[7315.88,185],'2021-10':[11318.00,238],'2021-11':[10185.70,260],'2021-12':[9266.87,183],
+'2022-01':[6051.01,130],'2022-02':[7052.84,176],'2022-03':[6325.39,165],'2022-04':[7952.28,180],'2022-05':[6999.66,168],'2022-06':[6258.07,130],'2022-07':[5221.27,143],'2022-08':[8390.67,231],'2022-09':[10554.89,240],'2022-10':[6712.14,187],'2022-11':[9809.59,215],'2022-12':[9125.73,202],
+'2023-01':[7212.98,169],'2023-02':[7592.23,185],'2023-03':[8559.30,255],'2023-04':[7240.75,188],'2023-05':[9092.36,213],'2023-06':[8284.31,223],'2023-07':[8024.70,222],'2023-08':[12937.34,318],'2023-09':[8791.70,222],'2023-10':[9803.72,246],'2023-11':[9017.18,217],'2023-12':[17138.19,297],
+'2024-01':[6236.17,201],'2024-02':[7830.9,183],'2024-03':[7814.34,212],'2024-04':[8375.58,198],'2024-05':[8245.32,217],'2024-06':[8963.35,245],'2024-07':[11504.32,267],'2024-08':[10687.82,283],'2024-09':[9685.49,223],'2024-10':[9579.22,249],'2024-11':[9348.91,208],'2024-12':[17745.69,324],
+'2025-01':[6504.35,180],'2025-02':[9929.72,266],'2025-03':[12155.58,283],'2025-04':[9748.81,252],'2025-05':[10221.37,251],'2025-06':[10974.63,313],'2025-07':[13082.88,331],'2025-08':[10249.53,265],'2025-09':[12440.13,301],'2025-10':[10260.37,295],'2025-11':[12265.97,290],'2025-12':[19857.94,361],
+'2026-01':[7977.20,205],'2026-02':[8011.23,245]
+};
+function getStratGroups(){
+  if(Array.isArray(strategicData.groups)&&strategicData.groups.length)return strategicData.groups;
+  return STRAT_DEFAULT_GROUPS.map(g=>({...g,osNames:g.osNames.slice(),skNames:g.skNames.slice()}));
+}
+function saveStratGroups(arr){strategicData.groups=arr;tfSave('tf_strategic',strategicData);}
+function _sp2(n){return String(n).padStart(2,'0');}
+function _sfmt(v){if(v===null||v===undefined)return'–';return (Math.round(v*100)/100).toLocaleString('sk-SK',{minimumFractionDigits:0,maximumFractionDigits:2});}
+// Hodnota z importu pre skupinu a mesiac
+function stratImportCell(mode,year,m,grp){
+  const imp=imports.find(i=>i.key===year+'-'+_sp2(m));
+  if(!imp)return null;
+  const arr=mode==='b'?(imp.peopleBrutto||[]):(imp.people||[]);
+  if(!arr.length)return null;
+  const find=n=>arr.find(x=>_namesMatch(x.name,n));
+  let skFJ=0,skKus=0,osFJ=0,osKus=0,any=false;
+  for(const n of (grp.osNames||[])){const p=find(n);if(p){any=true;osFJ+=(p.ownFJ||0);osKus+=(p.ownKus||0);}}
+  for(const n of (grp.skNames||[])){const p=find(n);if(p){any=true;
+    if(grp.skSource==='own'){skFJ+=(p.ownFJ||0);skKus+=(p.ownKus||0);}
+    else{skFJ+=(p.groupFJ||0);skKus+=(p.groupKus||0);}}}
+  return any?{skFJ,skKus,osFJ,osKus}:null;
+}
+// Finálna hodnota bunky: override > história (brutto do 02/2026) > import
+function stratCell(mode,year,m,grp){
+  const ym=year+'-'+_sp2(m);
+  const ov=strategicData.ov||{};
+  const base={skFJ:null,skKus:null,osFJ:null,osKus:null};
+  const hist=(mode==='b'&&STRAT_HIST_B[ym]&&STRAT_HIST_B[ym][grp.id])?STRAT_HIST_B[ym][grp.id]:null;
+  if(hist){base.skFJ=hist[0];base.skKus=hist[1];base.osFJ=hist[2];base.osKus=hist[3];}
+  else{const im=stratImportCell(mode,year,m,grp);if(im){base.skFJ=im.skFJ;base.skKus=im.skKus;base.osFJ=im.osFJ;base.osKus=im.osKus;}}
+  for(const f of ['skFJ','skKus','osFJ','osKus']){
+    const k=mode+'_'+ym+'_'+grp.id+'_'+f;
+    if(ov[k]!==undefined)base[f]=ov[k];
+  }
+  return base;
+}
+function stratEditCell(mode,year,m,grpId,field){
+  if(currentUserRole!=='admin')return;
+  const grp=getStratGroups().find(g=>g.id===grpId);
+  if(!grp)return;
+  const cur=stratCell(mode,year,m,grp)[field];
+  const lbl={skFJ:'sk. FJ',skKus:'sk. počet zmlúv',osFJ:'os. FJ',osKus:'os. počet zmlúv'}[field];
+  const val=prompt(grp.label+' · '+STRAT_MES[m-1]+' '+year+' ('+(mode==='b'?'BRUTTO':'NETTO')+')\n'+lbl+':\n\n(Prázdne = zrušiť ručnú opravu a vrátiť automatickú hodnotu)',cur===null||cur===undefined?'':cur);
+  if(val===null)return;
+  if(!strategicData.ov)strategicData.ov={};
+  const k=mode+'_'+year+'-'+_sp2(m)+'_'+grpId+'_'+field;
+  const t=String(val).trim().replace(/\s/g,'').replace(',','.');
+  if(t===''){delete strategicData.ov[k];}
+  else{const n=parseFloat(t);if(isNaN(n)){alert('Neplatné číslo.');return;}strategicData.ov[k]=n;}
+  tfSave('tf_strategic',strategicData);
+  renderStrateg();
+}
+function switchStrategTab(name,el){
+  document.querySelectorAll('#strateg-tabs .tab').forEach(t=>t.classList.remove('active'));
+  if(el)el.classList.add('active');
+  document.getElementById('strateg-tab-fj').style.display=name==='fj'?'':'none';
+  document.getElementById('strateg-tab-provizie').style.display=name==='provizie'?'':'none';
+  if(name==='fj')renderStrateg();
+}
+function stratYears(){
+  const ys=new Set([2025,2026]);
+  for(const imp of imports){const y=parseInt(imp.key.split('-')[0]);if(y)ys.add(y);}
+  ys.add(new Date().getFullYear());
+  return Array.from(ys).sort();
+}
+function renderStrateg(){
+  if(currentUserRole!=='admin')return;
+  const c=document.getElementById('strateg-fj-content');
+  if(!c)return;
+  if(strategYear===null)strategYear=new Date().getFullYear();
+  if(strategFirmaYear===null)strategFirmaYear=new Date().getFullYear();
+  const groups=getStratGroups();
+  const mode=strategMode,year=strategYear;
+  let html='';
+  // Ovládanie
+  html+='<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px">';
+  html+='<div class="tabs" style="margin:0"><div class="tab '+(mode==='b'?'active':'')+'" onclick="strategMode=\'b\';renderStrateg()">BRUTTO</div><div class="tab '+(mode==='n'?'active':'')+'" onclick="strategMode=\'n\';renderStrateg()">NETTO</div></div>';
+  html+='<select onchange="strategYear=parseInt(this.value);renderStrateg()" style="padding:7px 12px;border:1px solid var(--green-border);border-radius:7px;font-family:var(--font-mono);font-size:12px">'+stratYears().filter(y=>y>=2025).map(y=>'<option value="'+y+'"'+(y===year?' selected':'')+'>'+y+'</option>').join('')+'</select>';
+  html+='<button class="btn btn-secondary btn-sm" onclick="stratExportCsv()">Export do Excelu (CSV)</button>';
+  html+='<button class="btn btn-primary btn-sm" onclick="stratAddGroup()">+ Pridať manažéra</button>';
+  html+='<span style="font-size:10px;color:var(--gray3)">Klik na číslo = ručná oprava · klik na meno manažéra = úprava zloženia</span>';
+  html+='</div>';
+  if(mode==='n'&&year<2026)html+='<div style="font-size:12px;color:var(--gray3);margin-bottom:10px">NETTO dáta sú k dispozícii od roku 2026.</div>';
+  // Tabuľka manažérov
+  html+='<div class="card" style="margin-bottom:20px"><div class="card-title">FJ po manažéroch · '+(mode==='b'?'BRUTTO':'NETTO')+' · '+year+'</div>';
+  html+='<div style="overflow-x:auto"><table class="prispevky-table"><thead><tr><th style="min-width:86px;text-align:left">Mesiac</th>';
+  for(const g of groups){
+    html+='<th colspan="4" style="border-bottom:2px solid var(--green-border)"><span style="cursor:pointer;text-decoration:underline dotted" title="Upraviť zloženie skupiny" onclick="stratEditGroup(\''+g.id+'\')">'+g.label+'</span>'+(groups.length>1?' <span style="cursor:pointer;color:var(--red)" title="Odstrániť" onclick="stratRemoveGroup(\''+g.id+'\')">✕</span>':'')+'</th>';
+  }
+  html+='</tr><tr><th></th>';
+  for(const g of groups)html+='<th style="background:#e3f2fd;color:#1565c0">sk. FJ</th><th style="background:#e3f2fd;color:#1565c0">sk. zml.</th><th>os. FJ</th><th>os. zml.</th>';
+  html+='</tr></thead><tbody>';
+  for(let m=1;m<=12;m++){
+    html+='<tr><td class="cell-person">'+STRAT_MES[m-1]+'</td>';
+    for(const g of groups){
+      const cell=stratCell(mode,year,m,g);
+      for(const f of ['skFJ','skKus','osFJ','osKus']){
+        const ovK=mode+'_'+year+'-'+_sp2(m)+'_'+g.id+'_'+f;
+        const isOv=strategicData.ov&&strategicData.ov[ovK]!==undefined;
+        html+='<td style="cursor:pointer;text-align:right'+(isOv?';color:#1565c0;font-weight:700':'')+'" title="'+(isOv?'Ručne upravené — klik pre zmenu':'Klik pre ručnú opravu')+'" onclick="stratEditCell(\''+mode+'\','+year+','+m+',\''+g.id+'\',\''+f+'\')">'+_sfmt(cell[f])+'</td>';
+      }
+    }
+    html+='</tr>';
+  }
+  html+='</tbody></table></div>';
+  html+='<div style="font-size:10px;color:var(--gray3);margin-top:8px">Zdroj: nahrané ranklisty ('+(mode==='b'?'brutto':'netto')+'); história do 02/2026 prenesená zo sheetov. Modré číslo = ručná oprava.</div>';
+  html+='</div>';
+  // FIRMA spolu — mesačne + kumulatívne, od 2017
+  const fy=strategFirmaYear;
+  const firmaGrp=groups.find(g=>g.id==='firma')||groups[groups.length-1];
+  html+='<div class="card"><div class="card-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px"><span>Firma spolu — FJ a zmluvy po mesiacoch</span>';
+  html+='<span style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px">';
+  html+='<button class="btn btn-secondary" style="padding:4px 10px;font-size:11px" onclick="strategFirmaYear='+(fy-1)+';renderStrateg()">←</button>';
+  html+='<span style="min-width:56px;text-align:center">'+fy+'</span>';
+  html+='<button class="btn btn-secondary" style="padding:4px 10px;font-size:11px" onclick="strategFirmaYear='+(fy+1)+';renderStrateg()">→</button>';
+  html+='<button class="btn btn-secondary btn-sm" onclick="stratExportFirmaCsv()">Export CSV</button>';
+  html+='</span></div>';
+  html+='<div style="overflow-x:auto"><table class="prispevky-table" style="max-width:640px"><thead><tr><th style="text-align:left;min-width:100px">Mesiac</th><th>FJ</th><th>Zmluvy</th><th style="background:#e3f2fd;color:#1565c0">FJ spolu (od zač. roka)</th><th style="background:#e3f2fd;color:#1565c0">Zmluvy spolu</th></tr></thead><tbody>';
+  let cumFJ=0,cumZ=0;
+  for(let m=1;m<=12;m++){
+    const v=stratFirmaMonth(fy,m,firmaGrp);
+    if(v){cumFJ+=v[0]||0;cumZ+=v[1]||0;}
+    html+='<tr><td class="cell-person">'+STRAT_MES[m-1]+'</td>';
+    html+='<td style="text-align:right;cursor:pointer'+(v&&v[2]?';color:#1565c0;font-weight:700':'')+'" onclick="stratEditFirma('+fy+','+m+',0)">'+_sfmt(v?v[0]:null)+'</td>';
+    html+='<td style="text-align:right;cursor:pointer'+(v&&v[3]?';color:#1565c0;font-weight:700':'')+'" onclick="stratEditFirma('+fy+','+m+',1)">'+_sfmt(v?v[1]:null)+'</td>';
+    html+='<td style="text-align:right;font-weight:700;color:var(--green-dark)">'+(v?_sfmt(cumFJ):'–')+'</td>';
+    html+='<td style="text-align:right;font-weight:700;color:var(--green-dark)">'+(v?_sfmt(cumZ):'–')+'</td></tr>';
+  }
+  html+='<tr><td class="cell-person" style="font-weight:800">SPOLU '+fy+'</td><td style="text-align:right;font-weight:800">'+_sfmt(cumFJ)+'</td><td style="text-align:right;font-weight:800">'+_sfmt(cumZ)+'</td><td></td><td></td></tr>';
+  html+='</tbody></table></div>';
+  html+='<div style="font-size:10px;color:var(--gray3);margin-top:8px">História od 2017 (brutto). Od 03/2026 sa počíta automaticky z ranklistov podľa zloženia skupiny „Firma". Klik na číslo = ručná oprava.</div>';
+  html+='</div>';
+  c.innerHTML=html;
+}
+// Firma mesiac: [FJ, zmluvy, ovFJ?, ovZml?] — override > história > výpočet zo skupiny Firma (brutto)
+function stratFirmaMonth(year,m,firmaGrp){
+  const ym=year+'-'+_sp2(m);
+  const ov=strategicData.ov||{};
+  let fj=null,z=null;
+  if(STRAT_FIRMA_HIST[ym]){fj=STRAT_FIRMA_HIST[ym][0];z=STRAT_FIRMA_HIST[ym][1];}
+  else{
+    const im=stratImportCell('b',year,m,firmaGrp);
+    if(im){fj=im.skFJ;z=im.skKus;}
+  }
+  const ovF=ov['f_'+ym+'_FJ'],ovZ=ov['f_'+ym+'_Z'];
+  if(ovF!==undefined)fj=ovF;
+  if(ovZ!==undefined)z=ovZ;
+  if(fj===null&&z===null)return null;
+  return [fj,z,ovF!==undefined,ovZ!==undefined];
+}
+function stratEditFirma(year,m,which){
+  if(currentUserRole!=='admin')return;
+  const grp=getStratGroups().find(g=>g.id==='firma')||getStratGroups()[0];
+  const v=stratFirmaMonth(year,m,grp);
+  const cur=v?v[which]:null;
+  const val=prompt('Firma · '+STRAT_MES[m-1]+' '+year+'\n'+(which===0?'FJ':'Počet zmlúv')+':\n\n(Prázdne = zrušiť ručnú opravu)',cur===null||cur===undefined?'':cur);
+  if(val===null)return;
+  if(!strategicData.ov)strategicData.ov={};
+  const k='f_'+year+'-'+_sp2(m)+'_'+(which===0?'FJ':'Z');
+  const t=String(val).trim().replace(/\s/g,'').replace(',','.');
+  if(t===''){delete strategicData.ov[k];}
+  else{const n=parseFloat(t);if(isNaN(n)){alert('Neplatné číslo.');return;}strategicData.ov[k]=n;}
+  tfSave('tf_strategic',strategicData);
+  renderStrateg();
+}
+// Správa skupín manažérov
+function stratAddGroup(){
+  if(currentUserRole!=='admin')return;
+  const label=(prompt('Názov manažéra/skupiny (hlavička stĺpca):')||'').trim();
+  if(!label)return;
+  const os=(prompt('OS. (vlastné) — mená z ranklistu oddelené čiarkou:')||'').trim();
+  if(!os)return;
+  const sk=(prompt('SK. (skupinové) — mená z ranklistu oddelené čiarkou:',os)||'').trim();
+  const src=confirm('Skupinové FJ brať zo stĺpca SKUPINOVÉ daných ľudí?\n\nOK = skupinové (bežný manažér)\nZrušiť = súčet VLASTNÝCH daných ľudí (ako Firma)')?'group':'own';
+  const groups=getStratGroups();
+  groups.push({id:'g'+Date.now(),label,osNames:os.split(',').map(x=>x.trim()).filter(Boolean),skNames:(sk||os).split(',').map(x=>x.trim()).filter(Boolean),skSource:src});
+  saveStratGroups(groups);
+  renderStrateg();
+}
+function stratEditGroup(id){
+  if(currentUserRole!=='admin')return;
+  const groups=getStratGroups();
+  const g=groups.find(x=>x.id===id);
+  if(!g)return;
+  const label=(prompt('Názov:',g.label)||'').trim();
+  if(!label)return;
+  const os=(prompt('OS. (vlastné) — mená oddelené čiarkou:',g.osNames.join(', '))||'').trim();
+  const sk=(prompt('SK. (skupinové) — mená oddelené čiarkou:',g.skNames.join(', '))||'').trim();
+  const src=confirm('Skupinové FJ brať zo stĺpca SKUPINOVÉ?\n\nOK = skupinové\nZrušiť = súčet VLASTNÝCH (ako Firma)')?'group':'own';
+  g.label=label;
+  if(os)g.osNames=os.split(',').map(x=>x.trim()).filter(Boolean);
+  if(sk)g.skNames=sk.split(',').map(x=>x.trim()).filter(Boolean);
+  g.skSource=src;
+  saveStratGroups(groups);
+  renderStrateg();
+}
+function stratRemoveGroup(id){
+  if(currentUserRole!=='admin')return;
+  const groups=getStratGroups();
+  const g=groups.find(x=>x.id===id);
+  if(!g)return;
+  if(!confirm('Odstrániť stĺpec „'+g.label+'"? (Ručné opravy k nemu ostanú uložené.)'))return;
+  saveStratGroups(groups.filter(x=>x.id!==id));
+  renderStrateg();
+}
+// Export CSV (oddeľovač ; + BOM pre Excel)
+function _csvDownload(name,rows){
+  const csv='﻿'+rows.map(r=>r.map(v=>String(v===null||v===undefined?'':v).replace(/;/g,',')).join(';')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=name;
+  document.body.appendChild(a);a.click();a.remove();
+}
+function stratExportCsv(){
+  const groups=getStratGroups(),mode=strategMode,year=strategYear;
+  const head1=['Mesiac'];const head2=[''];
+  for(const g of groups){head1.push(g.label,'','','');head2.push('sk. FJ','sk. zmluvy','os. FJ','os. zmluvy');}
+  const rows=[head1,head2];
+  for(let m=1;m<=12;m++){
+    const r=[STRAT_MES[m-1]];
+    for(const g of groups){const c=stratCell(mode,year,m,g);r.push(c.skFJ===null?'':c.skFJ,c.skKus===null?'':c.skKus,c.osFJ===null?'':c.osFJ,c.osKus===null?'':c.osKus);}
+    rows.push(r);
+  }
+  _csvDownload('strategicky-meeting_FJ_'+(mode==='b'?'brutto':'netto')+'_'+year+'.csv',rows);
+}
+function stratExportFirmaCsv(){
+  const fy=strategFirmaYear;
+  const grp=getStratGroups().find(g=>g.id==='firma')||getStratGroups()[0];
+  const rows=[['Mesiac','FJ','Zmluvy','FJ kumulatívne','Zmluvy kumulatívne']];
+  let cf=0,cz=0;
+  for(let m=1;m<=12;m++){
+    const v=stratFirmaMonth(fy,m,grp);
+    if(v){cf+=v[0]||0;cz+=v[1]||0;}
+    rows.push([STRAT_MES[m-1],v?v[0]:'',v?v[1]:'',v?Math.round(cf*100)/100:'',v?cz:'']);
+  }
+  rows.push(['SPOLU '+fy,Math.round(cf*100)/100,cz,'','']);
+  _csvDownload('firma_FJ_'+fy+'.csv',rows);
+}
+</script>
 </body></html>
