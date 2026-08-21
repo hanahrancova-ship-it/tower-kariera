@@ -1357,17 +1357,28 @@ function processImport(rows,yearMonth,reportType){
   if(!Array.isArray(baseEntry.peopleBrutto))baseEntry.peopleBrutto=[];
   baseEntry.label=label;
   baseEntry.date=new Date().toISOString();
-  // Pri opakovanom nahratí toho istého mesiaca ZACHOVAJ pozície (manuálne zmeny) — zmeň len FJ.
-  const _mergePreservePos=(oldArr,np)=>{
+  // Pri opakovanom nahratí toho istého mesiaca ZACHOVAJ pozície (manuálne zmeny).
+  // Admin si môže vybrať: prepísať FJ novými hodnotami, alebo FJ ponechať a LEN DOPLNIŤ počty zmlúv (Kus).
+  const _oldArr=reportType==='brutto'?baseEntry.peopleBrutto:baseEntry.people;
+  let _keepFJ=false;
+  if(existing>=0&&_oldArr.length){
+    _keepFJ=!confirm('Mesiac '+label+' ('+reportType.toUpperCase()+') už je nahraný.\n\nOK = PREPÍSAŤ FJ novými hodnotami (+ doplniť počty zmlúv)\nZrušiť = PONECHAŤ doterajšie FJ a len DOPLNIŤ počty zmlúv');
+  }
+  const _mergePreservePos=(oldArr,np,keepFJ)=>{
     const byName={};(oldArr||[]).forEach(p=>{byName[_normName(p.name)]=p;});
-    return np.map(x=>{const o=byName[_normName(x.name)];return (o&&o.pos)?{...x,pos:o.pos}:x;});
+    return np.map(x=>{
+      const o=byName[_normName(x.name)];
+      if(!o)return x; // nový človek v mesiaci
+      if(keepFJ)return {...o,ownKus:x.ownKus,groupKus:x.groupKus}; // FJ/pozícia/manažér ostávajú, pribudnú len počty
+      return o.pos?{...x,pos:o.pos}:x;
+    });
   };
   if(reportType==='brutto'){
-    baseEntry.peopleBrutto=_mergePreservePos(baseEntry.peopleBrutto,parsed);
+    baseEntry.peopleBrutto=_mergePreservePos(baseEntry.peopleBrutto,parsed,_keepFJ);
   } else {
-    baseEntry.people=_mergePreservePos(baseEntry.people,parsed);
+    baseEntry.people=_mergePreservePos(baseEntry.people,parsed,_keepFJ);
   }
-  if(existing>=0){imports[existing]=baseEntry;showToast(`${label} – ${reportType.toUpperCase()} aktualizovaný.`,'success');}
+  if(existing>=0){imports[existing]=baseEntry;showToast(_keepFJ?`${label} – ${reportType.toUpperCase()}: počty zmlúv doplnené, FJ ostali nezmenené.`:`${label} – ${reportType.toUpperCase()} aktualizovaný.`,'success');}
   else{imports.push(baseEntry);showToast(`${label} – ${reportType.toUpperCase()} uložený.`,'success');}
   tfSave('tf_imports',imports);
   // Upozornenie adminovi: noví nováčikovia na TR, ktorých ešte netreba zabudnúť zaradiť do platieb
@@ -4445,6 +4456,7 @@ function renderStrateg(){
   html+='</tr><tr><th></th>';
   groups.forEach((g,gi)=>{html+='<th style="'+_sep+'background:#e3f2fd;color:#1565c0">sk. FJ</th><th style="background:#e3f2fd;color:#1565c0">sk. zml.</th><th style="background:'+_tint(gi)+'">os. FJ</th><th style="background:'+_tint(gi)+'">os. zml.</th>';});
   html+='</tr></thead><tbody>';
+  let _anyKusMissing=false;
   for(let m=1;m<=12;m++){
     html+='<tr><td class="cell-person">'+STRAT_MES[m-1]+'</td>';
     groups.forEach((g,gi)=>{
@@ -4452,13 +4464,17 @@ function renderStrateg(){
       ['skFJ','skKus','osFJ','osKus'].forEach((f,fi)=>{
         const ovK=mode+'_'+year+'-'+_sp2(m)+'_'+g.id+'_'+f;
         const isOv=strategicData.ov&&strategicData.ov[ovK]!==undefined;
-        html+='<td style="'+(fi===0?_sep:'')+'background:'+_tint(gi)+';cursor:pointer;text-align:right'+(fi<2?';font-weight:600':'')+(isOv?';color:#1565c0;font-weight:700':'')+'" title="'+(isOv?'Ručne upravené — klik pre zmenu':'Klik pre ručnú opravu')+'" onclick="stratEditCell(\''+mode+'\','+year+','+m+',\''+g.id+'\',\''+f+'\')">'+_sfmt(cell[f])+'</td>';
+        const _kusMissing=(f==='skKus'||f==='osKus')&&cell[f]===null&&(cell.skFJ!==null||cell.osFJ!==null);
+        if(_kusMissing)_anyKusMissing=true;
+        const _tt=isOv?'Ručne upravené — klik pre zmenu':(_kusMissing?'Počet zmlúv chýba — ranklist za tento mesiac nahraj znova (stĺpce „Kus")':'Klik pre ručnú opravu');
+        html+='<td style="'+(fi===0?_sep:'')+'background:'+_tint(gi)+';cursor:pointer;text-align:right'+(fi<2?';font-weight:600':'')+(isOv?';color:#1565c0;font-weight:700':'')+(_kusMissing?';color:#c77a00':'')+'" title="'+_tt+'" onclick="stratEditCell(\''+mode+'\','+year+','+m+',\''+g.id+'\',\''+f+'\')">'+(_kusMissing?'?':_sfmt(cell[f]))+'</td>';
       });
     });
     html+='</tr>';
   }
   html+='</tbody></table></div>';
   html+='<div style="font-size:10px;color:var(--gray3);margin-top:8px">Zdroj: nahrané ranklisty ('+(mode==='b'?'brutto':'netto')+'); história do 02/2026 prenesená zo sheetov. Modré číslo = ručná oprava.</div>';
+  if(_anyKusMissing)html+='<div style="font-size:11px;color:#854F0B;background:#FAEEDA;border-radius:6px;padding:8px 12px;margin-top:8px">Oranžový „?" = počet zmlúv chýba, lebo ranklist za daný mesiac bol nahraný ešte pred doplnením stĺpcov „Kus". Stačí ten mesiac <strong>nahrať znova</strong> (Import dát) — pozície sa nezmenia, doplnia sa len počty.</div>';
   html+='</div>';
   // FIRMA spolu — mesačne + kumulatívne, od 2017
   const fy=strategFirmaYear;
