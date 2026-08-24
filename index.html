@@ -4350,7 +4350,7 @@ const STRAT_DEFAULT_GROUPS=[
  {id:'el',label:'E. Lehocký',osNames:['Erik Lehocký'],skNames:['Erik Lehocký'],skSource:'group',skMinus:['Michal Gallo']},
  {id:'mg',label:'M. Gallo',osNames:['Michal Gallo'],skNames:['Michal Gallo'],skSource:'group'},
  {id:'an',label:'A. Nejedlík',osNames:['Andrej Nejedlík'],skNames:['Andrej Nejedlík'],skSource:'group'},
- {id:'firma',label:'Firma',osNames:['Mário Markech','Ondrej Broska'],skNames:['Mário Markech','Ondrej Broska','Mgr. Kristína Mikulovská','Peter Dohňanský','Michaela Hrbáčiková','Jakub Hertl','Adriana Ružovičová','Tobias Šalvata'],skSource:'own'}
+ {id:'firma',label:'Firma',osNames:['Mário Markech','Ondrej Broska'],skNames:['*'],skSource:'own'} // '*' = všetci ľudia v rankliste (súčet vlastnej produkcie = celá firma)
 ];
 // História BRUTTO po manažéroch (zo sheetu): [skFJ,skZml,osFJ,osZml]; null = '-'
 const STRAT_HIST_B={
@@ -4397,10 +4397,17 @@ function stratImportCell(mode,year,m,grp){
   if(!arr.length)return null;
   const find=n=>arr.find(x=>_namesMatch(x.name,n));
   let skFJ=0,skKus=0,osFJ=0,osKus=0,any=false,kusAny=false;
-  for(const n of (grp.osNames||[])){const p=find(n);if(p){any=true;osFJ+=(p.ownFJ||0);if(p.ownKus!==undefined){kusAny=true;osKus+=(p.ownKus||0);}}}
+  // '*' v zozname = všetci ľudia v rankliste (vždy súčet VLASTNEJ produkcie — bez dvojitého počítania)
+  const _osList=(grp.osNames||[]).includes('*')?arr.map(p=>p.name):(grp.osNames||[]);
+  const _skAll=(grp.skNames||[]).includes('*');
+  for(const n of _osList){const p=find(n);if(p){any=true;osFJ+=(p.ownFJ||0);if(p.ownKus!==undefined){kusAny=true;osKus+=(p.ownKus||0);}}}
+  if(_skAll){
+    for(const p of arr){any=true;skFJ+=(p.ownFJ||0);if(p.ownKus!==undefined){kusAny=true;skKus+=(p.ownKus||0);}}
+  }else{
   for(const n of (grp.skNames||[])){const p=find(n);if(p){any=true;
     if(grp.skSource==='own'){skFJ+=(p.ownFJ||0);if(p.ownKus!==undefined){kusAny=true;skKus+=(p.ownKus||0);}}
     else{skFJ+=(p.groupFJ||0);if(p.groupKus!==undefined){kusAny=true;skKus+=(p.groupKus||0);}}}}
+  }
   // Odpočet (napr. E. Lehocký bez skupiny M. Galla): odpočíta sa skupinová (alebo vlastná) produkcia + zmluvy daných ľudí
   for(const n of (grp.skMinus||[])){const p=find(n);if(p){
     if(grp.skSource==='own'){skFJ-=(p.ownFJ||0);if(p.ownKus!==undefined)skKus-=(p.ownKus||0);}
@@ -4442,6 +4449,7 @@ function stratEditCell(mode,year,m,grpId,field){
   if(histUsed)info+='<div style="color:#854F0B;margin-bottom:6px">Hodnota je z historického sheetu (do 02/2026).</div>';
   info+='<div style="font-weight:700;color:var(--green-dark)">Započítaní ('+(useGroupCol?'skupinová':'vlastná')+' produkcia'+(isKus?' – počet zmlúv':' – FJ')+'):</div>';
   if(!arr.length)info+='<div style="color:var(--gray3)">(ranklist za tento mesiac nie je nahraný)</div>';
+  else if(names.includes('*'))info+='<div><span style="color:#0e6b27">✓</span> VŠETCI ľudia v rankliste ('+arr.length+' osôb) — súčet vlastnej produkcie</div>';
   else names.forEach(n=>{const p=arr.find(x=>_namesMatch(x.name,n));info+='<div>'+(p?'<span style="color:#0e6b27">✓</span> ':'<span style="color:#a01010">✗</span> ')+esc(n)+(p?' = <strong>'+valOf(p)+'</strong>':' <span style="color:#a01010">— NIE JE v rankliste</span>')+'</div>';});
   if(isSk&&(grp.skMinus||[]).length){info+='<div style="font-weight:700;color:var(--green-dark);margin-top:6px">Odpočítaní:</div>';(grp.skMinus||[]).forEach(n=>{const p=arr.find(x=>_namesMatch(x.name,n));info+='<div>− '+esc(n)+(p?' = <strong>'+valOf(p)+'</strong>':' <span style="color:var(--gray3)">— nie je v rankliste</span>')+'</div>';});}
   window._stratEdit={kind:'cell',key:mode+'_'+ym+'_'+grpId+'_'+field};
@@ -4488,8 +4496,18 @@ function stratPeriod(){
   if(meet){const d=new Date(meet);if(!isNaN(d))to=_ymAdd(d.getFullYear()+'-'+_sp2(d.getMonth()+1),-1);}
   return {from,to,meet,lastEnd};
 }
-function stratSetMeeting(v){strategicData.meetingNext=v||'';tfSave('tf_strategic',strategicData);renderStrateg();}
-function stratSetLastEnd(v){if(v)strategicData.lastChartEnd=v;tfSave('tf_strategic',strategicData);renderStrateg();}
+function stratSetMeeting(v){
+  if(v){const y=parseInt(String(v).slice(0,4),10);
+    if(!y||y<2020||y>2100){showToast('Skontroluj rok v dátume meetingu (napr. 2026-09-05).','error');return;}}
+  if((strategicData.meetingNext||'')===(v||''))return;
+  strategicData.meetingNext=v||'';tfSave('tf_strategic',strategicData);renderStrateg();
+}
+function stratSetLastEnd(v){
+  if(v){const y=parseInt(String(v).slice(0,4),10);
+    if(!y||y<2017||y>2100){showToast('Skontroluj rok (napr. 2026-02).','error');return;}}
+  if(!v||(strategicData.lastChartEnd||'')===v)return;
+  strategicData.lastChartEnd=v;tfSave('tf_strategic',strategicData);renderStrateg();
+}
 // Séria mesačnej produkcie FIRMY (mode 'b' = história+ranklisty+opravy, 'n' = netto ranklisty)
 function stratFirmaSeries(mode,fromYm,toYm){
   const grp=getStratGroups().find(g=>g.id==='firma')||getStratGroups()[0];
@@ -4528,7 +4546,14 @@ function stratSvgChart(series){
     svg+='<line x1="'+X(p.i).toFixed(1)+'" y1="'+Y(p.v).toFixed(1)+'" x2="'+X(p.i).toFixed(1)+'" y2="'+Y(0)+'" stroke="rgba(255,255,255,0.30)" stroke-width="1"></line>';});
   svg+='<path d="'+path+'" fill="none" stroke="#eaf8ee" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"></path>';
   pts.forEach(p=>{if(p.v===null)return;
-    svg+='<circle cx="'+X(p.i).toFixed(1)+'" cy="'+Y(p.v).toFixed(1)+'" r="2.6" fill="#eaf8ee"><title>'+p.label+': '+p.v.toLocaleString('sk-SK')+' FJ</title></circle>';});
+    svg+='<circle cx="'+X(p.i).toFixed(1)+'" cy="'+Y(p.v).toFixed(1)+'" r="2.6" fill="#eaf8ee"></circle>';});
+  // Hodnoty nad bodmi pri kratších grafoch (napr. nové obdobie)
+  if(n<=13)pts.forEach(p=>{if(p.v===null)return;
+    svg+='<text x="'+X(p.i).toFixed(1)+'" y="'+(Y(p.v)-10).toFixed(1)+'" text-anchor="middle" font-size="12" font-weight="700" fill="#eaf8ee" font-family="Archivo,sans-serif">'+p.v.toLocaleString('sk-SK')+'</text>';});
+  // Široké hover zóny — tooltip s presným číslom na celom stĺpci mesiaca
+  const colW=(W-pL-pR)/Math.max(n,1);
+  pts.forEach(p=>{
+    svg+='<rect x="'+(X(p.i)-colW/2).toFixed(1)+'" y="'+pT+'" width="'+colW.toFixed(1)+'" height="'+(H-pT-pB)+'" fill="transparent"><title>'+p.label+': '+(p.v===null?'bez dát':p.v.toLocaleString('sk-SK')+' FJ')+'</title></rect>';});
   const every=n>30?2:1;
   pts.forEach(p=>{if(p.i%every!==0)return;
     svg+='<text x="'+X(p.i).toFixed(1)+'" y="'+(H-pB+16)+'" text-anchor="end" font-size="10" fill="#cfe6d6" font-family="Archivo,sans-serif" transform="rotate(-45 '+X(p.i).toFixed(1)+' '+(H-pB+16)+')">'+p.label+'</text>';});
@@ -4558,8 +4583,8 @@ function renderStrateg(){
   const per=stratPeriod();
   html+='<div class="card" style="margin-bottom:16px"><div class="card-title">Termín strategického meetingu</div>';
   html+='<div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;font-size:12px">';
-  html+='<label>Najbližší strategický: <input type="date" value="'+(per.meet||'')+'" onchange="stratSetMeeting(this.value)" style="padding:7px 10px;border:1px solid var(--green-border);border-radius:7px;font-family:var(--font-mono);font-size:12px"></label>';
-  html+='<label>Posledný graf bol do (vrátane): <input type="month" value="'+per.lastEnd+'" onchange="stratSetLastEnd(this.value)" style="padding:7px 10px;border:1px solid var(--green-border);border-radius:7px;font-family:var(--font-mono);font-size:12px"></label>';
+  html+='<label>Najbližší strategický: <input type="date" value="'+(per.meet||'')+'" onblur="stratSetMeeting(this.value)" onkeydown="if(event.key===\'Enter\')this.blur()" style="padding:7px 10px;border:1px solid var(--green-border);border-radius:7px;font-family:var(--font-mono);font-size:12px"></label>';
+  html+='<label>Posledný graf bol do (vrátane): <input type="month" value="'+per.lastEnd+'" onblur="stratSetLastEnd(this.value)" onkeydown="if(event.key===\'Enter\')this.blur()" style="padding:7px 10px;border:1px solid var(--green-border);border-radius:7px;font-family:var(--font-mono);font-size:12px"></label>';
   if(per.meet&&per.to)html+='<span style="color:var(--green-dark);font-weight:700">Nové obdobie: '+_ymNice(per.from)+' – '+_ymNice(per.to)+'</span>';
   else html+='<span style="color:var(--gray3)">Zadaj termín meetingu — vygeneruje sa graf za nové obdobie.</span>';
   html+='</div>';
@@ -4686,6 +4711,7 @@ function stratEditFirma(year,m,which){
   else{
     info+='<div style="font-weight:700;color:var(--green-dark)">Započítaní (skupina Firma, '+(grp.skSource==='own'?'vlastná':'skupinová')+' produkcia):</div>';
     if(!arr.length)info+='<div style="color:var(--gray3)">(brutto ranklist za tento mesiac nie je nahraný)</div>';
+    else if((grp.skNames||[]).includes('*'))info+='<div><span style="color:#0e6b27">✓</span> VŠETCI ľudia v rankliste ('+arr.length+' osôb) — súčet vlastnej produkcie</div>';
     else (grp.skNames||[]).forEach(n=>{const p=arr.find(x=>_namesMatch(x.name,n));const vv=p?(grp.skSource==='own'?(which===0?p.ownFJ:p.ownKus):(which===0?p.groupFJ:p.groupKus)):null;info+='<div>'+(p?'<span style="color:#0e6b27">✓</span> ':'<span style="color:#a01010">✗</span> ')+esc(n)+(p?' = <strong>'+((vv===undefined||vv===null)?'?':_sfmt(vv))+'</strong>':' <span style="color:#a01010">— NIE JE v rankliste</span>')+'</div>';});
   }
   window._stratEdit={kind:'firma',key:'f_'+ym+'_'+(which===0?'FJ':'Z')};
@@ -4702,7 +4728,7 @@ function stratAddGroup(){
   if(!label)return;
   const os=(prompt('OS. (vlastné) — mená z ranklistu oddelené čiarkou:')||'').trim();
   if(!os)return;
-  const sk=(prompt('SK. (skupinové) — mená z ranklistu oddelené čiarkou:',os)||'').trim();
+  const sk=(prompt('SK. (skupinové) — mená z ranklistu oddelené čiarkou.\nHviezdička * = VŠETCI ľudia v rankliste (súčet vlastnej produkcie):',os)||'').trim();
   const src=confirm('Skupinové FJ brať zo stĺpca SKUPINOVÉ daných ľudí?\n\nOK = skupinové (bežný manažér)\nZrušiť = súčet VLASTNÝCH daných ľudí (ako Firma)')?'group':'own';
   const minus=(prompt('ODPOČÍTAŤ zo skupinovej produkcie — mená oddelené čiarkou (nepovinné, napr. podskupina iného manažéra):','')||'').trim();
   const groups=getStratGroups();
@@ -4718,7 +4744,7 @@ function stratEditGroup(id){
   const label=(prompt('Názov:',g.label)||'').trim();
   if(!label)return;
   const os=(prompt('OS. (vlastné) — mená oddelené čiarkou:',g.osNames.join(', '))||'').trim();
-  const sk=(prompt('SK. (skupinové) — mená oddelené čiarkou:',g.skNames.join(', '))||'').trim();
+  const sk=(prompt('SK. (skupinové) — mená oddelené čiarkou.\nHviezdička * = VŠETCI ľudia v rankliste (súčet vlastnej produkcie):',g.skNames.join(', '))||'').trim();
   const src=confirm('Skupinové FJ brať zo stĺpca SKUPINOVÉ?\n\nOK = skupinové\nZrušiť = súčet VLASTNÝCH (ako Firma)')?'group':'own';
   const minus=prompt('ODPOČÍTAŤ zo skupinovej produkcie — mená oddelené čiarkou (prázdne = nič neodpočítavať):',(g.skMinus||[]).join(', '));
   g.label=label;
