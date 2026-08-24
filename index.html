@@ -4629,6 +4629,11 @@ function stratRastChart(){
       svg+='<text x="'+cx.toFixed(1)+'" y="'+yTop.toFixed(1)+'" text-anchor="middle" font-size="12" font-weight="800" fill="'+(pct>=0?'#1d8a3c':'#c62828')+'" font-family="Archivo,sans-serif">'+txt+'</text>';
     }
     svg+='<text x="'+cx.toFixed(1)+'" y="'+(H-pB+16)+'" text-anchor="middle" font-size="10" fill="#555" font-family="Archivo,sans-serif">'+STRAT_MES_S[m]+'</text>';
+    // Hover zóna na celý stĺpec mesiaca — presné čísla + % rozdiel
+    let _tt=STRAT_MES[m]+'\nMinulý rok: '+prev[m].toLocaleString('sk-SK')+' FJ';
+    if(cur[m]!==null){const _p=prev[m]?((cur[m]/prev[m]-1)*100):0;_tt+='\nTento rok ('+yNow+'): '+cur[m].toLocaleString('sk-SK')+' FJ\nRozdiel: '+(_p>=0?'+':'')+_p.toFixed(1).replace('.',',')+' %';}
+    else _tt+='\nTento rok: zatiaľ bez dát';
+    svg+='<rect x="'+(pL+slot*m).toFixed(1)+'" y="'+pT+'" width="'+slot.toFixed(1)+'" height="'+(H-pT-pB)+'" fill="transparent"><title>'+_tt+'</title></rect>';
   }
   const y0=pT+(H-pT-pB);
   svg+='<line x1="'+pL+'" y1="'+y0+'" x2="'+(W-pR)+'" y2="'+y0+'" stroke="#bbb"></line>';
@@ -4664,13 +4669,8 @@ function renderStrateg(){
   if(per.meet&&per.to)html+='<span style="color:var(--green-dark);font-weight:700">Nové obdobie: '+_ymNice(per.from)+' – '+_ymNice(per.to)+'</span>';
   else html+='<span style="color:var(--gray3)">Zadaj termín meetingu — vygeneruje sa graf za nové obdobie.</span>';
   html+='</div>';
-  if(per.meet&&per.to){
-    if(per.to>=per.from){
-      const perSeries=stratFirmaSeries(mode,per.from,per.to);
-      html+='<div style="margin-top:14px"><div style="font-weight:700;font-size:13px;color:var(--green-dark);margin-bottom:8px">Produkcia za firmu — nové obdobie ('+_ymNice(per.from)+' – '+_ymNice(per.to)+') · '+(mode==='b'?'BRUTTO':'NETTO')+'</div>'+stratSvgChart(perSeries)+'</div>';
-    }else{
-      html+='<div style="margin-top:10px;font-size:12px;color:var(--gray3)">Nové obdobie je prázdne (termín meetingu je skôr, než koniec posledného grafu).</div>';
-    }
+  if(per.meet&&per.to&&per.to<per.from){
+    html+='<div style="margin-top:10px;font-size:12px;color:var(--gray3)">Nové obdobie je prázdne (termín meetingu je skôr, než koniec posledného grafu).</div>';
   }
   html+='</div>';
   // ===== Graf 2: Výkony po manažmentoch (skupinové FJ spolu za obdobie) =====
