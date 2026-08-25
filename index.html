@@ -4553,7 +4553,8 @@ function stratSvgChart(series){
   // Široké hover zóny — tooltip s presným číslom na celom stĺpci mesiaca
   const colW=(W-pL-pR)/Math.max(n,1);
   pts.forEach(p=>{
-    svg+='<rect x="'+(X(p.i)-colW/2).toFixed(1)+'" y="'+pT+'" width="'+colW.toFixed(1)+'" height="'+(H-pT-pB)+'" fill="transparent"><title>'+p.label+': '+(p.v===null?'bez dát':p.v.toLocaleString('sk-SK')+' FJ')+'</title></rect>';});
+    const tip=p.label+': '+(p.v===null?'bez dát':p.v.toLocaleString('sk-SK')+' FJ');
+    svg+='<rect x="'+(X(p.i)-colW/2).toFixed(1)+'" y="'+pT+'" width="'+colW.toFixed(1)+'" height="'+(H-pT-pB)+'" fill="transparent"'+_tipAttr(tip)+'></rect>';});
   const every=n>30?2:1;
   pts.forEach(p=>{if(p.i%every!==0)return;
     svg+='<text x="'+X(p.i).toFixed(1)+'" y="'+(H-pB+16)+'" text-anchor="end" font-size="10" fill="#cfe6d6" font-family="Archivo,sans-serif" transform="rotate(-45 '+X(p.i).toFixed(1)+' '+(H-pB+16)+')">'+p.label+'</text>';});
@@ -4561,6 +4562,19 @@ function stratSvgChart(series){
   svg+='</svg>';
   return svg;
 }
+// Okamžitý tooltip pre grafy (natívne SVG <title> je pomalé/nespoľahlivé)
+function stratTipMove(ev,el){
+  let t=document.getElementById('strat-tip');
+  if(!t){t=document.createElement('div');t.id='strat-tip';t.style.cssText='position:fixed;display:none;z-index:3000;background:#0E3318;color:#fff;padding:8px 12px;border-radius:8px;font-size:12px;font-family:var(--font-mono);pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,0.3);white-space:pre-line;line-height:1.5';document.body.appendChild(t);}
+  t.textContent=el.getAttribute('data-tip')||'';
+  t.style.display='block';
+  const vw=window.innerWidth||1200;
+  let x=ev.clientX+14,y=ev.clientY+14;
+  if(x+260>vw)x=ev.clientX-260;
+  t.style.left=x+'px';t.style.top=y+'px';
+}
+function stratTipHide(){const t=document.getElementById('strat-tip');if(t)t.style.display='none';}
+function _tipAttr(txt){return ' data-tip="'+String(txt).replace(/"/g,'&quot;')+'" onmousemove="stratTipMove(event,this)" onmouseleave="stratTipHide()"';}
 // Graf 2 — staré obdobie (z jej sheetu, PRODUKCIA 11-12-1-2 = nov 2025 – feb 2026)
 const STRAT_G2_OLD=[{label:'Mišo',value:14785},{label:'Dominik',value:10712},{label:'O+M',value:10687},{label:'Erik',value:8234},{label:'Andrej',value:3672}];
 // Graf 3 — hodnoty predchádzajúceho roka (z jej sheetu „FJ 20% RAST", jan–dec)
@@ -4591,7 +4605,8 @@ function stratBarChartL(items){
     const x=pL+slot*i+(slot-bw)/2;
     const h=(H-pT-pB)*(v/top);
     const y=pT+(H-pT-pB)-h;
-    svg+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="2" fill="#16381f"><title>'+it.label+': '+v.toLocaleString('sk-SK')+' FJ</title></rect>';
+    svg+='<rect x="'+(pL+slot*i).toFixed(1)+'" y="'+pT+'" width="'+slot.toFixed(1)+'" height="'+(H-pT-pB)+'" fill="transparent"'+_tipAttr(it.label+': '+v.toLocaleString('sk-SK')+' FJ')+'></rect>';
+    svg+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="2" fill="#16381f"'+_tipAttr(it.label+': '+v.toLocaleString('sk-SK')+' FJ')+'></rect>';
     svg+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(y-6).toFixed(1)+'" text-anchor="middle" font-size="12" font-weight="700" fill="#16381f" font-family="Archivo,sans-serif">'+Math.round(v).toLocaleString('sk-SK')+'</text>';
     svg+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(H-pB+16)+'" text-anchor="middle" font-size="11" fill="#555" font-family="Archivo,sans-serif">'+it.label+'</text>';
   });
@@ -4633,7 +4648,7 @@ function stratRastChart(){
     let _tt=STRAT_MES[m]+'\nMinulý rok: '+prev[m].toLocaleString('sk-SK')+' FJ';
     if(cur[m]!==null){const _p=prev[m]?((cur[m]/prev[m]-1)*100):0;_tt+='\nTento rok ('+yNow+'): '+cur[m].toLocaleString('sk-SK')+' FJ\nRozdiel: '+(_p>=0?'+':'')+_p.toFixed(1).replace('.',',')+' %';}
     else _tt+='\nTento rok: zatiaľ bez dát';
-    svg+='<rect x="'+(pL+slot*m).toFixed(1)+'" y="'+pT+'" width="'+slot.toFixed(1)+'" height="'+(H-pT-pB)+'" fill="transparent"><title>'+_tt+'</title></rect>';
+    svg+='<rect x="'+(pL+slot*m).toFixed(1)+'" y="'+pT+'" width="'+slot.toFixed(1)+'" height="'+(H-pT-pB)+'" fill="transparent"'+_tipAttr(_tt)+'></rect>';
   }
   const y0=pT+(H-pT-pB);
   svg+='<line x1="'+pL+'" y1="'+y0+'" x2="'+(W-pR)+'" y2="'+y0+'" stroke="#bbb"></line>';
