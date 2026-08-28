@@ -471,7 +471,7 @@ i[class^="ti-"],i[class*=" ti-"]{font-style:normal;display:inline-flex;align-ite
     <div class="tab" onclick="switchStrategTab('provizie',this)">Provízie</div>
   </div>
   <div id="strateg-tab-fj"><div id="strateg-fj-content"></div></div>
-  <div id="strateg-tab-provizie" style="display:none"><div class="empty"><div class="big"></div>Provízie – pripravujeme (najprv FJ časť).</div></div>
+  <div id="strateg-tab-provizie" style="display:none"><div id="strateg-prov-content"></div></div>
 </div>
 <div class="page" id="page-kariera">
   <div class="page-header"><h2>Kariérna tabuľka</h2><p>Podmienky udržania štatútu a povýšenia</p></div>
@@ -730,6 +730,19 @@ i[class^="ti-"],i[class*=" ti-"]{font-style:normal;display:inline-flex;align-ite
     <div class="form-group"><label>Dátum zrušenia</label><input type="date" id="resolve-date"></div>
     <div class="form-group"><label>Poznámka</label><textarea id="resolve-note" rows="2" style="width:100%;padding:9px 12px;border:1px solid #e8e8e8;border-radius:6px;font-family:var(--font-mono);font-size:13px;resize:vertical"></textarea></div>
     <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('modal-resolve')">Späť</button><button class="btn btn-primary" onclick="confirmResolve()">Potvrdiť</button></div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-prov-upload">
+  <div class="modal" style="max-width:440px">
+    <h3 style="margin-bottom:6px">Nahrať provízie (týždenné výplaty)</h3>
+    <div style="font-size:12px;color:var(--gray3);margin-bottom:14px">Súbor s výplatami (stĺpce „Suma" a „Dátum úhrady"). Vyber, čie provízie to sú — súčty za obdobie sa vypočítajú automaticky.</div>
+    <div class="form-group"><label>Koho provízie</label><select id="prov-upload-person" style="width:100%;padding:9px 12px;border:1px solid var(--green-border);border-radius:7px;font-family:var(--font-mono);font-size:13px"></select></div>
+    <div class="form-group"><label>Súbor (.xlsx / .csv)</label><input type="file" id="prov-upload-file" accept=".xlsx,.xls,.csv" onchange="provUploadFile(this)" style="width:100%;padding:9px 12px;border:1px solid var(--green-border);border-radius:7px;font-size:12px"></div>
+    <div id="prov-upload-preview" style="font-size:12px;color:var(--gray3);margin-bottom:10px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-prov-upload')">Zrušiť</button>
+      <button class="btn btn-primary" onclick="provUploadConfirm()">Uložiť</button>
+    </div>
   </div>
 </div>
 <div class="modal-overlay" id="modal-strat-edit">
@@ -4477,6 +4490,7 @@ function switchStrategTab(name,el){
   document.getElementById('strateg-tab-fj').style.display=name==='fj'?'':'none';
   document.getElementById('strateg-tab-provizie').style.display=name==='provizie'?'':'none';
   if(name==='fj')renderStrateg();
+  if(name==='provizie')renderStrategProv();
 }
 function stratYears(){
   const ys=new Set([2025,2026]);
@@ -4914,6 +4928,274 @@ function stratExportFirmaCsv(){
   rows.push([]);rows.push(['SPOLU FIRMA','FJ','Zmluvy']);
   for(const y of stratFirmaYears()){let sf=0,sz=0,anyY=false;for(let m=1;m<=12;m++){const v=stratFirmaMonth(y,m,grp);if(v){anyY=true;sf+=v[0]||0;sz+=v[1]||0;}}if(anyY)rows.push([y,Math.round(sf*100)/100,sz]);}
   _csvDownload('firma_FJ_'+fy+'.csv',rows);
+}
+
+// ===================== PROVÍZIE (Strategický meeting) =====================
+// Stará tabuľka = predošlé obdobie (vložená 1:1 zo sheetu). Nová sa počíta za obdobie
+// z termínu meetingu (vždy celé mesiace). FJ = brutto vlastné z ranklistov; provízie sa
+// zadávajú/nahrávajú na osobu. Porovnania = priemer/mesiac vs. predošlé obdobie (%).
+const PROV_OLD_LABEL='1.9.2025 – 28.2.2026';
+const PROV_OLD=[
+ {name:'TOWER',hdr:true},
+ {name:'Kristína Mikulovská',mes:6,fj:3305.86,mesP:6,prov:20927.17,cp:'-'},
+ {name:'Michaela Hrbáčiková',mes:6,fj:1564.61,mesP:6,prov:3513.60,cp:'nový spolupracovník'},
+ {name:'Jakub Hertl',mes:6,fj:2407.07,mesP:6,prov:5844.04,cp:'nový spolupracovník'},
+ {name:'Peter Dohňanský',mes:6,fj:4409.16,mesP:6,prov:26176.06,cp:'+'},
+ {name:'Andrej Nejedlík',mes:6,fj:5665.72,mesP:6,prov:28777.97,cp:'-'},
+ {name:'E. Lehocký',mgr:true,mes:6,fj:1560.76,mesP:6,prov:24247.09,cp:'-'},
+ {name:'Erik Bednár',mes:6,fj:2853.20,mesP:6,prov:11147.71,cp:'-'},
+ {name:'Patrik Šuvara',mes:6,fj:3233.64,mesP:6,prov:8725.05,cp:'+'},
+ {name:'Matej Hodas',mes:6,fj:3462.81,mesP:6,prov:17310.58,cp:'+'},
+ {name:'Michal Gallo',mgr:true,mes:6,fj:1763.49,mesP:6,prov:28767.52,cp:'-'},
+ {name:'Timotej Kormaník',mes:6,fj:3774.43,mesP:6,prov:12048.04,cp:'-'},
+ {name:'Matúš Kormaník',mes:6,fj:3104.62,mesP:6,prov:12289.25,cp:'-'},
+ {name:'Bibiana Gallová',mes:6,fj:4052.37,mesP:6,prov:16914.20,cp:'+'},
+ {name:'Lukáš Bretz',mes:6,fj:653.43,mesP:6,prov:1692.74,cp:'-'},
+ {name:'Lucia Budzeľová',mes:6,fj:2594.67,mesP:6,prov:10832.74,cp:'+'},
+ {name:'Erich Chobot',mes:6,fj:1220.79,mesP:6,prov:1485.74,cp:'-'},
+ {name:'Juraj Tomáš Hrabovský',mes:6,fj:3183.73,mesP:6,prov:6660.26,cp:'-'},
+ {name:'Denisa Véghová',mes:6,fj:999.43,mesP:6,prov:2326.23,cp:'nový spolupracovník'},
+ {name:'Július Kováč',mes:6,fj:1295.70,mesP:6,prov:2727.11,cp:'nový spolupracovník'},
+ {name:'D. Lehocký',mgr:true,mes:6,fj:4630.32,mesP:6,prov:24924.64,cp:'+'},
+ {name:'Katarína Krčková',mes:6,fj:4534.78,mesP:6,prov:17801.86,cp:'+'},
+ {name:'Samuel Jankove',mes:6,fj:1651.29,mesP:6,prov:5192.58,cp:'+'},
+ {name:'Samuel Dzúrik',mes:6,fj:1349.88,mesP:6,prov:1577.12,cp:'-'},
+ {name:'Adam Marček',mes:6,fj:948.11,mesP:6,prov:385.68,cp:'na úrade'}
+];
+// Plné mená pre počítanie FJ z ranklistov (manažérske riadky)
+const PROV_MGR_FULL={'E. Lehocký':'Erik Lehocký','Michal Gallo':'Michal Gallo','D. Lehocký':'Dominik Lehocký'};
+function provOldFor(name){
+  const n=PROV_MGR_FULL[name]||name;
+  return PROV_OLD.find(r=>!r.hdr&&(_namesMatch(r.name,name)||_namesMatch(r.name,n)||_namesMatch(PROV_MGR_FULL[r.name]||r.name,n)));
+}
+function getProvRoster(){
+  if(Array.isArray(strategicData.provRoster)&&strategicData.provRoster.length)return strategicData.provRoster;
+  return PROV_OLD.map(r=>({name:r.name,hdr:!!r.hdr,mgr:!!r.mgr}));
+}
+function saveProvRoster(a){strategicData.provRoster=a;tfSave('tf_strategic',strategicData);}
+function _provStore(){if(!strategicData.prov)strategicData.prov={};const p=strategicData.prov;['mes','mesP','sum','fjOv'].forEach(k=>{if(!p[k])p[k]={};});return p;}
+function _provKey(name){const per=stratPeriod();return per.from+'|'+name;}
+// FJ spolu = brutto VLASTNÉ FJ osoby za mesiace obdobia (z ranklistov)
+function provFjSum(name,fromYm,toYm){
+  const full=PROV_MGR_FULL[name]||name;
+  let sum=0,any=false,ym=fromYm,gd=0;
+  while(ym<=toYm&&gd<60){
+    const imp=imports.find(i=>i.key===ym);
+    if(imp){const p=(imp.peopleBrutto||[]).find(x=>_namesMatch(x.name,full));if(p){sum+=(p.ownFJ||0);any=true;}}
+    ym=_ymAdd(ym,1);gd++;
+  }
+  return any?Math.round(sum*100)/100:null;
+}
+function _pctCell(curAvg,oldAvg){
+  if(oldAvg===null||oldAvg===undefined)return '<td style="background:#f4f4f4;color:#666;font-size:10px">nový spolupracovník</td>';
+  if(curAvg===null)return '<td style="color:var(--gray3)">–</td>';
+  const pct=oldAvg?((curAvg/oldAvg-1)*100):0;
+  const txt=(pct>=0?'+':'')+pct.toFixed(1).replace('.',',')+' %';
+  return '<td style="text-align:center;font-weight:700;background:'+(pct>=0?'#d4f4dd;color:#0e6b27':'#ffd6d6;color:#a01010')+'">'+txt+'</td>';
+}
+function provEdit(field,name,label,cur){
+  if(currentUserRole!=='admin')return;
+  const val=prompt(label+' — '+name+':\n(prázdne = predvolené/automatické)',cur===null||cur===undefined?'':cur);
+  if(val===null)return;
+  const p=_provStore();const k=_provKey(name);
+  const t=String(val).trim().replace(/\s/g,'').replace(',','.');
+  if(t===''){delete p[field][k];}
+  else{const n=parseFloat(t);if(isNaN(n)){alert('Neplatné číslo.');return;}p[field][k]=n;}
+  tfSave('tf_strategic',strategicData);renderStrategProv();
+}
+function provAddPerson(){
+  if(currentUserRole!=='admin')return;
+  // mená z ranklistov, ktoré ešte nie sú v tabuľke
+  const roster=getProvRoster();
+  const inR=n=>roster.some(r=>_namesMatch(r.name,n)||_namesMatch(PROV_MGR_FULL[r.name]||r.name,n));
+  const all=new Set();
+  imports.forEach(i=>{(i.peopleBrutto||[]).concat(i.people||[]).forEach(p=>all.add(p.name));});
+  const missing=Array.from(all).filter(n=>!inR(n)).sort();
+  let name=(prompt('Meno nového spolupracovníka:'+(missing.length?'\n\nV ranklistoch sú mimo tabuľky:\n• '+missing.join('\n• '):''))||'').trim();
+  if(!name)return;
+  const grp=(prompt('Zaradiť pod (napíš presne): TOWER / E. Lehocký / Michal Gallo / D. Lehocký','TOWER')||'').trim();
+  const order=['TOWER','E. Lehocký','Michal Gallo','D. Lehocký'];
+  if(!order.includes(grp)){alert('Neznáma skupina.');return;}
+  // vlož na koniec danej sekcie
+  let idx=roster.length;
+  const startI=roster.findIndex(r=>(r.hdr&&grp==='TOWER')||(r.mgr&&r.name===grp));
+  if(startI>=0){
+    idx=roster.length;
+    for(let i=startI+1;i<roster.length;i++){if(roster[i].hdr||roster[i].mgr){idx=i;break;}}
+  }
+  roster.splice(idx,0,{name});
+  saveProvRoster(roster);renderStrategProv();
+}
+function provRemovePerson(name){
+  if(currentUserRole!=='admin')return;
+  if(!confirm('Odstrániť '+name+' z tabuľky provízií?'))return;
+  saveProvRoster(getProvRoster().filter(r=>r.name!==name));
+  renderStrategProv();
+}
+// Súčet nahraných týždenných výplat osoby v období (celé mesiace od-do)
+function provPaySum(name,fromYm,toYm){
+  const pay=(strategicData.provPay||{})[name];
+  if(!Array.isArray(pay)||!pay.length)return null;
+  let sum=0,any=false;
+  for(const e of pay){const ym=String(e.d||'').slice(0,7);if(ym>=fromYm&&ym<=toYm){sum+=(e.a||0);any=true;}}
+  return any?Math.round(sum*100)/100:null;
+}
+// Parsovanie riadkov výplat: stĺpce so „suma" a „dátum" (dd.mm.rrrr alebo Date)
+function provParseRows(rows){
+  const out=[];
+  for(const r of rows){
+    let suma=null,dat=null;
+    for(const key of Object.keys(r)){
+      const kl=String(key).toLowerCase();
+      if(kl.includes('suma'))suma=parseFloat(String(r[key]).replace(/\s/g,'').replace(',','.'));
+      if(kl.includes('tum')||kl.includes('datum')||kl.includes('dátum'))dat=r[key];
+    }
+    if(suma===null||isNaN(suma)||!dat)continue;
+    let iso=null;
+    if(dat instanceof Date&&!isNaN(dat)){iso=dat.getFullYear()+'-'+_sp2(dat.getMonth()+1)+'-'+_sp2(dat.getDate());}
+    else{
+      const m=String(dat).trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/);
+      if(m)iso=m[3]+'-'+_sp2(parseInt(m[1],10)>12?m[2]:m[2])+'-'+_sp2(m[1]);
+      const m2=String(dat).trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if(m2)iso=m2[1]+'-'+m2[2]+'-'+m2[3];
+    }
+    if(!iso)continue;
+    out.push({d:iso,a:Math.round(suma*100)/100});
+  }
+  return out;
+}
+let _provUploadEntries=null;
+function provUploadOpen(){
+  if(currentUserRole!=='admin')return;
+  _provUploadEntries=null;
+  const sel=document.getElementById('prov-upload-person');
+  sel.innerHTML='<option value="">– vyber osobu –</option>'+getProvRoster().filter(r=>!r.hdr).map(r=>'<option value="'+r.name.replace(/"/g,'&quot;')+'">'+r.name+(r.mgr?' (manažér)':'')+'</option>').join('');
+  document.getElementById('prov-upload-preview').textContent='';
+  const f=document.getElementById('prov-upload-file');if(f)f.value='';
+  document.getElementById('modal-prov-upload').classList.add('open');
+}
+function provUploadFile(input){
+  const file=input.files&&input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array',codepage:65001,cellDates:true});
+      const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+      const entries=provParseRows(rows);
+      if(!entries.length){document.getElementById('prov-upload-preview').innerHTML='<span style="color:#a01010">V súbore sa nenašli stĺpce „Suma" a „Dátum úhrady".</span>';_provUploadEntries=null;return;}
+      _provUploadEntries=entries;
+      const total=entries.reduce((s,x)=>s+x.a,0);
+      const dates=entries.map(x=>x.d).sort();
+      document.getElementById('prov-upload-preview').innerHTML='Načítaných <strong>'+entries.length+'</strong> výplat ('+dates[0]+' – '+dates[dates.length-1]+'), spolu <strong>'+total.toFixed(2).replace('.',',')+' €</strong>.';
+    }catch(err){document.getElementById('prov-upload-preview').innerHTML='<span style="color:#a01010">Súbor sa nepodarilo načítať: '+err.message+'</span>';_provUploadEntries=null;}
+  };
+  reader.readAsArrayBuffer(file);
+}
+function provUploadConfirm(){
+  if(currentUserRole!=='admin')return;
+  const name=document.getElementById('prov-upload-person').value;
+  if(!name){alert('Vyber osobu.');return;}
+  if(!_provUploadEntries||!_provUploadEntries.length){alert('Najprv vyber súbor s výplatami.');return;}
+  if(!strategicData.provPay)strategicData.provPay={};
+  strategicData.provPay[name]=_provUploadEntries;
+  tfSave('tf_strategic',strategicData);
+  closeModal('modal-prov-upload');
+  renderStrategProv();
+  showToast('Výplaty pre '+name+' nahrané ('+_provUploadEntries.length+' týždňov).','success');
+}
+function renderStrategProv(){
+  if(currentUserRole!=='admin')return;
+  const c=document.getElementById('strateg-prov-content');
+  if(!c)return;
+  const per=stratPeriod();
+  const curLabel=per.to?(_ymNice(per.from)+' – '+_ymNice(per.to)):'(zadaj termín meetingu v záložke FJ)';
+  const p=_provStore();
+  let html='';
+  html+='<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px">';
+  html+='<button class="btn btn-primary btn-sm" onclick="provAddPerson()">+ Pridať osobu</button>';
+  html+='<button class="btn btn-primary btn-sm" onclick="provUploadOpen()">Nahrať provízie (import výplat)</button>';
+  html+='<button class="btn btn-secondary btn-sm" onclick="provExportCsv()">Export do Excelu (CSV)</button>';
+  html+='<span style="font-size:10px;color:var(--gray3)">Klik na počet mesiacov / provízie = úprava · FJ sa počítajú z brutto ranklistov</span>';
+  html+='</div>';
+  // ===== AKTUÁLNE OBDOBIE =====
+  html+='<div class="card" style="margin-bottom:20px"><div class="card-title">Provízie a FJ — aktuálne obdobie: '+curLabel+'</div>';
+  html+='<div style="overflow-x:auto"><table class="prispevky-table"><thead><tr>'
+    +'<th style="text-align:left;min-width:170px">Meno</th><th>počet mesiacov</th><th>FJ spolu</th><th>FJ priemer/mes.</th><th>porovnanie FJ</th>'
+    +'<th>mesiace provízií</th><th>provízie spolu</th><th>provízie priemer/mes.</th><th>porovnanie provízií</th><th></th></tr></thead><tbody>';
+  const roster=getProvRoster();
+  for(const r of roster){
+    if(r.hdr){html+='<tr><td colspan="10" style="background:var(--green-dark);color:#fff;font-weight:800;text-align:left;border-radius:6px">TOWER</td></tr>';continue;}
+    const k=_provKey(r.name);
+    const mes=(p.mes[k]!==undefined)?p.mes[k]:6;
+    const fjAuto=per.to?provFjSum(r.name,per.from,per.to):null;
+    const fj=(p.fjOv[k]!==undefined)?p.fjOv[k]:fjAuto;
+    const fjAvg=(fj!==null&&mes)?Math.round(fj/mes*10)/10:null;
+    const old=provOldFor(r.name);
+    const oldFjAvg=old?Math.round(old.fj/old.mes*10)/10:null;
+    const mesP=(p.mesP[k]!==undefined)?p.mesP[k]:6;
+    const provPay=per.to?provPaySum(r.name,per.from,per.to):null;
+    const prov=(p.sum[k]!==undefined)?p.sum[k]:provPay;
+    const provAvg=(prov!==null&&mesP)?Math.round(prov/mesP*100)/100:null;
+    const oldProvAvg=old?Math.round(old.prov/old.mesP*100)/100:null;
+    const safe=r.name.replace(/'/g,"\\'");
+    const rowStyle=r.mgr?' style="background:var(--green-dark)"':'';
+    const tdN=r.mgr?'<td class="cell-person" style="background:var(--green-dark) !important;color:#fff !important;font-weight:800">'+r.name+'</td>':'<td class="cell-person">'+r.name+'</td>';
+    const tdTxt=r.mgr?';color:#fff;background:var(--green-dark)':'';
+    html+='<tr'+rowStyle+'>'+tdN
+      +'<td style="text-align:center;cursor:pointer'+tdTxt+'" title="Klik = upraviť počet mesiacov" onclick="provEdit(\'mes\',\''+safe+'\',\'Počet mesiacov (FJ)\','+mes+')">'+mes+'</td>'
+      +'<td style="text-align:right;cursor:pointer'+tdTxt+(p.fjOv[k]!==undefined?';color:#1565c0;font-weight:700':'')+'" title="FJ spolu (brutto vlastné z ranklistov) — klik = ručná oprava" onclick="provEdit(\'fjOv\',\''+safe+'\',\'FJ spolu (ručná oprava)\','+(fj===null?'':fj)+')">'+_sfmt(fj)+'</td>'
+      +'<td style="text-align:right'+tdTxt+'">'+_sfmt(fjAvg)+'</td>'
+      +_pctCell(fjAvg,oldFjAvg)
+      +'<td style="text-align:center;cursor:pointer'+tdTxt+'" title="Klik = upraviť" onclick="provEdit(\'mesP\',\''+safe+'\',\'Počet mesiacov (provízie)\','+mesP+')">'+mesP+'</td>'
+      +'<td style="text-align:right;cursor:pointer'+tdTxt+(p.sum[k]!==undefined?';color:#1565c0;font-weight:700':'')+'" title="'+(p.sum[k]!==undefined?'Ručne zadané — klik pre zmenu':(provPay!==null?'Súčet z nahraných výplat za obdobie — klik = ručná oprava':'Klik = zapísať / nahraj výplaty importom'))+'" onclick="provEdit(\'sum\',\''+safe+'\',\'Provízie spolu (€)\','+(prov===null?'':prov)+')">'+_sfmt(prov)+'</td>'
+      +'<td style="text-align:right'+tdTxt+'">'+_sfmt(provAvg)+'</td>'
+      +_pctCell(provAvg,oldProvAvg)
+      +'<td style="text-align:center'+tdTxt+'">'+(r.mgr?'':'<span style="cursor:pointer;color:var(--red)" title="Odstrániť" onclick="provRemovePerson(\''+safe+'\')">✕</span>')+'</td></tr>';
+  }
+  html+='</tbody></table></div>';
+  html+='<div style="font-size:10px;color:var(--gray3);margin-top:8px">Porovnania = priemer/mesiac oproti predošlému obdobiu ('+PROV_OLD_LABEL+'). Modré/tučné číslo = ručne zadané. Predvolený počet mesiacov je 6 — pri nováčikoch uprav klikom.</div>';
+  html+='</div>';
+  // ===== PREDOŠLÉ OBDOBIE (statická tabuľka 1:1) =====
+  html+='<div class="card"><div class="card-title">Predošlé obdobie: '+PROV_OLD_LABEL+'</div>';
+  html+='<div style="overflow-x:auto"><table class="prispevky-table"><thead><tr>'
+    +'<th style="text-align:left;min-width:170px">Meno</th><th>počet mesiacov</th><th>FJ spolu</th><th>FJ priemer/mes.</th><th>porovnanie FJ</th>'
+    +'<th>mesiace provízií</th><th>provízie spolu</th><th>provízie priemer/mes.</th><th>porovnanie provízií</th></tr></thead><tbody>';
+  for(const r of PROV_OLD){
+    if(r.hdr){html+='<tr><td colspan="9" style="background:var(--green-dark);color:#fff;font-weight:800;text-align:left;border-radius:6px">TOWER</td></tr>';continue;}
+    const avg=Math.round(r.fj/r.mes*10)/10, pAvg=Math.round(r.prov/r.mesP*100)/100;
+    const cpCell=(r.cp==='+')?'<td style="text-align:center;font-weight:700;background:#d4f4dd;color:#0e6b27">+</td>':(r.cp==='-')?'<td style="text-align:center;font-weight:700;background:#ffd6d6;color:#a01010">−</td>':'<td style="background:#f4f4f4;color:#666;font-size:10px">'+r.cp+'</td>';
+    const tdTxt=r.mgr?';color:#fff;background:var(--green-dark)':'';
+    const tdN=r.mgr?'<td class="cell-person" style="background:var(--green-dark) !important;color:#fff !important;font-weight:800">'+r.name+'</td>':'<td class="cell-person">'+r.name+'</td>';
+    html+='<tr'+(r.mgr?' style="background:var(--green-dark)"':'')+'>'+tdN
+      +'<td style="text-align:center'+tdTxt+'">'+r.mes+'</td>'
+      +'<td style="text-align:right'+tdTxt+'">'+_sfmt(r.fj)+'</td>'
+      +'<td style="text-align:right'+tdTxt+'">'+_sfmt(avg)+'</td>'
+      +'<td style="text-align:center'+tdTxt+'">'+'<span style="font-weight:700">±</span>'.replace('±','')+'</td>'
+      +'<td style="text-align:center'+tdTxt+'">'+r.mesP+'</td>'
+      +'<td style="text-align:right'+tdTxt+'">'+_sfmt(r.prov)+'</td>'
+      +'<td style="text-align:right'+tdTxt+'">'+_sfmt(pAvg)+'</td>'
+      +cpCell+'</tr>';
+  }
+  html+='</tbody></table></div>';
+  html+='<div style="font-size:10px;color:var(--gray3);margin-top:8px">Tabuľka vložená 1:1 zo sheetu (počítané za obdobie 1.9.2025 – 28.2.2026). Slúži ako základ pre porovnania v aktuálnom období.</div>';
+  html+='</div>';
+  c.innerHTML=html;
+}
+function provExportCsv(){
+  const per=stratPeriod();const p=_provStore();
+  const rows=[['Meno','počet mesiacov','FJ spolu','FJ priemer/mes.','mesiace provízií','provízie spolu','provízie priemer/mes.'],[]];
+  for(const r of getProvRoster()){
+    if(r.hdr){rows.push(['TOWER']);continue;}
+    const k=_provKey(r.name);
+    const mes=(p.mes[k]!==undefined)?p.mes[k]:6;
+    const fjAuto=per.to?provFjSum(r.name,per.from,per.to):null;
+    const fj=(p.fjOv[k]!==undefined)?p.fjOv[k]:fjAuto;
+    const mesP=(p.mesP[k]!==undefined)?p.mesP[k]:6;
+    const prov=(p.sum[k]!==undefined)?p.sum[k]:null;
+    rows.push([r.name,mes,fj===null?'':fj,(fj!==null&&mes)?Math.round(fj/mes*10)/10:'',mesP,prov===null?'':prov,(prov!==null&&mesP)?Math.round(prov/mesP*100)/100:'']);
+  }
+  _csvDownload('strategicky-meeting_provizie_'+(per.from||'')+'.csv',rows);
 }
 </script>
 </body></html>
