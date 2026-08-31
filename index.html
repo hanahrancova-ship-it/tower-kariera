@@ -2433,7 +2433,7 @@ const PRISPEVKY_FAKT=[
   {name:'Erik Bednár',team:['Erik Bednár','Patrik Šuvara'],maxPrispevok:540,minFJ:2700,maxPrispevokNew:540,minFJNew:2700},
   {name:'Mgr. Kristína Mikulovská',team:['Mgr. Kristína Mikulovská','Michaela Hrbáčiková'],maxPrispevok:345,minFJ:1750,maxPrispevokNew:360,minFJNew:1800},
   {name:'Lucia Budzeľová',team:['Lucia Budzeľová'],maxPrispevok:186,minFJ:930,maxPrispevokNew:186,minFJNew:930},
-  {name:'Július Kováč',team:['Július Kováč','Andrej Bitala','Peter Letovanec','Sára Macová'],maxPrispevok:825,minFJ:4125,maxPrispevokNew:825,minFJNew:4125,fromNewOnly:true,specialQ:{'2026-Q3':[6,7,8,9]}}
+  {name:'Július Kováč',team:['Július Kováč','Andrej Bitala','Peter Letovanec','Peter Letanovec','Sára Macová'],maxPrispevok:825,minFJ:4125,maxPrispevokNew:825,minFJNew:4125,fromNewOnly:true,specialQ:{'2026-Q3':[6,7,8,9]}}
 ];
 
 // FIX preddavky + Q vyrovnanie (skupina 3). *New = od 1.7.2026.
@@ -2526,7 +2526,8 @@ function showPayInfo(grpId,label){
 function ownFJForMonth(name,monthKey){
   const imp=imports.find(i=>i.key===monthKey);
   if(!imp)return 0;
-  const p=imp.people.find(x=>x.name===name);
+  // Tolerantné porovnanie mena (tituly, diakritika, medzery) — inak vypadnú FJ pri drobnom rozdiele zápisu
+  const p=imp.people.find(x=>_namesMatch(x.name,name));
   return p?(p.ownFJ||0):0;
 }
 
@@ -2720,11 +2721,15 @@ function renderPrispevkyFakt(year){
       const data=getPrispevok(key);
       // spočítaj FJ tímu za Q (s prípadnou výnimkou na počet mesiacov)
       const specMonths=p.specialQ&&p.specialQ[year+'-Q'+q];
-      let sumFJ=0;
+      let sumFJ=0;const _detail=[];
       for(const member of p.team){
-        if(specMonths){for(const mm of specMonths)sumFJ+=ownFJForMonth(member,year+'-'+String(mm).padStart(2,'0'));}
-        else sumFJ+=ownFJForQ(member,year,q);
+        let mv=0;
+        if(specMonths){for(const mm of specMonths)mv+=ownFJForMonth(member,year+'-'+String(mm).padStart(2,'0'));}
+        else mv=ownFJForQ(member,year,q);
+        sumFJ+=mv;
+        _detail.push(member+': '+(Math.round(mv*100)/100));
       }
+      const _detailTip=_detail.join(' · ');
       const specTag=specMonths?' · '+specMonths.length+' mes.':'';
       const prispevok=Math.min(sumFJ*0.2,maxP);
       const prispevokUlozeny=(data&&data.sumaEur!==undefined)?data.sumaEur:prispevok;
@@ -2740,7 +2745,7 @@ function renderPrispevkyFakt(year){
         }
       }
       const safeName=p.name.replace(/'/g,"\\'");
-      html+='<td class="prispevok-cell '+cls+'" onclick="openPrispevokModal(\'fakt\',\''+key+'\',\''+safeName+'\',\'Q'+q+' '+year+'\','+prispevok.toFixed(2)+')">'+content+'</td>';
+      html+='<td class="prispevok-cell '+cls+'" title="'+_detailTip.replace(/"/g,'&quot;')+'" onclick="openPrispevokModal(\'fakt\',\''+key+'\',\''+safeName+'\',\'Q'+q+' '+year+'\','+prispevok.toFixed(2)+')">'+content+'</td>';
     }
     if(isAdmin){const safeName=p.name.replace(/'/g,"\\'");html+='<td class="tf-admin-only" style="text-align:center"><button onclick="removeFaktPerson(\''+safeName+'\')" style="background:transparent;border:none;cursor:pointer;color:var(--red);font-size:14px;padding:2px 6px" title="Odstrániť"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></td>';}
     html+='</tr>';
