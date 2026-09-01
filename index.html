@@ -4423,6 +4423,7 @@ function getStratGroups(){
 function saveStratGroups(arr){strategicData.groups=arr;tfSave('tf_strategic',strategicData);}
 function _sp2(n){return String(n).padStart(2,'0');}
 function _sfmt(v){if(v===null||v===undefined)return'–';return (Math.round(v*100)/100).toLocaleString('sk-SK',{minimumFractionDigits:0,maximumFractionDigits:2});}
+function _sfmtR(v){if(v===null||v===undefined)return'–';return Math.round(v).toLocaleString('sk-SK');}
 // Hodnota z importu pre skupinu a mesiac
 function stratImportCell(mode,year,m,grp){
   const imp=imports.find(i=>i.key===year+'-'+_sp2(m));
@@ -4462,6 +4463,7 @@ function stratCell(mode,year,m,grp){
     const k=mode+'_'+ym+'_'+grp.id+'_'+f;
     if(ov[k]!==undefined)base[f]=(ov[k]==='-'||ov[k]==='–')?null:ov[k];
   }
+  if(mode==='b'&&grp.id==='firma'&&STRAT_FIRMA_FIX[ym]!==undefined&&ov[mode+'_'+ym+'_'+grp.id+'_skFJ']===undefined)base.skFJ=STRAT_FIRMA_FIX[ym];
   // Trvalé pomlčky: Firma nemá osobnú produkciu; A. Nejedlík nemá skupinu
   if(grp.noOs||grp.id==='firma'){base.osFJ=null;base.osKus=null;}
   if(grp.noSk||grp.id==='an'){base.skFJ=null;base.skKus=null;}
@@ -4588,11 +4590,11 @@ function stratSvgChart(series){
     svg+='<circle cx="'+X(p.i).toFixed(1)+'" cy="'+Y(p.v).toFixed(1)+'" r="2.6" fill="#eaf8ee"></circle>';});
   // Hodnoty nad bodmi pri kratších grafoch (napr. nové obdobie)
   if(n<=13)pts.forEach(p=>{if(p.v===null)return;
-    svg+='<text x="'+X(p.i).toFixed(1)+'" y="'+(Y(p.v)-10).toFixed(1)+'" text-anchor="middle" font-size="12" font-weight="700" fill="#eaf8ee" font-family="Archivo,sans-serif">'+p.v.toLocaleString('sk-SK')+'</text>';});
+    svg+='<text x="'+X(p.i).toFixed(1)+'" y="'+(Y(p.v)-10).toFixed(1)+'" text-anchor="middle" font-size="12" font-weight="700" fill="#eaf8ee" font-family="Archivo,sans-serif">'+Math.round(p.v).toLocaleString('sk-SK')+'</text>';});
   // Široké hover zóny — tooltip s presným číslom na celom stĺpci mesiaca
   const colW=(W-pL-pR)/Math.max(n,1);
   pts.forEach(p=>{
-    const tip=p.label+': '+(p.v===null?'bez dát':p.v.toLocaleString('sk-SK')+' FJ');
+    const tip=p.label+': '+(p.v===null?'bez dát':Math.round(p.v).toLocaleString('sk-SK')+' FJ');
     svg+='<rect x="'+(X(p.i)-colW/2).toFixed(1)+'" y="'+pT+'" width="'+colW.toFixed(1)+'" height="'+(H-pT-pB)+'" fill="transparent"'+_tipAttr(tip)+'></rect>';});
   const every=n>30?2:1;
   pts.forEach(p=>{if(p.i%every!==0)return;
@@ -4659,8 +4661,8 @@ function stratBarChartL(items){
     const x=pL+slot*i+(slot-bw)/2;
     const h=(H-pT-pB)*(v/top);
     const y=pT+(H-pT-pB)-h;
-    svg+='<rect x="'+(pL+slot*i).toFixed(1)+'" y="'+pT+'" width="'+slot.toFixed(1)+'" height="'+(H-pT-pB)+'" fill="transparent"'+_tipAttr(it.label+': '+v.toLocaleString('sk-SK')+' FJ')+'></rect>';
-    svg+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="2" fill="#16381f"'+_tipAttr(it.label+': '+v.toLocaleString('sk-SK')+' FJ')+'></rect>';
+    svg+='<rect x="'+(pL+slot*i).toFixed(1)+'" y="'+pT+'" width="'+slot.toFixed(1)+'" height="'+(H-pT-pB)+'" fill="transparent"'+_tipAttr(it.label+': '+Math.round(v).toLocaleString('sk-SK')+' FJ')+'></rect>';
+    svg+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="2" fill="#16381f"'+_tipAttr(it.label+': '+Math.round(v).toLocaleString('sk-SK')+' FJ')+'></rect>';
     svg+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(y-6).toFixed(1)+'" text-anchor="middle" font-size="12" font-weight="700" fill="#16381f" font-family="Archivo,sans-serif">'+Math.round(v).toLocaleString('sk-SK')+'</text>';
     svg+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(H-pB+16)+'" text-anchor="middle" font-size="11" fill="#555" font-family="Archivo,sans-serif">'+it.label+'</text>';
   });
@@ -4688,10 +4690,10 @@ function stratRastChart(){
     const cx=pL+slot*m+slot/2;
     const xPrev=cx-bw-2, xCur=cx+2;
     const hP=(H-pT-pB)*(prev[m]/top);
-    svg+='<rect x="'+xPrev.toFixed(1)+'" y="'+Ybar(prev[m]).toFixed(1)+'" width="'+bw+'" height="'+hP.toFixed(1)+'" rx="2" fill="#16381f"><title>'+STRAT_MES[m]+' (minulý rok): '+prev[m].toLocaleString('sk-SK')+' FJ</title></rect>';
+    svg+='<rect x="'+xPrev.toFixed(1)+'" y="'+Ybar(prev[m]).toFixed(1)+'" width="'+bw+'" height="'+hP.toFixed(1)+'" rx="2" fill="#16381f"><title>'+STRAT_MES[m]+' (minulý rok): '+Math.round(prev[m]).toLocaleString('sk-SK')+' FJ</title></rect>';
     if(cur[m]!==null){
       const hC=(H-pT-pB)*(cur[m]/top);
-      svg+='<rect x="'+xCur.toFixed(1)+'" y="'+Ybar(cur[m]).toFixed(1)+'" width="'+bw+'" height="'+hC.toFixed(1)+'" rx="2" fill="#3CD64E"><title>'+STRAT_MES[m]+' '+yNow+': '+cur[m].toLocaleString('sk-SK')+' FJ</title></rect>';
+      svg+='<rect x="'+xCur.toFixed(1)+'" y="'+Ybar(cur[m]).toFixed(1)+'" width="'+bw+'" height="'+hC.toFixed(1)+'" rx="2" fill="#3CD64E"><title>'+STRAT_MES[m]+' '+yNow+': '+Math.round(cur[m]).toLocaleString('sk-SK')+' FJ</title></rect>';
       const pct=prev[m]?((cur[m]/prev[m]-1)*100):0;
       const txt=(pct>=0?'+':'')+pct.toFixed(1).replace('.',',')+'%';
       const yTop=Math.min(Ybar(prev[m]),Ybar(cur[m]))-8;
@@ -4699,8 +4701,8 @@ function stratRastChart(){
     }
     svg+='<text x="'+cx.toFixed(1)+'" y="'+(H-pB+16)+'" text-anchor="middle" font-size="10" fill="#555" font-family="Archivo,sans-serif">'+STRAT_MES_S[m]+'</text>';
     // Hover zóna na celý stĺpec mesiaca — presné čísla + % rozdiel
-    let _tt=STRAT_MES[m]+'\nMinulý rok: '+prev[m].toLocaleString('sk-SK')+' FJ';
-    if(cur[m]!==null){const _p=prev[m]?((cur[m]/prev[m]-1)*100):0;_tt+='\nTento rok ('+yNow+'): '+cur[m].toLocaleString('sk-SK')+' FJ\nRozdiel: '+(_p>=0?'+':'')+_p.toFixed(1).replace('.',',')+' %';}
+    let _tt=STRAT_MES[m]+'\nMinulý rok: '+Math.round(prev[m]).toLocaleString('sk-SK')+' FJ';
+    if(cur[m]!==null){const _p=prev[m]?((cur[m]/prev[m]-1)*100):0;_tt+='\nTento rok ('+yNow+'): '+Math.round(cur[m]).toLocaleString('sk-SK')+' FJ\nRozdiel: '+(_p>=0?'+':'')+_p.toFixed(1).replace('.',',')+' %';}
     else _tt+='\nTento rok: zatiaľ bez dát';
     svg+='<rect x="'+(pL+slot*m).toFixed(1)+'" y="'+pT+'" width="'+slot.toFixed(1)+'" height="'+(H-pT-pB)+'" fill="transparent"'+_tipAttr(_tt)+'></rect>';
   }
@@ -4819,9 +4821,9 @@ function renderStrateg(){
         let t=g.label+' · '+STRAT_MES[m-1]+' — započítaní:';
         if((names||[]).includes('*')){t+='\n✓ VŠETCI z ranklistu ('+_arrM.length+' osôb), vlastná produkcia';}
         else (names||[]).forEach(n=>{const p=_arrM.find(x=>_namesMatch(x.name,n));
-          if(p){const v=useGroup?(p.groupFJ||0):(p.ownFJ||0);const kk=useGroup?p.groupKus:p.ownKus;t+='\n✓ '+n+': '+(Math.round(v*100)/100)+(kk!==undefined?' FJ · '+kk+' ks':' FJ');}
+          if(p){const v=useGroup?(p.groupFJ||0):(p.ownFJ||0);const kk=useGroup?p.groupKus:p.ownKus;t+='\n✓ '+n+': '+Math.round(v)+(kk!==undefined?' FJ · '+kk+' ks':' FJ');}
           else t+='\n✗ '+n+' — nie je v rankliste';});
-        if((g.skMinus||[]).length&&useGroup!==false){(g.skMinus||[]).forEach(n=>{const p=_arrM.find(x=>_namesMatch(x.name,n));t+='\n− '+n+(p?': '+(Math.round((p.groupFJ||0)*100)/100)+' FJ':' — nie je v rankliste');});}
+        if((g.skMinus||[]).length&&useGroup!==false){(g.skMinus||[]).forEach(n=>{const p=_arrM.find(x=>_namesMatch(x.name,n));t+='\n− '+n+(p?': '+Math.round(p.groupFJ||0)+' FJ':' — nie je v rankliste');});}
         return t;};
       const _tipSk=_mkTip(g.skNames,g.skSource!=='own');
       const _tipOs=_mkTip(g.osNames,false);
@@ -4833,13 +4835,13 @@ function renderStrateg(){
         const _kusMissing=(f==='skKus'||f==='osKus')&&cell[f]===null&&(cell.skFJ!==null||cell.osFJ!==null);
         if(_kusMissing)_anyKusMissing=true;
         const _tipC=(fi<2?_tipSk:_tipOs)+(isOv?'\n(ručne upravené)':'')+'\nKlik = ručná oprava';
-        html+='<td style="'+(fi===0?_sep:'')+'background:'+_tint(gi)+';cursor:pointer;text-align:right'+(fi<2?';font-weight:600':'')+(_kusMissing?';color:#c77a00':'')+'" data-tip="'+_tipC.replace(/"/g,'&quot;')+'" onmousemove="stratTipMove(event,this)" onmouseleave="stratTipHide()" onclick="stratEditCell(\''+mode+'\','+year+','+m+',\''+g.id+'\',\''+f+'\')">'+(_kusMissing?'?':_sfmt(cell[f]))+'</td>';
+        html+='<td style="'+(fi===0?_sep:'')+'background:'+_tint(gi)+';cursor:pointer;text-align:right'+(fi<2?';font-weight:600':'')+(_kusMissing?';color:#c77a00':'')+'" data-tip="'+_tipC.replace(/"/g,'&quot;')+'" onmousemove="stratTipMove(event,this)" onmouseleave="stratTipHide()" onclick="stratEditCell(\''+mode+'\','+year+','+m+',\''+g.id+'\',\''+f+'\')">'+(_kusMissing?'?':_sfmtR(cell[f]))+'</td>';
       });
     });
     html+='</tr>';
   }
   html+='</tbody></table></div>';
-  html+='<div style="font-size:10px;color:var(--gray3);margin-top:8px">Zdroj: nahrané ranklisty ('+(mode==='b'?'brutto':'netto')+'); história do 02/2026 prenesená zo sheetov. Modré číslo = ručná oprava.</div>';
+  html+='<div style="font-size:10px;color:var(--gray3);margin-top:8px">Zdroj: nahrané ranklisty ('+(mode==='b'?'brutto':'netto')+'); história do 02/2026 prenesená zo sheetov. Či je hodnota ručne upravená, uvidíš v bublinke pri prejdení myšou.</div>';
   if(_anyKusMissing)html+='<div style="font-size:11px;color:#854F0B;background:#FAEEDA;border-radius:6px;padding:8px 12px;margin-top:8px">Oranžový „?" = počet zmlúv chýba, lebo ranklist za daný mesiac bol nahraný ešte pred doplnením stĺpcov „Kus". Stačí ten mesiac <strong>nahrať znova</strong> (Import dát) — pozície sa nezmenia, doplnia sa len počty.</div>';
   html+='</div>';
   // FIRMA spolu — mesačne + kumulatívne, od 2017
@@ -4870,10 +4872,10 @@ function renderStrateg(){
     const _ckF=(mode==='b')?('stratEditFirma('+fy+','+m+',0)'):('stratEditCell(\'n\','+fy+','+m+',\'firma\',\'skFJ\')');
     const _ckZ=(mode==='b')?('stratEditFirma('+fy+','+m+',1)'):('stratEditCell(\'n\','+fy+','+m+',\'firma\',\'skKus\')');
     html+='<tr><td class="cell-person">'+STRAT_MES[m-1]+'</td>';
-    html+='<td style="text-align:right;cursor:pointer" onclick="'+_ckF+'">'+_sfmt(v?v[0]:null)+'</td>';
-    html+='<td style="text-align:right;cursor:pointer" onclick="'+_ckZ+'">'+_sfmt(v?v[1]:null)+'</td></tr>';
+    html+='<td style="text-align:right;cursor:pointer" onclick="'+_ckF+'">'+_sfmtR(v?v[0]:null)+'</td>';
+    html+='<td style="text-align:right;cursor:pointer" onclick="'+_ckZ+'">'+_sfmtR(v?v[1]:null)+'</td></tr>';
   }
-  html+='<tr><td class="cell-person" style="font-weight:800;background:#e4efe7 !important">SPOLU '+fy+'</td><td style="text-align:right;font-weight:800;background:#e4efe7">'+_sfmt(cumFJ)+'</td><td style="text-align:right;font-weight:800;background:#e4efe7">'+_sfmt(cumZ)+'</td></tr>';
+  html+='<tr><td class="cell-person" style="font-weight:800;background:#e4efe7 !important">SPOLU '+fy+'</td><td style="text-align:right;font-weight:800;background:#e4efe7">'+_sfmtR(cumFJ)+'</td><td style="text-align:right;font-weight:800;background:#e4efe7">'+_sfmtR(cumZ)+'</td></tr>';
   html+='</tbody></table></div></div>';
   // Pravá: SPOLU FIRMA po rokoch (samostatná tabuľka)
   html+='<div style="min-width:280px"><table class="prispevky-table" style="max-width:340px"><thead><tr><th colspan="3" style="background:#e4efe7;color:var(--green-dark);font-size:12px">SPOLU FIRMA</th></tr><tr><th style="text-align:left">Rok</th><th>FJ</th><th>Zmluvy</th></tr></thead><tbody>';
@@ -4882,7 +4884,7 @@ function renderStrateg(){
     let sf=0,sz=0,anyY=false;
     for(let m=1;m<=12;m++){const v=_fV(y,m);if(v){anyY=true;sf+=v[0]||0;sz+=v[1]||0;}}
     const _cur=(y===fy);
-    html+='<tr style="cursor:pointer" onclick="strategFirmaYear='+y+';renderStrateg()" title="Zobraziť mesiace roka '+y+'"><td class="cell-person" style="'+(_cur?'background:#e4efe7 !important;font-weight:800':'')+'">'+y+'</td><td style="text-align:right;font-weight:700;'+(_cur?'background:#e4efe7':'')+'">'+(anyY?_sfmt(Math.round(sf*100)/100):'–')+'</td><td style="text-align:right;font-weight:700;'+(_cur?'background:#e4efe7':'')+'">'+(anyY?_sfmt(sz):'–')+'</td></tr>';
+    html+='<tr style="cursor:pointer" onclick="strategFirmaYear='+y+';renderStrateg()" title="Zobraziť mesiace roka '+y+'"><td class="cell-person" style="'+(_cur?'background:#e4efe7 !important;font-weight:800':'')+'">'+y+'</td><td style="text-align:right;font-weight:700;'+(_cur?'background:#e4efe7':'')+'">'+(anyY?_sfmtR(sf):'–')+'</td><td style="text-align:right;font-weight:700;'+(_cur?'background:#e4efe7':'')+'">'+(anyY?_sfmtR(sz):'–')+'</td></tr>';
   }
   html+='</tbody></table><div style="font-size:10px;color:var(--gray3);margin-top:6px">Klik na rok zobrazí jeho mesiace vľavo.</div></div>';
   html+='</div>';
@@ -4905,7 +4907,9 @@ function stratFirmaYears(){
   for(const imp of imports){const y=parseInt(imp.key.split('-')[0]);if(y>maxY)maxY=y;}
   const out=[];for(let y=2017;y<=maxY;y++)out.push(y);return out;
 }
-// Firma mesiac: [FJ, zmluvy, ovFJ?, ovZml?] — override > história > výpočet zo skupiny Firma (brutto)
+// Ručne potvrdené FJ firmy (brutto) — prepíšu výpočet z ranklistu (zmluvy ostávajú z importu)
+const STRAT_FIRMA_FIX={'2026-03':8240,'2026-04':11399,'2026-05':10212};
+// Firma mesiac: [FJ, zmluvy, ovFJ?, ovZml?] — override > pevná hodnota > história > výpočet zo skupiny Firma (brutto)
 function stratFirmaMonth(year,m,firmaGrp){
   const ym=year+'-'+_sp2(m);
   const ov=strategicData.ov||{};
@@ -4915,6 +4919,7 @@ function stratFirmaMonth(year,m,firmaGrp){
     const im=stratImportCell('b',year,m,firmaGrp);
     if(im){fj=im.skFJ;z=im.skKus;}
   }
+  if(STRAT_FIRMA_FIX[ym]!==undefined)fj=STRAT_FIRMA_FIX[ym];
   const ovF=ov['f_'+ym+'_FJ'],ovZ=ov['f_'+ym+'_Z'];
   if(ovF!==undefined)fj=ovF;
   if(ovZ!==undefined)z=ovZ;
@@ -5240,8 +5245,8 @@ function renderStrategProv(){
     const tdTxt=r.mgr?';color:#fff;background:var(--green-dark)':'';
     html+='<tr'+rowStyle+'>'+tdN
       +'<td style="text-align:center;cursor:pointer'+tdTxt+'" title="Klik = upraviť počet mesiacov" onclick="provEdit(\'mes\',\''+safe+'\',\'Počet mesiacov (FJ)\','+mes+')">'+mes+'</td>'
-      +'<td style="text-align:right;cursor:pointer'+tdTxt+'" title="FJ spolu (brutto vlastné z ranklistov) — klik = ručná oprava" onclick="provEdit(\'fjOv\',\''+safe+'\',\'FJ spolu (ručná oprava)\','+(fj===null?'':fj)+')">'+_sfmt(fj)+'</td>'
-      +'<td style="text-align:right'+tdTxt+'">'+_sfmt(fjAvg)+'</td>'
+      +'<td style="text-align:right;cursor:pointer'+tdTxt+'" title="FJ spolu (brutto vlastné z ranklistov) — klik = ručná oprava" onclick="provEdit(\'fjOv\',\''+safe+'\',\'FJ spolu (ručná oprava)\','+(fj===null?'':fj)+')">'+_sfmtR(fj)+'</td>'
+      +'<td style="text-align:right'+tdTxt+'">'+_sfmtR(fjAvg)+'</td>'
       +_pctCell(fjAvg,oldFjAvg)
       +'<td style="text-align:center;cursor:pointer'+tdTxt+'" title="Klik = upraviť" onclick="provEdit(\'mesP\',\''+safe+'\',\'Počet mesiacov (provízie)\','+mesP+')">'+mesP+'</td>'
       +'<td style="text-align:right;cursor:pointer'+tdTxt+'" title="'+(p.sum[k]!==undefined?'Ručne zadané — klik pre zmenu':(provPay!==null?'Súčet z nahraných výplat za obdobie — klik = ručná oprava':'Klik = zapísať / nahraj výplaty importom'))+'" onclick="provEdit(\'sum\',\''+safe+'\',\'Provízie spolu (€)\','+(prov===null?'':prov)+')">'+_sfmt(prov)+'</td>'
@@ -5265,8 +5270,8 @@ function renderStrategProv(){
     const tdN=r.mgr?'<td class="cell-person" style="background:var(--green-dark) !important;color:#fff !important;font-weight:800">'+r.name+'</td>':'<td class="cell-person">'+r.name+'</td>';
     html+='<tr'+(r.mgr?' style="background:var(--green-dark)"':'')+'>'+tdN
       +'<td style="text-align:center'+tdTxt+'">'+r.mes+'</td>'
-      +'<td style="text-align:right'+tdTxt+'">'+_sfmt(r.fj)+'</td>'
-      +'<td style="text-align:right'+tdTxt+'">'+_sfmt(avg)+'</td>'
+      +'<td style="text-align:right'+tdTxt+'">'+_sfmtR(r.fj)+'</td>'
+      +'<td style="text-align:right'+tdTxt+'">'+_sfmtR(avg)+'</td>'
       +'<td style="text-align:center'+tdTxt+'">'+'<span style="font-weight:700">±</span>'.replace('±','')+'</td>'
       +'<td style="text-align:center'+tdTxt+'">'+r.mesP+'</td>'
       +'<td style="text-align:right'+tdTxt+'">'+_sfmt(r.prov)+'</td>'
