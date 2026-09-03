@@ -4369,7 +4369,7 @@ const STRAT_DEFAULT_GROUPS=[
  {id:'el',label:'E. Lehocký',short:'Erik',osNames:['Erik Lehocký'],skNames:['Erik Lehocký'],skSource:'group',skMinus:['Michal Gallo']},
  {id:'mg',label:'M. Gallo',short:'Mišo',osNames:['Michal Gallo'],skNames:['Michal Gallo'],skSource:'group'},
  {id:'lb',label:'L. Budzeľová',short:'Lucia',osNames:['Lucia Budzeľová'],skNames:['Lucia Budzeľová'],skSource:'group'},
- {id:'an',label:'A. Nejedlík',short:'Andrej',osNames:['Andrej Nejedlík'],skNames:['Andrej Nejedlík'],skSource:'group',noSk:true},
+ {id:'an',label:'A. Nejedlík',short:'Andrej',osNames:['Andrej Nejedlík'],skNames:['Andrej Nejedlík'],skSource:'group'}, // sk. = os. (nemá skupinu, duplikuje sa osobná)
  {id:'firma',label:'Firma',osNames:['Mário Markech','Ondrej Broska'],skNames:['*'],skSource:'own',noOs:true} // '*' = všetci ľudia v rankliste (súčet vlastnej produkcie = celá firma)
 ];
 // História BRUTTO po manažéroch (zo sheetu): [skFJ,skZml,osFJ,osZml]; null = '-'
@@ -4464,9 +4464,10 @@ function stratCell(mode,year,m,grp){
     if(ov[k]!==undefined)base[f]=(ov[k]==='-'||ov[k]==='–')?null:ov[k];
   }
   if(mode==='b'&&grp.id==='firma'&&STRAT_FIRMA_FIX[ym]!==undefined&&ov[mode+'_'+ym+'_'+grp.id+'_skFJ']===undefined)base.skFJ=STRAT_FIRMA_FIX[ym];
-  // Trvalé pomlčky: Firma nemá osobnú produkciu; A. Nejedlík nemá skupinu
+  // Firma nemá osobnú produkciu (pomlčky); A. Nejedlík nemá skupinu → sk. sa duplikuje z osobnej
   if(grp.noOs||grp.id==='firma'){base.osFJ=null;base.osKus=null;}
-  if(grp.noSk||grp.id==='an'){base.skFJ=null;base.skKus=null;}
+  if(grp.id==='an'||grp.skMirrorOs){base.skFJ=base.osFJ;base.skKus=base.osKus;}
+  else if(grp.noSk){base.skFJ=null;base.skKus=null;}
   return base;
 }
 function stratEditCell(mode,year,m,grpId,field){
@@ -4628,9 +4629,11 @@ function stratEditG2Old(){
   if(!items.length){alert('Nepodarilo sa načítať hodnoty.');return;}
   strategicData.g2old=items;tfSave('tf_strategic',strategicData);renderStrateg();
 }
-let strategG2={from:null,to:null,sel:null};
+let strategG2={from:null,to:null,from2:null,to2:null,sel:null,init2:false};
 function stratG2SetFrom(v){if(v)strategG2.from=v;renderStrateg();}
 function stratG2SetTo(v){if(v)strategG2.to=v;renderStrateg();}
+function stratG2SetFrom2(v){strategG2.from2=v||null;renderStrateg();}
+function stratG2SetTo2(v){strategG2.to2=v||null;renderStrateg();}
 function stratG2Toggle(id,on){if(strategG2.sel&&strategG2.sel[id])strategG2.sel[id].on=!!on;renderStrateg();}
 function stratG2Src(id,src){if(strategG2.sel&&strategG2.sel[id])strategG2.sel[id].src=src;renderStrateg();}
 // Graf 3 — hodnoty predchádzajúceho roka (z jej sheetu „FJ 20% RAST", jan–dec)
@@ -4668,6 +4671,50 @@ function stratBarChartL(items){
   });
   const y0=pT+(H-pT-pB);
   svg+='<line x1="'+pL+'" y1="'+y0+'" x2="'+(W-pR)+'" y2="'+y0+'" stroke="#bbb"></line></svg>';
+  return svg;
+}
+// VÝBER: dva stĺpce na osobu — obdobie 1 (tmavozelená) a obdobie 2 (svetlozelená), čiastočne sa prekrývajú
+function stratBarChartL2(items,leg1,leg2){
+  const has2=items.some(i=>i.v2!==null&&i.v2!==undefined);
+  const vals=[];items.forEach(i=>{vals.push(i.v1||0);if(has2&&i.v2!==null&&i.v2!==undefined)vals.push(i.v2||0);});
+  if(!items.length||!vals.some(v=>v>0))return '<div class="empty">Za toto obdobie zatiaľ nie sú dáta.</div>';
+  const W=560,H=350,pL=64,pR=12,pT=30,pB=has2?60:44;
+  const mx=Math.max(...vals,1);const step=_niceStep(mx);const top=Math.max(step,Math.ceil(mx/step)*step);
+  const n=items.length,slot=(W-pL-pR)/n,bw=Math.min(56,slot*(has2?0.42:0.5));
+  const off=has2?bw*0.45:0;
+  let svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block">';
+  for(let g=0;g<=top;g+=step){const y=pT+(H-pT-pB)*(1-g/top);
+    svg+='<line x1="'+pL+'" y1="'+y.toFixed(1)+'" x2="'+(W-pR)+'" y2="'+y.toFixed(1)+'" stroke="#ececec"></line>';
+    svg+='<text x="'+(pL-8)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end" font-size="10" fill="#999" font-family="Archivo,sans-serif">'+g.toLocaleString('sk-SK')+'</text>';
+  }
+  const plotH=H-pT-pB;
+  items.forEach((it,i)=>{
+    const v1=it.v1||0,v2=(it.v2===null||it.v2===undefined)?null:(it.v2||0);
+    const x1=pL+slot*i+(slot-(bw+off))/2;
+    const h1=plotH*(v1/top),y1=pT+plotH-h1;
+    let tip=it.label+'\n'+(has2?(leg1+': '):'')+Math.round(v1).toLocaleString('sk-SK')+' FJ';
+    if(v2!==null){tip+='\n'+leg2+': '+Math.round(v2).toLocaleString('sk-SK')+' FJ';if(v2>0){const pc=(v1/v2-1)*100;tip+='\nRozdiel: '+(pc>=0?'+':'')+pc.toFixed(1).replace('.',',')+' %';}}
+    svg+='<rect x="'+(pL+slot*i).toFixed(1)+'" y="'+pT+'" width="'+slot.toFixed(1)+'" height="'+plotH+'" fill="transparent"'+_tipAttr(tip)+'></rect>';
+    if(v2!==null){
+      const h2=plotH*(v2/top),y2=pT+plotH-h2,x2=x1+off;
+      svg+='<rect x="'+x2.toFixed(1)+'" y="'+y2.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h2.toFixed(1)+'" rx="2" fill="#3CD64E" fill-opacity="0.9"'+_tipAttr(tip)+'></rect>';
+    }
+    svg+='<rect x="'+x1.toFixed(1)+'" y="'+y1.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h1.toFixed(1)+'" rx="2" fill="#16381f" fill-opacity="'+(v2!==null?'0.92':'1')+'"'+_tipAttr(tip)+'></rect>';
+    svg+='<text x="'+(x1+bw/2).toFixed(1)+'" y="'+(y1-6).toFixed(1)+'" text-anchor="middle" font-size="11" font-weight="700" fill="#16381f" font-family="Archivo,sans-serif">'+Math.round(v1).toLocaleString('sk-SK')+'</text>';
+    if(v2!==null){
+      const h2=plotH*(v2/top),y2b=pT+plotH-h2;
+      const yl2=(Math.abs(y2b-y1)<14)?(Math.min(y1,y2b)-19):(y2b-6);
+      svg+='<text x="'+(x1+off+bw/2).toFixed(1)+'" y="'+yl2.toFixed(1)+'" text-anchor="middle" font-size="11" font-weight="700" fill="#1d8a3c" font-family="Archivo,sans-serif">'+Math.round(v2).toLocaleString('sk-SK')+'</text>';
+    }
+    svg+='<text x="'+(pL+slot*i+slot/2).toFixed(1)+'" y="'+(H-pB+16)+'" text-anchor="middle" font-size="11" fill="#555" font-family="Archivo,sans-serif">'+it.label+'</text>';
+  });
+  const y0=pT+plotH;
+  svg+='<line x1="'+pL+'" y1="'+y0+'" x2="'+(W-pR)+'" y2="'+y0+'" stroke="#bbb"></line>';
+  if(has2){
+    svg+='<rect x="'+pL+'" y="'+(H-16)+'" width="11" height="11" fill="#16381f" rx="2"></rect><text x="'+(pL+16)+'" y="'+(H-7)+'" font-size="10" fill="#555" font-family="Archivo,sans-serif">'+leg1+'</text>';
+    svg+='<rect x="'+(pL+230)+'" y="'+(H-16)+'" width="11" height="11" fill="#3CD64E" rx="2"></rect><text x="'+(pL+246)+'" y="'+(H-7)+'" font-size="10" fill="#555" font-family="Archivo,sans-serif">'+leg2+'</text>';
+  }
+  svg+='</svg>';
   return svg;
 }
 // Graf 3: mesiace tohto roka vs. predchádzajúci rok, % rozdiel nad každým mesiacom (len BRUTTO)
@@ -4750,29 +4797,45 @@ function renderStrateg(){
   mgrGroups.forEach(g=>{if(!strategG2.sel[g.id])strategG2.sel[g.id]={on:true,src:'sk'};});
   if(!strategG2.from)strategG2.from=(per.meet&&per.to&&per.to>=per.from)?per.from:(year+'-01');
   if(!strategG2.to)strategG2.to=(per.meet&&per.to&&per.to>=per.from)?per.to:(year+'-12');
+  if(!strategG2.init2){strategG2.from2='2025-11';strategG2.to2='2026-02';strategG2.init2=true;}
+  const g2range=(g,st,fromYm,toYm)=>{
+    let sum=0,ym=fromYm,gd=0;
+    while(ym<=toYm&&gd<200){
+      const pr2=ym.split('-').map(Number);
+      const c=stratCell(mode,pr2[0],pr2[1],g);
+      const v=(st.src==='os')?c.osFJ:c.skFJ;
+      if(v!==null&&v!==undefined)sum+=v;
+      ym=_ymAdd(ym,1);gd++;
+    }
+    return Math.round(sum*100)/100;
+  };
+  const g2has2=!!(strategG2.from2&&strategG2.to2);
   const g2sum=()=>{
     const out=[];
     mgrGroups.forEach(g=>{
       const st=strategG2.sel[g.id];if(!st||!st.on)return;
-      let sum=0,any=false,ym=strategG2.from,gd=0;
-      while(ym<=strategG2.to&&gd<200){
-        const pr2=ym.split('-').map(Number);
-        const c=stratCell(mode,pr2[0],pr2[1],g);
-        const v=(st.src==='os')?c.osFJ:c.skFJ;
-        if(v!==null&&v!==undefined){sum+=v;any=true;}
-        ym=_ymAdd(ym,1);gd++;
-      }
-      out.push({label:(g.short||g.label)+(st.src==='os'?' (os.)':''),value:any?Math.round(sum*100)/100:0});
+      out.push({label:(g.short||g.label)+(st.src==='os'?' (os.)':''),
+        v1:g2range(g,st,strategG2.from,strategG2.to),
+        v2:g2has2?g2range(g,st,strategG2.from2,strategG2.to2):null});
     });
-    out.sort((a,b)=>b.value-a.value);
+    out.sort((a,b)=>b.v1-a.v1);
     return out;
   };
   html+='<div class="card" style="margin-bottom:16px"><div class="card-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px"><span>Výkony po manažmentoch — FJ spolu · '+(mode==='b'?'BRUTTO':'NETTO')+'</span>'+(mode==='b'?'<button class="btn btn-secondary btn-sm" onclick="stratEditG2Old()">Upraviť starý graf</button>':'')+'</div>';
   // Filter: mesiace + manažéri + sk./os.
   html+='<div style="background:var(--green-tint);border:1px solid var(--green-border);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;display:flex;gap:16px;align-items:center;flex-wrap:wrap">';
   html+='<span style="font-weight:700;color:var(--green-dark)">Filter:</span>';
-  html+='<label>od <input type="month" value="'+strategG2.from+'" onblur="stratG2SetFrom(this.value)" onkeydown="if(event.key===\'Enter\')this.blur()" style="padding:5px 8px;border:1px solid var(--green-border);border-radius:6px;font-family:var(--font-mono);font-size:11px"></label>';
-  html+='<label>do <input type="month" value="'+strategG2.to+'" onblur="stratG2SetTo(this.value)" onkeydown="if(event.key===\'Enter\')this.blur()" style="padding:5px 8px;border:1px solid var(--green-border);border-radius:6px;font-family:var(--font-mono);font-size:11px"></label>';
+  html+='<span style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--green-border);border-left:5px solid #16381f;border-radius:6px;padding:4px 10px">'
+    +'<span style="font-weight:700;color:#16381f">Obdobie 1</span>'
+    +'od <input type="month" value="'+strategG2.from+'" onblur="stratG2SetFrom(this.value)" onkeydown="if(event.key===\'Enter\')this.blur()" style="padding:5px 8px;border:1px solid var(--green-border);border-radius:6px;font-family:var(--font-mono);font-size:11px">'
+    +'do <input type="month" value="'+strategG2.to+'" onblur="stratG2SetTo(this.value)" onkeydown="if(event.key===\'Enter\')this.blur()" style="padding:5px 8px;border:1px solid var(--green-border);border-radius:6px;font-family:var(--font-mono);font-size:11px">'
+    +'</span>';
+  html+='<span style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--green-border);border-left:5px solid #3CD64E;border-radius:6px;padding:4px 10px">'
+    +'<span style="font-weight:700;color:#1d8a3c">Obdobie 2</span>'
+    +'od <input type="month" value="'+(strategG2.from2||'')+'" onblur="stratG2SetFrom2(this.value)" onkeydown="if(event.key===\'Enter\')this.blur()" style="padding:5px 8px;border:1px solid var(--green-border);border-radius:6px;font-family:var(--font-mono);font-size:11px">'
+    +'do <input type="month" value="'+(strategG2.to2||'')+'" onblur="stratG2SetTo2(this.value)" onkeydown="if(event.key===\'Enter\')this.blur()" style="padding:5px 8px;border:1px solid var(--green-border);border-radius:6px;font-family:var(--font-mono);font-size:11px">'
+    +'<span style="font-size:10px;color:var(--gray3)">(vymaž dátumy = bez porovnania)</span>'
+    +'</span>';
   mgrGroups.forEach(g=>{
     const st=strategG2.sel[g.id];
     html+='<span style="display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid var(--green-border);border-radius:6px;padding:4px 8px">'
@@ -4786,7 +4849,9 @@ function renderStrateg(){
   if(mode==='b'){
     html+='<div style="flex:1;min-width:320px"><div style="font-weight:700;font-size:12px;color:var(--green-dark);margin-bottom:6px;text-align:center">PRODUKCIA 11-12-1-2 (november 2025 – február 2026)</div>'+stratBarChartL(stratG2Old())+'</div>';
   }
-  html+='<div style="flex:1;min-width:320px"><div style="font-weight:700;font-size:12px;color:var(--green-dark);margin-bottom:6px;text-align:center">VÝBER ('+_ymNice(strategG2.from)+' – '+_ymNice(strategG2.to)+')</div>'+stratBarChartL(g2sum())+'</div>';
+  const _leg1=_ymNice(strategG2.from)+' – '+_ymNice(strategG2.to);
+  const _leg2=g2has2?(_ymNice(strategG2.from2)+' – '+_ymNice(strategG2.to2)):'';
+  html+='<div style="flex:1;min-width:320px"><div style="font-weight:700;font-size:12px;color:var(--green-dark);margin-bottom:6px;text-align:center">VÝBER'+(g2has2?' — porovnanie dvoch období':' ('+_leg1+')')+'</div>'+stratBarChartL2(g2sum(),_leg1,_leg2)+'</div>';
   html+='</div></div>';
   // ===== Graf 3: FJ za firmu vs. predchádzajúci rok (len BRUTTO) =====
   if(mode==='b'){
@@ -4828,14 +4893,16 @@ function renderStrateg(){
       const _tipSk=_mkTip(g.skNames,g.skSource!=='own');
       const _tipOs=_mkTip(g.osNames,false);
       ['skFJ','skKus','osFJ','osKus'].forEach((f,fi)=>{
-        const _dashField=((g.noOs||g.id==='firma')&&(f==='osFJ'||f==='osKus'))||((g.noSk||g.id==='an')&&(f==='skFJ'||f==='skKus'));
+        const _mirrorSk=(g.id==='an'||g.skMirrorOs)&&(f==='skFJ'||f==='skKus');
+        const _dashField=((g.noOs||g.id==='firma')&&(f==='osFJ'||f==='osKus'))||(g.noSk&&!_mirrorSk&&g.id!=='an'&&(f==='skFJ'||f==='skKus'));
         if(_dashField){html+='<td style="'+(fi===0?_sep:'')+'background:'+_tint(gi)+';text-align:right;color:var(--gray3)">–</td>';return;}
         const ovK=mode+'_'+year+'-'+_sp2(m)+'_'+g.id+'_'+f;
         const isOv=strategicData.ov&&strategicData.ov[ovK]!==undefined;
         const _kusMissing=(f==='skKus'||f==='osKus')&&cell[f]===null&&(cell.skFJ!==null||cell.osFJ!==null);
         if(_kusMissing)_anyKusMissing=true;
-        const _tipC=(fi<2?_tipSk:_tipOs)+(isOv?'\n(ručne upravené)':'')+'\nKlik = ručná oprava';
-        html+='<td style="'+(fi===0?_sep:'')+'background:'+_tint(gi)+';cursor:pointer;text-align:right'+(fi<2?';font-weight:600':'')+(_kusMissing?';color:#c77a00':'')+'" data-tip="'+_tipC.replace(/"/g,'&quot;')+'" onmousemove="stratTipMove(event,this)" onmouseleave="stratTipHide()" onclick="stratEditCell(\''+mode+'\','+year+','+m+',\''+g.id+'\',\''+f+'\')">'+(_kusMissing?'?':_sfmtR(cell[f]))+'</td>';
+        const _editF=_mirrorSk?f.replace('sk','os'):f;
+        const _tipC=(_mirrorSk?_tipOs+'\n(sk. = osobná produkcia — duplikuje sa)':(fi<2?_tipSk:_tipOs))+(isOv?'\n(ručne upravené)':'')+'\nKlik = ručná oprava';
+        html+='<td style="'+(fi===0?_sep:'')+'background:'+_tint(gi)+';cursor:pointer;text-align:right'+(fi<2?';font-weight:600':'')+(_kusMissing?';color:#c77a00':'')+'" data-tip="'+_tipC.replace(/"/g,'&quot;')+'" onmousemove="stratTipMove(event,this)" onmouseleave="stratTipHide()" onclick="stratEditCell(\''+mode+'\','+year+','+m+',\''+g.id+'\',\''+_editF+'\')">'+(_kusMissing?'?':_sfmtR(cell[f]))+'</td>';
       });
     });
     html+='</tr>';
