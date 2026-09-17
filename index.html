@@ -1150,8 +1150,19 @@ function getCGraceInfo(p){
 
 // Manuálny override nadriadeného — uložený v poznamkyData pod kľúčom '__mgr_<meno>' (bez zmeny worker.js)
 function getManagerOverride(name){
-  const v=poznamkyData['__mgr_'+name];
+  let v=poznamkyData['__mgr_'+name];
+  if(v===undefined){
+    // Nový excel môže meno zapísať inak (titul, poradie) — nájdi override tolerantne
+    for(const k in poznamkyData){
+      if(k.indexOf('__mgr_')===0&&_namesMatch(k.slice(6),name)){v=poznamkyData[k];break;}
+    }
+  }
   return (v===undefined||v===null||String(v).trim()==='')?null:v;
+}
+function _mgrOverrideDeleteAll(name){
+  for(const k of Object.keys(poznamkyData)){
+    if(k.indexOf('__mgr_')===0&&_namesMatch(k.slice(6),name))delete poznamkyData[k];
+  }
 }
 function editManager(name){
   if(currentUserRole!=='admin')return;
@@ -1175,8 +1186,8 @@ function saveManagerOverride(){
   const name=window._mgrTarget;
   if(!name)return;
   const t=document.getElementById('mgr-select').value;
-  if(t===''){delete poznamkyData['__mgr_'+name];}
-  else{poznamkyData['__mgr_'+name]=t;}
+  _mgrOverrideDeleteAll(name); // zmaž aj varianty mena s/bez titulu
+  if(t!==''){poznamkyData['__mgr_'+name]=t;}
   tfSave('tf_poznamky',poznamkyData);
   closeModal('modal-mgr');
   computeEvalPeople();
@@ -1794,8 +1805,17 @@ function renderEvaluation(){
       // Diagnostika grace pre admina: prečo osoba na C nemá "Nevyhodnocuje sa"
       if(currentUserRole==='admin'&&p.pos==='C'){
         const _fc=getFirstCDate(p.name);
-        if(!_fc){statusBadge+='<div class="tf-admin-only" style="font-size:9px;color:var(--gray3);margin-top:2px" title="Ochranná lehota sa aktivuje zápisom povýšenia TR→C v Evidencii">bez záznamu povýšenia na C</div>';}
-        else{const _u=new Date(_fc);_u.setMonth(_u.getMonth()+NOVACIK_C_GRACE_MONTHS);statusBadge+='<div class="tf-admin-only" style="font-size:9px;color:var(--gray3);margin-top:2px">ochranná lehota skončila '+formatDmy(_u)+'</div>';}
+        const _dg='<div class="tf-admin-only" style="font-size:9px;color:var(--gray3);margin-top:2px"';
+        if(!_fc){statusBadge+=_dg+' title="Ochranná lehota sa aktivuje zápisom povýšenia TR→C v Evidencii">bez záznamu povýšenia na C</div>';}
+        else{
+          const _demo=getLatestDemotionToTR(p.name);
+          if(_demo&&!isNaN(new Date(_demo.date))&&new Date(_demo.date)<=_fc){
+            statusBadge+=_dg+' title="Ochranná lehota platí len pri úplne prvom povýšení TR→C">bez ochrannej lehoty — opätovné povýšenie po páde na TR</div>';
+          }else{
+            const _u=new Date(_fc);_u.setMonth(_u.getMonth()+NOVACIK_C_GRACE_MONTHS);
+            statusBadge+=_dg+'>ochranná lehota '+((new Date())<_u?'trvá do ':'skončila ')+formatDmy(_u)+'</div>';
+          }
+        }
       }
       // Modrá šípka hore = bude povýšený k 1. nasledujúceho mesiaca (viditeľné aj v user prístupe)
       const _willPromote=!aw&&(pr.canPromote===true||(pr.multiPath&&pr.paths&&pr.paths.length));
