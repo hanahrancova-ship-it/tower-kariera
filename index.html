@@ -2675,7 +2675,7 @@ function renderPrispevkyFix(year){
   html+='</tr></thead><tbody>';
   for(const p of roster){
     const platbaNew=(p.platbaNew!==undefined)?p.platbaNew:p.platba;
-    const platbaTxt=(platbaNew!==p.platba)?p.platba+'→'+platbaNew:String(platbaNew);
+    const platbaTxt=String(platbaNew); // zobrazuje sa len aktuálne platná suma (mesačné bunky pred 1.7. počítajú so starou)
     const safeRow=p.name.replace(/'/g,"\\'");
     html+='<tr><td class="cell-person">'+p.name+'</td>'
       +(isAdmin
