@@ -1191,19 +1191,23 @@ function computeEvalPeople(){
   const newest=usedImports[0];
   // 1) Union ľudí z netto aj brutto v najnovšom importe → určenie aktuálnej pozície.
   // Pre osobu prítomnú v oboch reportoch: ak netto.pos != 'TR' → použijeme netto (povýšený), inak brutto.
+  // Kľúč = meno bez titulov/diakritiky, poradie slov nehrá rolu — „Eva Marková Koreňová"
+  // a „Ing. Eva Marková Koreňová" je JEDEN človek (inak by sa vo Vyhodnotení zobrazil 2×).
+  const _bmKey=n=>_nameTokens(n).sort().join(' ');
   const baseMap=new Map();
   for(const p of (newest.people||[])){
-    baseMap.set(p.name,{...p,_dataSource:'netto'});
+    baseMap.set(_bmKey(p.name),{...p,_dataSource:'netto'});
   }
   for(const p of (newest.peopleBrutto||[])){
-    if(!baseMap.has(p.name)){
-      baseMap.set(p.name,{...p,_dataSource:'brutto'});
+    const _k=_bmKey(p.name);
+    if(!baseMap.has(_k)){
+      baseMap.set(_k,{...p,_dataSource:'brutto'});
     } else {
-      const existing=baseMap.get(p.name);
+      const existing=baseMap.get(_k);
       // Ak je v netto reporte ako TR a je to NOVÁČIK (nikdy nespadol na TR), fyzicky ešte nemá netto
       // produkciu — preberáme brutto. Ak SPADOL na TR (má zníženie na TR), ostáva na netto (nových 400 FJ netto).
       if(existing.pos==='TR' && !getLatestDemotionToTR(p.name)){
-        baseMap.set(p.name,{...p,_dataSource:'brutto'});
+        baseMap.set(_k,{...p,_dataSource:'brutto'});
       }
       // Inak (C+ alebo spadnutý na TR): zostáva netto
     }
@@ -1215,7 +1219,7 @@ function computeEvalPeople(){
     let totalOwn=0,totalGroup=0,totalHist=0;
     usedImports.forEach(imp=>{
       const arr=usesBrutto?(imp.peopleBrutto||[]):(imp.people||[]);
-      const match=arr.find(x=>x.name===p.name);
+      const match=arr.find(x=>_namesMatch(x.name,p.name));
       if(match){totalOwn+=match.ownFJ||0;totalGroup+=match.groupFJ||0;totalHist=Math.max(totalHist,match.histFJ||0);}
     });
     // Kumulatívne historické BRUTTO (pre TR → C kontrolu povýšenia)
@@ -1224,7 +1228,7 @@ function computeEvalPeople(){
       cumulativeBrutto=0;
       for(const imp of imports){
         const arr=imp.peopleBrutto||[];
-        const match=arr.find(x=>x.name===p.name);
+        const match=arr.find(x=>_namesMatch(x.name,p.name));
         if(match)cumulativeBrutto+=match.ownFJ||0;
       }
     }
@@ -1238,11 +1242,19 @@ function computeEvalPeople(){
     if(_mo!==null)p.manager=_mo;
   });
   evalPeople.forEach(p=>{
-    const directs=evalPeople.filter(x=>x.manager===p.name);
+    const directs=evalPeople.filter(x=>x!==p&&_namesMatch(x.manager||'',p.name));
     const _pbOf=x=>{
       if(hasHistProtection(x.histFJ)){const kC=getKariera('C');if(x.ownFJ<effectiveMaintainFJ(kC,x.histFJ,x.name,x.pos))return 0;}
       return (x.pos===p.pos?Math.floor((PB_VALUES[x.pos]||0)/2):(PB_VALUES[x.pos]||0));
     };
+    // Rozpis PB — koho a s koľkými bodmi počítame (zobrazí sa v bublinke na PB bunke)
+    p.pbDetail=directs.map(x=>{
+      const v=_pbOf(x);
+      let note='';
+      if(hasHistProtection(x.histFJ)&&v===0)note=' (0 — hist. ochrana, nesplnené udržanie)';
+      else if(x.pos===p.pos)note=' (rovnaká pozícia → ½, zaokr. nadol)';
+      return x.name+' · '+x.pos+' = '+v+' PB'+note;
+    });
     p.pb=directs.reduce((s,x)=>s+_pbOf(x),0);                                   // napomínaní SA rátajú do PB
     p.pbWithoutWarned=directs.reduce((s,x)=>s+(getActiveWarning(x.name)?0:_pbOf(x)),0); // bez napomínaných (kontrola rizika)
     // Efektívne skupinové FJ (pre kontrolu plnenia):
@@ -1927,6 +1939,10 @@ function renderEvaluation(){
     // Skupinové FJ a PB pri grace tiež neutrálne (s tooltipom o grace stave)
     let _groupFjCellFinal=groupFJCell;
     let _pbCellFinal=pbCell(p.pb,pbThresh);
+    if(p.pbDetail&&p.pbDetail.length){
+      const _pbTip='PB — koho počítame ('+p.pb+' PB):\n'+p.pbDetail.join('\n');
+      _pbCellFinal='<span data-tip="'+_tipEsc(_pbTip)+'" onmousemove="stratTipMove(event,this)" onmouseleave="stratTipHide()" style="cursor:help">'+_pbCellFinal+'</span>';
+    }
     if(s.grace){
       const _gTip=(currentUserRole==='admin')?'Nevyhodnocuje sa do '+formatDmy(s.graceUntil)+'.':'Nevyhodnocuje sa.';
       _groupFjCellFinal=`<span class="fj-cell fj-neutral" data-tip="${_tipEsc(_gTip)}" title="${_tipEsc(_gTip)}" style="cursor:help">${p.groupFJ.toFixed(2)}</span>`;
@@ -2602,7 +2618,7 @@ function getSubordinatesRecursive(rootName){
   const queue=[rootName];
   while(queue.length){
     const current=queue.shift();
-    const directs=evalPeople.filter(p=>p.manager===current);
+    const directs=evalPeople.filter(p=>_namesMatch(p.manager||'',current));
     for(const d of directs){
       if(!result.has(d.name)){
         result.add(d.name);
