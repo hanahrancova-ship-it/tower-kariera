@@ -3854,6 +3854,14 @@ function renderCrm(){
     if(lastFine)return 'Posledná: '+formatDate(lastFine.date)+' · '+lastFine.amount+' € (uhradené'+(lastFine.paidDate?' '+formatDate(lastFine.paidDate):'')+')';
     return '—';
   };
+  // Zarovnanie: každý riadok dostane toľko buniek, koľko má najdlhší (dopĺňa sa predvyplnenými)
+  const _rowLen=name=>{
+    const _f=finesForPerson(name).length;
+    const _r=((crmData.resets&&crmData.resets[name])||[]).length;
+    const _nl=getNextFineLevel(name);
+    return _f+_r+(Math.max(5,_nl)-_nl+1);
+  };
+  const _targetLen=allNames.reduce((m,n)=>Math.max(m,_rowLen(n)),0);
   html+='<div style="margin:18px 0 8px 0;font-size:11px;color:var(--gray3);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;padding:0 4px">Prehľad pokút — rebríček ('+allNames.length+')</div>';
   html+='<div class="card" style="padding:14px"><div style="overflow-x:auto"><table class="prispevky-table"><thead><tr><th style="text-align:left;min-width:190px">Meno</th><th style="text-align:left">Pokuty (N → 10 € → 20 € → 30 € → 40 € → … · R = reset)</th></tr></thead><tbody>';
   for(const name of allNames){
@@ -3863,14 +3871,14 @@ function renderCrm(){
       +'<div style="margin-top:4px;display:flex;gap:10px;flex-wrap:wrap"><span style="font-size:10px;color:#1565c0;cursor:pointer;text-decoration:underline dotted" onclick="openCrmHistoryModal(\''+safe+'\')">História</span>'
       +(_isAdmin?'<span class="tf-admin-only" style="font-size:10px;color:var(--orange);cursor:pointer;text-decoration:underline dotted" onclick="resetCrmForPerson(\''+safe+'\')">↺ Reset</span>':'')
       +'</div></td>';
-    html+='<td><div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;padding:4px 0">'+crmLadderCellsHtml(name,_isAdmin)+'</div></td></tr>';
+    html+='<td><div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;padding:4px 0">'+crmLadderCellsHtml(name,_isAdmin,_targetLen)+'</div></td></tr>';
   }
   html+='</tbody></table></div>';
   html+='<div style="font-size:10px;color:var(--gray3);margin-top:8px;line-height:1.6"><strong>N</strong> = napomenutie (prvý priestupok, bez platby) · <strong>R</strong> = reset — cyklus končí a ďalšia pokuta začína opäť od 10 € · <span style="color:#a01010;font-weight:700">červená = neuhradená</span> · <span style="color:#0e6b27;font-weight:700">zelená = uhradená (s dátumom úhrady)</span> · bodkovaná = predvyplnený ďalší stupeň'+(_isAdmin?'<br><span class="tf-admin-only">Klik na bunku = úprava (úhrada s dátumom / zmeniť na RESET / vymazať) · klik na bodkovanú = zapísať pokutu alebo reset teraz.</span>':'')+'</div></div>';
   c.innerHTML=html;
 }
 // Bunky rebríčka pokút jednej osoby (história + resety + predvyplnené ďalšie stupne)
-function crmLadderCellsHtml(name,isAdmin){
+function crmLadderCellsHtml(name,isAdmin,targetLen){
   const safe=name.replace(/'/g,"\\'");
   const fines=finesForPerson(name);
   const resets=((crmData.resets&&crmData.resets[name])||[]).slice().sort();
@@ -3900,9 +3908,11 @@ function crmLadderCellsHtml(name,isAdmin){
       out+=chip(label+'<span style="font-size:8px;font-weight:600">'+sub+'</span>',st,tip,isAdmin?'crmCellAction(\''+f.id.replace(/'/g,"\\'")+'\')':'');
     }
   }
-  // Predvyplnené ďalšie stupne — do 40 € (alebo aspoň jeden ďalší)
+  // Predvyplnené ďalšie stupne — min. po 40 €, a dorovnané na dĺžku najdlhšieho riadku
   const nextLevel=getNextFineLevel(name);
-  for(let L=nextLevel;L<=Math.max(5,nextLevel);L++){
+  let _cells=ev.length;
+  const _endLevel=Math.max(Math.max(5,nextLevel),nextLevel+(targetLen?targetLen-_cells-1:0));
+  for(let L=nextLevel;L<=_endLevel;L++){
     const amt=crmFineAmountForLevel(L);
     const label=amt>0?(amt+' €'):'N';
     out+=chip(label,
