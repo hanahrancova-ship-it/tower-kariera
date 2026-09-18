@@ -3763,6 +3763,8 @@ function renderCrm(){
     +'<div style="font-size:11px;color:rgba(255,255,255,0.75)">Na OZ ste doteraz prispeli sumou</div>'
     +'<div style="font-size:28px;font-weight:800;color:#3CD64E;line-height:1.2'+(currentUserRole==='admin'?';cursor:pointer':'')+'"'+(currentUserRole==='admin'?' title="Klikni pre opravu celkovej sumy (nastaví historický základ)" onclick="editOzBase()"':'')+'>'+_totalSum.toFixed(2).replace('.',',')+' €</div>'
     +'</div></div>';
+  // Upozornenie pre všetkých (aj user prístup)
+  html+='<div style="font-size:12px;color:#a01010;background:#fdecec;border:1px solid #f5b5b5;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-weight:600">Ak pokuta nebude uhradená najneskôr do 2 týždňov, budú spolupracovníkovi automaticky pozastavené provízie.</div>';
   // Status banner
   const reports=Object.keys(crmData.reports).sort();
   const lastReport=reports[reports.length-1];
@@ -3834,37 +3836,148 @@ function renderCrm(){
       html+='</div></div>';
     }
   }
-  // Potom uhradené / čisté
-  if(paidOnly.length){
-    html+='<div style="margin:18px 0 8px 0;font-size:11px;color:var(--gray3);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;padding:0 4px">Bez aktívnych pokút ('+paidOnly.length+')</div>';
-    for(const x of paidOnly){
-      const safeName=x.name.replace(/'/g,"\\'");
-      const lastFine=x.fines[x.fines.length-1];
-      const _resetD=lastResetDate(x.name);
-      html+='<div class="crm-card crm-paid">';
-      html+='<div><div class="crm-name">'+x.name+'</div>';
-      let _sub;
-      if(_resetD&&(!lastFine||lastFine.date<=_resetD)){
-        _sub='Reset '+formatDate(_resetD);
-        // Posledná pokuta pred resetom (výška) — nech vidno, na čom cyklus skončil
-        const _preF=x.fines.filter(f=>f.amount>0&&f.date<=_resetD);
-        if(_preF.length){const _lp=_preF[_preF.length-1];_sub+=' · posledná pokuta pred resetom: '+_lp.amount+' € ('+formatDate(_lp.date)+')';}
-      }
-      else if(lastFine&&lastFine.level===1)_sub='Posledné: Napomenutie · '+formatDate(lastFine.date);
-      else if(lastFine)_sub='Posledná: '+formatDate(lastFine.date)+' · '+lastFine.amount+' € (uhradené)';
-      else _sub='—';
-      html+='<div class="crm-sub">'+_sub+'</div></div>';
-      // Badge
-      if(_resetD&&(!lastFine||lastFine.date<=_resetD))html+='<span class="badge-new badge-pill" style="background:var(--gray);color:var(--gray4)">↺ Vyresetované</span>';
-      else if(lastFine&&lastFine.level===1)html+='<span class="badge-new badge-pill bg-warn">⚠ Napomenutie</span>';
-      else html+='<span class="badge-new badge-pill bg-success">✓ Uhradené</span>';
-      html+='<div style="display:flex;gap:6px">';
-      html+='<button class="btn btn-secondary btn-sm" onclick="openCrmHistoryModal(\''+safeName+'\')">História</button>';
-      if(_isAdmin)html+='<button class="btn btn-secondary btn-sm tf-admin-only" onclick="resetCrmForPerson(\''+safeName+'\')" style="color:var(--orange)">↺ Reset</button>';
-      html+='</div></div>';
+  // Spodná tabuľka: rebríček pokút pre VŠETKÝCH (ako pri servise — mená v riadkoch, bunky N/10/20/…/R)
+  const allNames=[...withUnpaid.map(x=>x.name),...paidOnly.map(x=>x.name)];
+  const _subFor=name=>{
+    const fines=finesForPerson(name);
+    const unp=unpaidFinesSinceReset(name);
+    const _resetD=lastResetDate(name);
+    const lastFine=fines[fines.length-1];
+    if(unp.length)return 'Aktívnych pokút: '+unp.length+' · Spolu '+unp.reduce((a,f)=>a+f.amount,0)+' €';
+    if(_resetD&&(!lastFine||lastFine.date<=_resetD)){
+      let t='Reset '+formatDate(_resetD);
+      const _preF=fines.filter(f=>f.amount>0&&f.date<=_resetD);
+      if(_preF.length){const _lp=_preF[_preF.length-1];t+=' · posledná pokuta pred resetom: '+_lp.amount+' € ('+formatDate(_lp.date)+')';}
+      return t;
+    }
+    if(lastFine&&lastFine.level===1)return 'Posledné: Napomenutie · '+formatDate(lastFine.date);
+    if(lastFine)return 'Posledná: '+formatDate(lastFine.date)+' · '+lastFine.amount+' € (uhradené'+(lastFine.paidDate?' '+formatDate(lastFine.paidDate):'')+')';
+    return '—';
+  };
+  html+='<div style="margin:18px 0 8px 0;font-size:11px;color:var(--gray3);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;padding:0 4px">Prehľad pokút — rebríček ('+allNames.length+')</div>';
+  html+='<div class="card" style="padding:14px"><div style="overflow-x:auto"><table class="prispevky-table"><thead><tr><th style="text-align:left;min-width:190px">Meno</th><th style="text-align:left">Pokuty (N → 10 € → 20 € → 30 € → 40 € → … · R = reset)</th></tr></thead><tbody>';
+  for(const name of allNames){
+    const safe=name.replace(/'/g,"\\'");
+    html+='<tr><td class="cell-person" style="vertical-align:top"><div>'+name+'</div>'
+      +'<div style="font-size:10px;color:var(--gray3);font-weight:400;margin-top:2px">'+_subFor(name)+'</div>'
+      +'<div style="margin-top:4px;display:flex;gap:10px;flex-wrap:wrap"><span style="font-size:10px;color:#1565c0;cursor:pointer;text-decoration:underline dotted" onclick="openCrmHistoryModal(\''+safe+'\')">História</span>'
+      +(_isAdmin?'<span class="tf-admin-only" style="font-size:10px;color:var(--orange);cursor:pointer;text-decoration:underline dotted" onclick="resetCrmForPerson(\''+safe+'\')">↺ Reset</span>':'')
+      +'</div></td>';
+    html+='<td><div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;padding:4px 0">'+crmLadderCellsHtml(name,_isAdmin)+'</div></td></tr>';
+  }
+  html+='</tbody></table></div>';
+  html+='<div style="font-size:10px;color:var(--gray3);margin-top:8px;line-height:1.6"><strong>N</strong> = napomenutie (prvý priestupok, bez platby) · <strong>R</strong> = reset — cyklus končí a ďalšia pokuta začína opäť od 10 € · <span style="color:#a01010;font-weight:700">červená = neuhradená</span> · <span style="color:#0e6b27;font-weight:700">zelená = uhradená (s dátumom úhrady)</span> · bodkovaná = predvyplnený ďalší stupeň'+(_isAdmin?'<br><span class="tf-admin-only">Klik na bunku = úprava (úhrada s dátumom / zmeniť na RESET / vymazať) · klik na bodkovanú = zapísať pokutu alebo reset teraz.</span>':'')+'</div></div>';
+  c.innerHTML=html;
+}
+// Bunky rebríčka pokút jednej osoby (história + resety + predvyplnené ďalšie stupne)
+function crmLadderCellsHtml(name,isAdmin){
+  const safe=name.replace(/'/g,"\\'");
+  const fines=finesForPerson(name);
+  const resets=((crmData.resets&&crmData.resets[name])||[]).slice().sort();
+  const ev=[];
+  for(const f of fines)ev.push({t:'f',d:f.date,f});
+  for(const r of resets)ev.push({t:'r',d:r});
+  ev.sort((a,b)=>{const c2=String(a.d).localeCompare(String(b.d));if(c2)return c2;return (a.t==='r'?1:0)-(b.t==='r'?1:0);});
+  const chip=(inner,style,tip,onclick)=>'<span '+(tip?'data-tip="'+tip.replace(/"/g,'&quot;')+'" onmousemove="stratTipMove(event,this)" onmouseleave="stratTipHide()" ':'')
+    +(onclick?'onclick="'+onclick+'" ':'')
+    +'style="display:inline-flex;flex-direction:column;align-items:center;justify-content:center;min-width:48px;padding:4px 8px;border-radius:7px;font-size:11px;font-weight:700;line-height:1.25;'+style+(onclick?';cursor:pointer':'')+'">'+inner+'</span>';
+  let out='';
+  for(const e of ev){
+    if(e.t==='r'){
+      out+=chip('R<span style="font-size:8px;font-weight:600">'+formatDate(e.d)+'</span>',
+        'background:#ececec;color:#555;border:1px solid #d5d5d5',
+        'R = RESET ('+formatDate(e.d)+') — cyklus končí, ďalšia pokuta začína od 10 €'+(isAdmin?'\nKlik = zrušiť tento reset':''),
+        isAdmin?'crmRemoveReset(\''+safe+'\',\''+e.d+'\')':'');
+    }else{
+      const f=e.f;
+      const label=f.amount>0?(f.amount+' €'):'N';
+      let st,tip;
+      if(f.amount===0){st='background:#FAEEDA;color:#854F0B;border:1px solid #ecd3a7';tip='N = napomenutie ('+formatDate(f.date)+') — prvý priestupok, bez platby';}
+      else if(f.paid){st='background:#c8e6c9;color:#0e6b27;border:1px solid #a5d6a7';tip='Pokuta '+f.amount+' € z '+formatDate(f.date)+' — UHRADENÁ'+(f.paidDate?' '+formatDate(f.paidDate):'');}
+      else{st='background:#ffcdd2;color:#a01010;border:1px solid #ef9a9a';tip='Pokuta '+f.amount+' € z '+formatDate(f.date)+' — NEUHRADENÁ';}
+      if(isAdmin)tip+='\nKlik = úprava (úhrada s dátumom / reset / vymazať)';
+      const sub=f.amount===0?formatDate(f.date):(f.paid?('✓ '+(f.paidDate?formatDate(f.paidDate):'')):formatDate(f.date));
+      out+=chip(label+'<span style="font-size:8px;font-weight:600">'+sub+'</span>',st,tip,isAdmin?'crmCellAction(\''+f.id.replace(/'/g,"\\'")+'\')':'');
     }
   }
-  c.innerHTML=html;
+  // Predvyplnené ďalšie stupne — do 40 € (alebo aspoň jeden ďalší)
+  const nextLevel=getNextFineLevel(name);
+  for(let L=nextLevel;L<=Math.max(5,nextLevel);L++){
+    const amt=crmFineAmountForLevel(L);
+    const label=amt>0?(amt+' €'):'N';
+    out+=chip(label,
+      'background:#fff;color:#9aa5ad;border:1px dashed #c9cfd4;font-weight:600',
+      (amt>0?'Predvyplnený ďalší stupeň — pokuta zatiaľ nevznikla':'N = napomenutie — prvý priestupok, bez platby (zatiaľ nevzniklo)')+(isAdmin?'\nKlik = zapísať pokutu / reset teraz':''),
+      isAdmin?'crmPrefillAction(\''+safe+'\','+L+')':'');
+  }
+  return out;
+}
+// Dátum od admina v tvare DD.MM.RRRR (alebo RRRR-MM-DD) → ISO
+function _promptDate(label,defIso){
+  const val=prompt(label+' (DD.MM.RRRR):',defIso?formatDate(defIso):'');
+  if(val===null)return null;
+  const t=val.trim();
+  let m=t.match(/^(\d{1,2})\.\s?(\d{1,2})\.\s?(\d{4})$/);
+  if(m)return m[3]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0');
+  m=t.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(m)return t;
+  alert('Neplatný dátum. Zadaj v tvare DD.MM.RRRR (napr. '+formatDate(todayISO())+').');
+  return null;
+}
+// Klik na existujúcu bunku pokuty v rebríčku
+function crmCellAction(fineId){
+  if(currentUserRole!=='admin')return;
+  ensureCrm();
+  const f=crmData.fines[fineId];
+  if(!f){showToast('Pokuta sa nenašla.','error');return;}
+  if(f.amount===0){
+    const ch=prompt('Napomenutie z '+formatDate(f.date)+' — akcia:\n3 = zmeniť na RESET (záznam sa zmaže, nový cyklus od 10 €)\n4 = vymazať záznam','');
+    if(ch===null)return;
+    const c2=ch.trim();
+    if(c2==='3'){if(!confirm('Napomenutie sa VYMAŽE a zapíše sa RESET k '+formatDate(f.date)+'. Pokračovať?'))return;delete crmData.fines[f.id];crmData.resets[f.person]=crmData.resets[f.person]||[];crmData.resets[f.person].push(f.date);}
+    else if(c2==='4'){if(!confirm('Vymazať napomenutie z '+formatDate(f.date)+'?'))return;delete crmData.fines[f.id];}
+    else return;
+    saveCrm();renderCrm();showToast('Uložené.','success');return;
+  }
+  const ch=prompt('Pokuta '+f.amount+' € z '+formatDate(f.date)+(f.paid?' — UHRADENÁ'+(f.paidDate?' '+formatDate(f.paidDate):''):' — NEUHRADENÁ')+'\n\n1 = označiť UHRADENÚ (zadáš dátum)\n2 = označiť NEUHRADENÚ\n3 = zmeniť na RESET (pokuta sa zmaže, nový cyklus od 10 €)\n4 = vymazať pokutu','1');
+  if(ch===null)return;
+  const c2=ch.trim();
+  if(c2==='1'){const d=_promptDate('Dátum úhrady pokuty '+f.amount+' €',f.paidDate||todayISO());if(!d)return;f.paid=true;f.paidDate=d;}
+  else if(c2==='2'){f.paid=false;f.paidDate=null;}
+  else if(c2==='3'){if(!confirm('Pokuta '+f.amount+' € sa VYMAŽE a namiesto nej sa zapíše RESET k '+formatDate(f.date)+'. Ďalšie pokuty začnú opäť od 10 €. Pokračovať?'))return;delete crmData.fines[f.id];crmData.resets[f.person]=crmData.resets[f.person]||[];crmData.resets[f.person].push(f.date);}
+  else if(c2==='4'){if(!confirm('Vymazať pokutu '+f.amount+' € z '+formatDate(f.date)+'?'))return;delete crmData.fines[f.id];}
+  else return;
+  saveCrm();renderCrm();showToast('Uložené.','success');
+}
+// Klik na predvyplnenú (bodkovanú) bunku — zapísať pokutu ručne alebo reset
+function crmPrefillAction(name,level){
+  if(currentUserRole!=='admin')return;
+  ensureCrm();
+  const amt=crmFineAmountForLevel(level);
+  const ch=prompt(name+' — ďalší stupeň: '+(amt>0?amt+' €':'napomenutie (N)')+'\n\n1 = zapísať '+(amt>0?'pokutu '+amt+' €':'napomenutie')+' (zadáš dátum)\n2 = RESET teraz (nový cyklus od 10 €)','1');
+  if(ch===null)return;
+  const c2=ch.trim();
+  if(c2==='1'){
+    const d=_promptDate('Dátum '+(amt>0?'pokuty':'napomenutia'),todayISO());
+    if(!d)return;
+    const id='fine_'+d+'_'+name.replace(/\s+/g,'_')+'_m'+(Date.now()%1000000);
+    crmData.fines[id]={id,person:name,date:d,amount:amt,level,paid:amt===0,paidDate:null};
+  }else if(c2==='2'){
+    if(!confirm('Reset pre '+name+'? Nový cyklus začne od 10 €.'))return;
+    crmData.resets[name]=crmData.resets[name]||[];
+    crmData.resets[name].push(todayISO());
+  }else return;
+  saveCrm();renderCrm();showToast('Uložené.','success');
+}
+// Zrušenie resetu (klik na R bunku)
+function crmRemoveReset(name,date){
+  if(currentUserRole!=='admin')return;
+  ensureCrm();
+  if(!confirm('Zrušiť reset z '+formatDate(date)+' pre '+name+'? Pokuty sa opäť spoja do jedného cyklu.'))return;
+  const arr=crmData.resets[name]||[];
+  const i=arr.indexOf(date);
+  if(i>=0)arr.splice(i,1);
+  saveCrm();renderCrm();showToast('Reset zrušený.','success');
 }
 
 // Označiť jednu konkrétnu pokutu ako uhradenú (priamo z karty)
@@ -3873,11 +3986,13 @@ function markFinePaid(fineId){
   ensureCrm();
   const f=crmData.fines[fineId];
   if(!f){showToast('Pokuta sa nenašla.','error');return;}
+  const d=_promptDate('Dátum úhrady pokuty '+f.amount+' €',todayISO());
+  if(!d)return;
   f.paid=true;
-  f.paidDate=todayISO();
+  f.paidDate=d;
   saveCrm();
   renderCrm();
-  showToast('Pokuta '+f.amount+' € označená ako uhradená.','success');
+  showToast('Pokuta '+f.amount+' € uhradená k '+formatDate(d)+'.','success');
 }
 // Označiť jednu konkrétnu pokutu ako NEuhradenú (rollback)
 function markFineUnpaid(fineId){
