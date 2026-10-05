@@ -1817,7 +1817,7 @@ function renderEvaluation(){
       }else if(aw){
         statusBadge='<span class="badge badge-red">Napomenutý k '+formatWarnDateShort(aw.date)+'</span>';
       }else{
-        statusBadge=s.ok?'<span class="badge badge-green">OK</span>':'<span class="badge badge-orange">Nesplnené</span>';
+        statusBadge=s.ok?'<span class="badge badge-green">OK</span>':'<span class="badge badge-orange" data-tip="'+_tipEsc('Nesplnené — dôvod:\n'+(s.issues&&s.issues.length?s.issues.join('\n'):s.msg||''))+'" onmousemove="stratTipMove(event,this)" onmouseleave="stratTipHide()" style="cursor:help">Nesplnené</span>';
       }
       // Diagnostika grace pre admina: prečo osoba na C nemá "Nevyhodnocuje sa"
       if(currentUserRole==='admin'&&p.pos==='C'){
