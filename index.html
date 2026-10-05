@@ -1778,11 +1778,28 @@ function renderEvaluation(){
     let napomCell='<span style="font-size:11px;color:var(--gray3)">–</span>';
     if(aw){const dots=[0,1,2].map(i=>{let cls='free';if(i<ms)cls='used';else if(i===ms&&ms<3)cls='half';return`<span class="napom-m ${cls}"></span>`;}).join('');const _rText=aw.reason==='fj'?'FJ':aw.reason==='pb'?'PB':aw.reason==='pb_podriadeny'?'PB (podr.)':'FJ+PB';napomCell=`<div style="display:flex;flex-direction:column;gap:3px"><span class="badge ${ms>=3?'badge-red':ms>=2?'badge-red':'badge-orange'}" style="font-size:10px">${ms+1}/3 mes.</span><span class="napom-dot">${dots}</span><span style="font-size:9px;color:var(--gray3)">Dôvod: ${_rText}</span>${s.ok?'<span class="badge badge-green" style="font-size:9px">✓ spĺňa – zrušiť</span>':(ms>=3?'<span class="badge badge-red" style="font-size:9px">⚠ ZNÍŽIŤ</span>':'')}</div>`;}
     let promoCell='<span style="color:var(--gray3);font-size:11px">–</span>';
+    // Preskakovanie stupňov: aj keď nespĺňa NASLEDUJÚCU pozíciu, môže spĺňať vyššiu (napr. C → TL)
+    const _promoAlt=(!pr.brutoCheck&&pr.canPromote!==true&&!(pr.multiPath&&pr.paths?.length))?bestPromotionTarget(p):null;
     if(pr.brutoCheck)promoCell='<span class="badge badge-orange" style="font-size:9px">C–brutto⚠</span>';
     else if(pr.canPromote===true)promoCell=`<span class="badge badge-blue" style="font-size:10px">→${bestPromotionTarget(p)||pr.nextPos}✓</span>`;
     else if(pr.multiPath&&pr.paths?.length)promoCell=pr.paths.map(x=>`<span class="badge badge-blue" style="font-size:10px">→${x.nextPos}✓</span>`).join('<br>');
-    else if(pr.multiPath&&pr.allPaths){const best=pr.allPaths.sort((a,b)=>(a.issues?.length||0)-(b.issues?.length||0))[0];promoCell=`<span style="font-size:10px;color:var(--gray3)">${best.nextPos}:${(best.issues||[]).slice(0,1).join(',')}</span>`;}
-    else if(pr.issues?.length)promoCell=`<span style="font-size:10px;color:var(--gray3)">${pr.issues.slice(0,1).join(',')}</span>`;
+    else if(_promoAlt)promoCell=`<span class="badge badge-blue" style="font-size:10px;cursor:help" data-tip="${_tipEsc('Nasledujúcu pozíciu ('+pr.nextPos+') nespĺňa, ale spĺňa podmienky povýšenia na '+_promoAlt+':\n'+(pr.issues||[]).map(x=>pr.nextPos+': '+x).join('\n'))}" onmousemove="stratTipMove(event,this)" onmouseleave="stratTipHide()">→${_promoAlt}✓</span>`;
+    else if(pr.multiPath&&pr.allPaths){const best=pr.allPaths.sort((a,b)=>(a.issues?.length||0)-(b.issues?.length||0))[0];const _tipMp='Prečo zatiaľ nie je povýšenie:\n'+pr.allPaths.map(x=>'→ '+x.nextPos+': '+((x.issues&&x.issues.length)?x.issues.join(' · '):'OK')).join('\n');promoCell=`<span style="font-size:10px;color:var(--gray3);cursor:help" data-tip="${_tipEsc(_tipMp)}" onmousemove="stratTipMove(event,this)" onmouseleave="stratTipHide()">${best.nextPos}:${(best.issues||[]).slice(0,1).join(',')}</span>`;}
+    else if(pr.issues?.length){const _tipPr='Povýšenie na '+pr.nextPos+' — chýba:\n'+pr.issues.join('\n')+(pr.note?'\n('+pr.note+')':'');promoCell=`<span style="font-size:10px;color:var(--gray3);cursor:help" data-tip="${_tipEsc(_tipPr)}" onmousemove="stratTipMove(event,this)" onmouseleave="stratTipHide()">${pr.issues.slice(0,1).join(',')}</span>`;}
+    // Admin: bublinka na pozícii = kompletná analýza povýšenia (prečo áno / prečo nie)
+    let _promoTip='';
+    if(currentUserRole==='admin'&&!isOwner(p.name)&&!isNonEval(p.name)){
+      if(pr.brutoCheck)_promoTip='TR→C: potrebná manuálna kontrola brutto FJ.';
+      else if(pr.canPromote===true)_promoTip='✓ Spĺňa povýšenie na '+(bestPromotionTarget(p)||pr.nextPos)+(pr.note?'\n'+pr.note:'');
+      else if(pr.multiPath&&pr.paths?.length)_promoTip='✓ Spĺňa povýšenie na '+pr.paths.map(x=>x.nextPos).join(' / ');
+      else if(_promoAlt)_promoTip='✓ Spĺňa povýšenie na '+_promoAlt+' (preskočený stupeň)\nNasledujúca pozícia '+pr.nextPos+' nespĺňa: '+(pr.issues||[]).join(' · ');
+      else if(pr.multiPath&&pr.allPaths)_promoTip='Povýšenie zatiaľ NIE:\n'+pr.allPaths.map(x=>'→ '+x.nextPos+': '+((x.issues&&x.issues.length)?x.issues.join(' · '):'OK')).join('\n');
+      else if(pr.issues&&pr.issues.length)_promoTip='Povýšenie na '+pr.nextPos+' — chýba:\n'+pr.issues.join('\n')+(pr.note?'\n('+pr.note+')':'');
+      else if(pr.msg)_promoTip=pr.msg;
+    }
+    const _posTd=_promoTip
+      ?('<span data-tip="'+_tipEsc(_promoTip)+'" onmousemove="stratTipMove(event,this)" onmouseleave="stratTipHide()" style="cursor:help"><span class="pos '+posClass(p.pos)+'">'+p.pos+'</span></span>')
+      :('<span class="pos '+posClass(p.pos)+'">'+p.pos+'</span>');
     // Status badge — pre grace (nováčik na C) zobraziť šedý "Nevyhodnocuje sa"; admin vidí dátum aj inline pod badge, user nie.
     let statusBadge;
     if(s.grace){
@@ -1818,9 +1835,10 @@ function renderEvaluation(){
         }
       }
       // Modrá šípka hore = bude povýšený k 1. nasledujúceho mesiaca (viditeľné aj v user prístupe)
-      const _willPromote=!aw&&(pr.canPromote===true||(pr.multiPath&&pr.paths&&pr.paths.length));
+      const _promoAlt2=(!aw&&!pr.brutoCheck&&pr.canPromote!==true&&!(pr.multiPath&&pr.paths&&pr.paths.length))?bestPromotionTarget(p):null;
+      const _willPromote=!aw&&(pr.canPromote===true||(pr.multiPath&&pr.paths&&pr.paths.length)||_promoAlt2);
       if(_willPromote){
-        const _pt=pr.canPromote===true?(bestPromotionTarget(p)||pr.nextPos):pr.paths.map(x=>x.nextPos).join(' / ');
+        const _pt=pr.canPromote===true?(bestPromotionTarget(p)||pr.nextPos):(_promoAlt2||pr.paths.map(x=>x.nextPos).join(' / '));
         statusBadge+=' <span title="Bude povýšený k '+nextMonthLabel()+' na '+_pt+'" style="cursor:help;color:#1565c0;font-weight:800;font-size:15px;vertical-align:middle;margin-left:3px">↑</span>';
       }
     }
@@ -1980,7 +1998,7 @@ function renderEvaluation(){
       _actionFinal='<span style="color:var(--gray3)">–</span>';
       _rowClsFinal='eval-row-ok';
     }
-    html+=`<tr class="${_rowClsFinal}"><td class="eval-name-cell">${_personCell}</td><td><span class="pos ${posClass(p.pos)}">${p.pos}</span></td><td style="font-size:11px;color:var(--gray3)">${currentUserRole==='admin'?`<span class="tf-admin-only" style="cursor:pointer;text-decoration:underline dotted" title="Upraviť nadriadeného (Excel: ${(p._mgrExcel||'–').replace(/"/g,'')})" onclick="editManager('${_safeNm}')">${p.manager||'–'} ✎</span>${getManagerOverride(p.name)!==null?'<div style="font-size:9px;color:#1565c0">upravené</div>':''}`:(p.manager||'–')}</td><td style="font-size:11px">${cestaCell}</td><td style="text-align:right">${_ownFjCell}</td><td style="text-align:right">${_groupFjCellFinal}</td><td style="text-align:right">${fjCell(p.histFJ,null,'Hist.FJ','')}</td><td style="text-align:right">${_pbCellFinal}</td><td>${_statusBadgeFinal}</td><td>${_napomCellFinal}</td><td>${_splnaFinal}</td><td class="tf-admin-only">${_actionFinal}</td></tr>`;
+    html+=`<tr class="${_rowClsFinal}"><td class="eval-name-cell">${_personCell}</td><td>${_posTd}</td><td style="font-size:11px;color:var(--gray3)">${currentUserRole==='admin'?`<span class="tf-admin-only" style="cursor:pointer;text-decoration:underline dotted" title="Upraviť nadriadeného (Excel: ${(p._mgrExcel||'–').replace(/"/g,'')})" onclick="editManager('${_safeNm}')">${p.manager||'–'} ✎</span>${getManagerOverride(p.name)!==null?'<div style="font-size:9px;color:#1565c0">upravené</div>':''}`:(p.manager||'–')}</td><td style="font-size:11px">${cestaCell}</td><td style="text-align:right">${_ownFjCell}</td><td style="text-align:right">${_groupFjCellFinal}</td><td style="text-align:right">${fjCell(p.histFJ,null,'Hist.FJ','')}</td><td style="text-align:right">${_pbCellFinal}</td><td>${_statusBadgeFinal}</td><td>${_napomCellFinal}</td><td>${_splnaFinal}</td><td class="tf-admin-only">${_actionFinal}</td></tr>`;
   });
   html+=`</tbody></table></div><div style="display:flex;gap:16px;padding:10px 16px;font-size:11px;color:var(--gray3);flex-wrap:wrap;margin-top:8px;justify-content:center"><span><span class="fj-cell fj-ok">●</span> splnené</span><span><span class="fj-cell fj-fail">●</span> nesplnené</span><span style="color:var(--gray3)">Prejdi myšou na číslo pre detail štatútu</span></div>`;
   document.getElementById('eval-main-table').innerHTML=html;
