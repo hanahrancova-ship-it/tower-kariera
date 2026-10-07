@@ -2030,6 +2030,15 @@ function renderLudia(){
 function formatWarnDate(d){if(!d)return'';const p=d.split('-');if(p.length<3)return d;const m=['janár','február','marec','apríl','máj','jún','júl','august','september','október','november','december'];return'k 1. '+m[parseInt(p[1],10)-1]+' '+p[0];}
 function formatWarnDateShort(d){if(!d)return'';const p=d.split('-');if(p.length<3)return d;return parseInt(p[2],10)+'.'+parseInt(p[1],10)+'.'+p[0];}
 function renderWarnings(){renderEvidenciaNapomenutia();}
+// Zoradenie evidencie podľa dátumu: klik na hlavičku "Dátum" prepína najnovšie/najstaršie hore
+let evidenciaSort={pov:'desc',zni:'desc',nap:'desc'};
+function evSortToggle(which){
+  evidenciaSort[which]=(evidenciaSort[which]==='desc')?'asc':'desc';
+  renderEvidencia();
+}
+function _evDateTh(which){
+  return '<th style="cursor:pointer;user-select:none" title="Klik = prepnúť zoradenie podľa dátumu" onclick="evSortToggle(\''+which+'\')">Dátum '+(evidenciaSort[which]==='desc'?'▼':'▲')+'</th>';
+}
 function renderEvidencia(){
   renderEvidenciaPovysenia();
   renderEvidenciaZnizenia();
@@ -2054,11 +2063,12 @@ function renderEvidenciaPovysenia(){
       const _safe=name.replace(/'/g,"\'");
       const _key='pov_'+name+'_'+i;
       const _note=(evidenciaPoznamky[_key]||'').replace(/"/g,'&quot;');
-      rows.push(`<tr><td>${name}</td><td>${h.date}</td><td><span class="pos ${posClass(h.fromPos)}">${h.fromPos}</span></td><td><span class="pos ${posClass(h.toPos)}">${h.toPos}</span></td><td><input type="text" value="${_note}" onchange="saveEvPoznamka('${_key}',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-size:11px;background:transparent"></td><td><button class="btn btn-sm btn-danger" onclick="deletePoziciaRow('${_safe}',${i})">✕</button></td></tr>`);
+      rows.push({d:String(h.date||''),html:`<tr><td>${name}</td><td>${h.date}</td><td><span class="pos ${posClass(h.fromPos)}">${h.fromPos}</span></td><td><span class="pos ${posClass(h.toPos)}">${h.toPos}</span></td><td><input type="text" value="${_note}" onchange="saveEvPoznamka('${_key}',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-size:11px;background:transparent"></td><td><button class="btn btn-sm btn-danger" onclick="deletePoziciaRow('${_safe}',${i})">✕</button></td></tr>`});
     });
   });
+  rows.sort((a,b)=>evidenciaSort.pov==='desc'?b.d.localeCompare(a.d):a.d.localeCompare(b.d));
   const addBtn=currentUserRole==='admin'?'<div style="margin-bottom:10px"><button class="btn btn-primary btn-sm" onclick="addPovysenieManual()">+ Pridať povýšenie</button></div>':'';
-  el.innerHTML=addBtn+(rows.length?'<div class="table-wrap"><table><thead><tr><th>Meno</th><th>Dátum</th><th>Z poz.</th><th>Na poz.</th><th>Poznámka</th><th></th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>':'<div class="empty"><div class="big"></div>Žiadne povýšenia.</div>');
+  el.innerHTML=addBtn+(rows.length?'<div class="table-wrap"><table><thead><tr><th>Meno</th>'+_evDateTh('pov')+'<th>Z poz.</th><th>Na poz.</th><th>Poznámka</th><th></th></tr></thead><tbody>'+rows.map(r=>r.html).join('')+'</tbody></table></div>':'<div class="empty"><div class="big"></div>Žiadne povýšenia.</div>');
 }
 // Ručný zápis povýšenia do evidencie (aj pre osobu, ktorá nie je v aktuálnom importe).
 // Zapíše sa do pozicieHistory → zobrazí v evidencii a aktivuje 3-mes. grace pri povýšení na C.
@@ -2094,14 +2104,15 @@ function renderEvidenciaZnizenia(){
       const _safe=name.replace(/'/g,"\'");
       const _key='zni_'+name+'_'+i;
       const _note=(evidenciaPoznamky[_key]||'').replace(/"/g,'&quot;');
-      rows.push(`<tr><td>${name}</td><td>${h.date}</td><td><span class="pos ${posClass(h.fromPos)}">${h.fromPos}</span></td><td><span class="pos ${posClass(h.toPos)}">${h.toPos}</span></td><td><input type="text" value="${_note}" onchange="saveEvPoznamka('${_key}',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-size:11px;background:transparent"></td><td><button class="btn btn-sm btn-danger" onclick="deletePoziciaRow('${_safe}',${i})">✕</button></td></tr>`);
+      rows.push({d:String(h.date||''),html:`<tr><td>${name}</td><td>${h.date}</td><td><span class="pos ${posClass(h.fromPos)}">${h.fromPos}</span></td><td><span class="pos ${posClass(h.toPos)}">${h.toPos}</span></td><td><input type="text" value="${_note}" onchange="saveEvPoznamka('${_key}',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-size:11px;background:transparent"></td><td><button class="btn btn-sm btn-danger" onclick="deletePoziciaRow('${_safe}',${i})">✕</button></td></tr>`});
     });
   });
-  el.innerHTML=rows.length?'<div class="table-wrap"><table><thead><tr><th>Meno</th><th>Dátum</th><th>Z poz.</th><th>Na poz.</th><th>Poznámka</th><th></th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>':'<div class="empty"><div class="big"></div>Žiadne zníženia.</div>';
+  rows.sort((a,b)=>evidenciaSort.zni==='desc'?b.d.localeCompare(a.d):a.d.localeCompare(b.d));
+  el.innerHTML=rows.length?'<div class="table-wrap"><table><thead><tr><th>Meno</th>'+_evDateTh('zni')+'<th>Z poz.</th><th>Na poz.</th><th>Poznámka</th><th></th></tr></thead><tbody>'+rows.map(r=>r.html).join('')+'</tbody></table></div>':'<div class="empty"><div class="big"></div>Žiadne zníženia.</div>';
 }
 function renderEvidenciaNapomenutia(){
   const el=document.getElementById('ev-napomenutia');if(!el)return;
-  const sorted=[...warnings].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const sorted=[...warnings].sort((a,b)=>evidenciaSort.nap==='desc'?(new Date(b.date)-new Date(a.date)):(new Date(a.date)-new Date(b.date)));
   if(!sorted.length){el.innerHTML='<div class="empty"><div class="big"></div>Žiadne napomenutia.</div>';return;}
   const rows=sorted.map(w=>{
     const ms=monthsSince(w.date);
@@ -2125,7 +2136,7 @@ function renderEvidenciaNapomenutia(){
     }
     return`<tr class="${_rowClass}"${_rowStyle}><td><strong>${w.person}</strong></td><td>${formatWarnDate(w.date)}</td><td>${_wpos}</td><td>${_reason}</td><td>${_zrusCell}</td><td><input type="text" value="${_note}" onchange="saveEvPoznamka('nap_${w.id}',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-size:11px;background:transparent"></td><td style="white-space:nowrap"><button class="btn btn-sm btn-secondary" onclick="editWarning('${w.id}')" style="margin-right:4px">Upraviť</button><button class="btn btn-sm btn-danger" onclick="deleteWarning('${w.id}')">&#x2715;</button></td></tr>`;
   });
-  el.innerHTML='<div class="table-wrap"><table><thead><tr><th>Meno</th><th>Dátum</th><th>Poz.</th><th>Za čo</th><th>Zrušené k</th><th>Poznámka</th><th></th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>';
+  el.innerHTML='<div class="table-wrap"><table><thead><tr><th>Meno</th>'+_evDateTh('nap')+'<th>Poz.</th><th>Za čo</th><th>Zrušené k</th><th>Poznámka</th><th></th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>';
 }
 function renderEvidenciaMesiaca(){
   const el=document.getElementById('ev-mesiac');if(!el)return;
@@ -2707,13 +2718,13 @@ function renderPrispevky(){
   // Skupina 2 — Faktúry (kvartálne, prvé hore)
   html+=renderPrispevkyFakt(year);
   // ===== KANCELÁRIE BA ===== (nadpis až po faktúrach)
-  html+='<div style="border-left:4px solid var(--green);padding:8px 14px;margin:26px 0 14px;background:#f4faf5;border-radius:0 8px 8px 0"><div style="font-weight:800;font-size:16px;color:var(--green-dark)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:6px"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="9" y1="7" x2="9.01" y2="7"></line><line x1="15" y1="7" x2="15.01" y2="7"></line><line x1="9" y1="11" x2="9.01" y2="11"></line><line x1="15" y1="11" x2="15.01" y2="11"></line><path d="M9 22v-4h6v4"></path></svg>Kancelárie BA</div><div style="font-size:12px;color:var(--gray3);margin-top:2px">Spravuje <strong>K. Veselská</strong></div><div style="font-size:12px;color:var(--gray3);margin-top:4px">Jednodňový prenájom: <strong>28 €</strong></div></div>';
+  html+='<div style="border-left:4px solid var(--green);padding:8px 14px;margin:26px 0 14px;background:#f4faf5;border-radius:0 8px 8px 0"><div style="font-weight:800;font-size:16px;color:var(--green-dark)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:6px"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="9" y1="7" x2="9.01" y2="7"></line><line x1="15" y1="7" x2="15.01" y2="7"></line><line x1="9" y1="11" x2="9.01" y2="11"></line><line x1="15" y1="11" x2="15.01" y2="11"></line><path d="M9 22v-4h6v4"></path></svg>Kancelárie BA</div><div style="font-size:12px;color:var(--gray3);margin-top:2px">Spravuje <strong>K. Veselská</strong></div><div style="font-size:12px;color:var(--gray3);margin-top:4px">Jednodňový prenájom: <strong>28 €</strong></div><div style="font-size:12px;color:var(--gray3);margin-top:2px">Prenájom na 1 meeting (max 3 h): <strong>9 €</strong></div></div>';
   // Skupina 3 — Fix preddavky BA
   html+=renderPrispevkyFixPreddavky(year);
   // Skupina 1 — Fix prenájom
   html+=renderPrispevkyFix(year);
   // ===== KANCELÁRIE TN =====
-  html+='<div style="border-left:4px solid var(--green);padding:8px 14px;margin:26px 0 14px;background:#f4faf5;border-radius:0 8px 8px 0"><div style="font-weight:800;font-size:16px;color:var(--green-dark)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:6px"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="9" y1="7" x2="9.01" y2="7"></line><line x1="15" y1="7" x2="15.01" y2="7"></line><line x1="9" y1="11" x2="9.01" y2="11"></line><line x1="15" y1="11" x2="15.01" y2="11"></line><path d="M9 22v-4h6v4"></path></svg>Kancelárie TN</div><div style="font-size:12px;color:var(--gray3);margin-top:2px">Spravuje <strong>K. Cucíková</strong></div><div style="font-size:12px;color:var(--gray3);margin-top:4px">Jednodňový prenájom: <strong>17 €</strong></div></div>';
+  html+='<div style="border-left:4px solid var(--green);padding:8px 14px;margin:26px 0 14px;background:#f4faf5;border-radius:0 8px 8px 0"><div style="font-weight:800;font-size:16px;color:var(--green-dark)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:6px"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="9" y1="7" x2="9.01" y2="7"></line><line x1="15" y1="7" x2="15.01" y2="7"></line><line x1="9" y1="11" x2="9.01" y2="11"></line><line x1="15" y1="11" x2="15.01" y2="11"></line><path d="M9 22v-4h6v4"></path></svg>Kancelárie TN</div><div style="font-size:12px;color:var(--gray3);margin-top:2px">Spravuje <strong>K. Cucíková</strong></div><div style="font-size:12px;color:var(--gray3);margin-top:4px">Jednodňový prenájom: <strong>17 €</strong></div><div style="font-size:12px;color:var(--gray3);margin-top:2px">Prenájom na 1 meeting (max 3 h): <strong>14 €</strong></div></div>';
   html+=renderPrispevkyTNNew(year);
   // Starý podielový model TN (do 30.6.2026) sa už nezobrazuje — dáta ostávajú uložené.
   c.innerHTML=html;
