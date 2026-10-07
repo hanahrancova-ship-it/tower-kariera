@@ -2523,7 +2523,9 @@ function teamForGroup(grp,year,q){
   for(const ex of excl){
     for(const n of Array.from(set)){if(_namesMatch(n,ex))set.delete(n);}
   }
-  for(const inc of (grp.teamInclude||[]))set.add(inc);
+  for(const inc of (grp.teamInclude||[])){
+    if(!Array.from(set).some(n=>_namesMatch(n,inc)))set.add(inc);
+  }
   // Ručné úpravy admina (uložené v prispevkyData) — platia pre všetky kvartály od úpravy:
   // pridaný člen sa počíta hneď celý Q, odobratý sa z výpočtu odpočíta.
   if(grp.id){
@@ -2534,7 +2536,12 @@ function teamForGroup(grp,year,q){
       if(!Array.from(set).some(n=>_namesMatch(n,a)))set.add(a);
     }
   }
-  return Array.from(set);
+  // Poistka: žiadne meno 2× (rôzne zápisy toho istého človeka) — FJ by sa inak počítali dvakrát
+  const out=[];
+  for(const n of set){
+    if(!out.some(x=>_namesMatch(x,n)))out.push(n);
+  }
+  return out;
 }
 // Úprava tímu skupiny fixných preddavkov (Dominik+Katka, Mišo Gallo):
 // základ je hierarchia z ranklistu, admin môže ľudí navyše PRIDAŤ alebo ODOBRAŤ.
@@ -2845,7 +2852,9 @@ function renderPrispevkyFakt(year){
       // spočítaj FJ tímu za Q (s prípadnou výnimkou na počet mesiacov)
       const specMonths=p.specialQ&&p.specialQ[year+'-Q'+q];
       let sumFJ=0;const _detail=[];
-      for(const member of p.team){
+      const _teamDedup=[];
+      for(const _m of (p.team||[])){if(!_teamDedup.some(x=>_namesMatch(x,_m)))_teamDedup.push(_m);}
+      for(const member of _teamDedup){
         let mv=0;
         if(specMonths){for(const mm of specMonths)mv+=ownFJForMonth(member,year+'-'+String(mm).padStart(2,'0'));}
         else mv=ownFJForQ(member,year,q);
