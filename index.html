@@ -455,6 +455,7 @@ i[class^="ti-"],i[class*=" ti-"]{font-style:normal;display:inline-flex;align-ite
     <div class="tab" onclick="switchEvidenciaTab('znizenia',this)">Zníženia</div>
     <div class="tab" onclick="switchEvidenciaTab('napomenutia',this)">Napomenutia</div>
     <div class="tab" onclick="switchEvidenciaTab('mesiac',this)">Vyhodnotenie mesiaca</div>
+    <div class="tab" onclick="switchEvidenciaTab('q',this)">Vyhodnotenie Q</div>
   </div>
   <div id="ev-tab-povysenia"><div id="ev-povysenia"><div class="empty"><div class="big"></div>Žiadne povýšenia.</div></div></div>
   <div id="ev-tab-znizenia" style="display:none"><div id="ev-znizenia"><div class="empty"><div class="big"></div>Žiadne zníženia.</div></div></div>
@@ -463,6 +464,7 @@ i[class^="ti-"],i[class*=" ti-"]{font-style:normal;display:inline-flex;align-ite
     <div id="ev-napomenutia"><div class="table-wrap"><table><thead><tr><th>Meno</th><th>Dátum</th><th>Poz.</th><th>Za čo</th><th>Zrušené k</th><th>Poznámka</th><th></th></tr></thead><tbody><tr class="eval-row-warn"><td><strong>Ing. Bibiana Gallová</strong></td><td>k 1. apríl 2026</td><td>–</td><td>Nesplnenie PB</td><td>–<br><button class="btn btn-sm btn-secondary" style="font-size:10px" onclick="openResolveModal('Ing. Bibiana Gallová')">Zrušiť</button></td><td><input type="text" value="" onchange="saveEvPoznamka('nap_1778441124340',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-size:11px;background:transparent"></td><td><button class="btn btn-sm btn-danger" onclick="deleteWarning('1778441124340')">✕</button></td></tr><tr class=""><td><strong>Ondrej Broska</strong></td><td>k 1. apríl 2026</td><td>–</td><td>Nesplnenie FJ</td><td>2026-05-10</td><td><input type="text" value="" onchange="saveEvPoznamka('nap_1778408118548',this.value)" style="width:100%;border:1px solid var(--gray2);border-radius:4px;padding:3px 6px;font-size:11px;background:transparent"></td><td><button class="btn btn-sm btn-danger" onclick="deleteWarning('1778408118548')">✕</button></td></tr></tbody></table></div></div>
   </div>
   <div id="ev-tab-mesiac" style="display:none"><div id="ev-mesiac"><div class="table-wrap"><table><thead><tr><th>Mesiac</th><th>Meno vítąza</th><th style="text-align:right">Vlastné FJ</th></tr></thead><tbody><tr><td>Apríl 2026</td><td><strong>Mgr. Kristína Mikulovská</strong> <span class="pos pos-tl">TL</span></td><td style="text-align:right">1088 FJ</td></tr><tr><td>Marec 2026</td><td><strong>Andrej Nejedlík</strong> <span class="pos pos-vip">VIP IV</span></td><td style="text-align:right">2059 FJ</td></tr><tr><td>Február 2026</td><td><strong>Dominik Lehocký</strong> <span class="pos pos-em">EM</span></td><td style="text-align:right">1140 FJ</td></tr><tr><td>Január 2026</td><td><strong>Mgr. Kristína Mikulovská</strong> <span class="pos pos-tl">TL</span></td><td style="text-align:right">986 FJ</td></tr></tbody></table></div></div></div>
+  <div id="ev-tab-q" style="display:none"><div id="ev-q"></div></div>
 </div>
 <div class="page" id="page-strateg">
   <div class="page-header"><h2>Strategický meeting</h2><p>FJ a provízie · len pre admin</p></div>
@@ -2044,11 +2046,12 @@ function renderEvidencia(){
   renderEvidenciaZnizenia();
   renderEvidenciaNapomenutia();
   renderEvidenciaMesiaca();
+  renderEvidenciaQ();
 }
 function switchEvidenciaTab(name,el){
   document.querySelectorAll('#ev-tabs .tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  ['povysenia','znizenia','napomenutia','mesiac'].forEach(t=>{
+  ['povysenia','znizenia','napomenutia','mesiac','q'].forEach(t=>{
     const d=document.getElementById('ev-tab-'+t);
     if(d)d.style.display=(t===name)?'block':'none';
   });
@@ -2147,6 +2150,157 @@ function renderEvidenciaMesiaca(){
     return best?`<tr><td>${imp.label}</td><td><strong>${best.name}</strong> <span class="pos ${posClass(best.pos)}">${best.pos}</span></td><td style="text-align:right">${best.ownFJ.toFixed(0)} FJ</td></tr>`:'';
   }).filter(Boolean);
   el.innerHTML=rows.length?'<div class="table-wrap"><table><thead><tr><th>Mesiac</th><th>Meno vítąza</th><th style="text-align:right">Vlastné FJ</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>':'<div class="empty">Žiadne dáta.</div>';
+}
+// ===== Vyhodnotenie Q =====
+// Recruiter: body z kvartálneho CRM exportu (CC = 8 b, VP = 3 b, IS = 1 b) — nahráva admin.
+// Export je hierarchický (odsadené mená): vedúci je v ňom raz ako súčet skupiny a raz odsadený
+// ako osoba — berie sa vždy NAJHLBŠIE odsadený riadok (osobné čísla), súčtové/skupinové riadky sa preskočia.
+// Obchodník: súčet vlastnej NETTO produkcie za kvartál z nahraných ranklistov.
+// Dáta sa ukladajú do crmData.qrecruit (kľúč 'crm' — bez zmeny worker.js).
+const EVQ_BODY={CC:8,VP:3,IS:1};
+let evQYear=null;
+function _evqStore(){ensureCrm();if(!crmData.qrecruit)crmData.qrecruit={};return crmData.qrecruit;}
+function renderEvidenciaQ(){
+  const el=document.getElementById('ev-q');if(!el)return;
+  const store=_evqStore();
+  let years=new Set([new Date().getFullYear()]);
+  for(const imp of (imports||[])){const y=parseInt(imp.key.slice(0,4));if(y)years.add(y);}
+  for(const k of Object.keys(store)){const y=parseInt(k.slice(0,4));if(y)years.add(y);}
+  years=[...years].filter(y=>y>=2026).sort();
+  if(!years.length)years=[new Date().getFullYear()];
+  if(!evQYear||!years.includes(evQYear))evQYear=years.includes(new Date().getFullYear())?new Date().getFullYear():years[years.length-1];
+  const isAdmin=(currentUserRole==='admin');
+  const esc=t=>String(t).replace(/"/g,'&quot;');
+  let html='<div style="display:flex;justify-content:flex-end;margin-bottom:12px"><label style="font-size:11px;color:var(--gray3);text-transform:uppercase;letter-spacing:0.5px;font-weight:600">Rok: <select onchange="evQYear=parseInt(this.value);renderEvidencia();" style="padding:6px 9px;border:1px solid var(--gray2);border-radius:6px;font-family:var(--font-mono);font-size:12px">'+years.map(y=>'<option'+(y===evQYear?' selected':'')+'>'+y+'</option>').join('')+'</select></label></div>';
+  html+='<div class="table-wrap"><table><thead><tr><th style="min-width:120px"></th>';
+  for(let q=1;q<=4;q++)html+='<th style="min-width:170px">Q'+q+' '+evQYear+'</th>';
+  html+='</tr></thead><tbody>';
+  // --- Recruiter Q ---
+  html+='<tr><td style="font-weight:800;color:var(--green-dark)">Recruiter Q<div style="font-size:9px;font-weight:600;color:var(--gray3)">CC 8 b · VP 3 b · IS 1 b</div></td>';
+  for(let q=1;q<=4;q++){
+    const key=evQYear+'-Q'+q;
+    const data=store[key];
+    let cell;
+    if(data&&data.counts&&Object.keys(data.counts).length){
+      const rank=Object.entries(data.counts).map(([n,c])=>({n,c,b:(c.CC||0)*EVQ_BODY.CC+(c.VP||0)*EVQ_BODY.VP+(c.IS||0)*EVQ_BODY.IS})).sort((a,b)=>b.b-a.b);
+      const top=rank[0];
+      const winners=rank.filter(r=>r.b===top.b&&r.b>0);
+      if(winners.length){
+        cell=winners.map(w=>{
+          const tip=w.n+' — Q'+q+' '+evQYear+':\n'+(w.c.CC||0)+'× CC = '+((w.c.CC||0)*EVQ_BODY.CC)+' b\n'+(w.c.VP||0)+'× VP = '+((w.c.VP||0)*EVQ_BODY.VP)+' b\n'+(w.c.IS||0)+'× IS = '+((w.c.IS||0)*EVQ_BODY.IS)+' b\nSPOLU: '+w.b+' bodov';
+          return '<div data-tip="'+esc(tip)+'" onmousemove="stratTipMove(event,this)" onmouseleave="stratTipHide()" style="cursor:help">🏆 <strong>'+w.n+'</strong><div style="font-size:10px;color:var(--gray3)">'+w.b+' bodov</div></div>';
+        }).join('');
+      }else cell='<span style="color:var(--gray3)">nikto bez bodov</span>';
+      cell+='<div style="font-size:9px;color:#0e6b27;margin-top:3px">✓ export nahratý'+(data.uploadedAt?' '+formatDate(data.uploadedAt.slice(0,10)):'')+'</div>';
+    }else cell='<span style="color:var(--gray3)">–</span>';
+    if(isAdmin)cell+='<div style="margin-top:4px"><button class="btn btn-secondary btn-sm tf-admin-only" style="font-size:9px;padding:2px 8px" onclick="evQUpload('+evQYear+','+q+')">'+(data?'↻ Nahrať znova':'Nahrať CRM export')+'</button></div>';
+    html+='<td style="vertical-align:top">'+cell+'</td>';
+  }
+  html+='</tr>';
+  // --- Obchodník Q ---
+  html+='<tr><td style="font-weight:800;color:var(--green-dark)">Obchodník Q<div style="font-size:9px;font-weight:600;color:var(--gray3)">netto produkcia za Q</div></td>';
+  for(let q=1;q<=4;q++){
+    const sums={};let any=false;
+    for(let m=(q-1)*3+1;m<=q*3;m++){
+      const imp=(imports||[]).find(i2=>i2.key===evQYear+'-'+String(m).padStart(2,'0'));
+      if(!imp)continue;
+      for(const p of (imp.people||[])){
+        const k2=Object.keys(sums).find(x=>_namesMatch(x,p.name))||p.name;
+        sums[k2]=(sums[k2]||0)+(p.ownFJ||0);any=true;
+      }
+    }
+    let cell;
+    if(any){
+      const rank=Object.entries(sums).map(([n,v])=>({n,v})).sort((a,b)=>b.v-a.v);
+      const top=rank[0];
+      const tip=top.n+' — Q'+q+' '+evQYear+':\nVlastné NETTO FJ za kvartál: '+Math.round(top.v).toLocaleString('sk-SK')+' FJ';
+      cell='<div data-tip="'+esc(tip)+'" onmousemove="stratTipMove(event,this)" onmouseleave="stratTipHide()" style="cursor:help">🏆 <strong>'+top.n+'</strong><div style="font-size:10px;color:var(--gray3)">'+Math.round(top.v).toLocaleString('sk-SK')+' FJ netto</div></div>';
+    }else cell='<span style="color:var(--gray3)">–</span>';
+    html+='<td style="vertical-align:top">'+cell+'</td>';
+  }
+  html+='</tr></tbody></table></div>';
+  el.innerHTML=html;
+}
+// Nahratie kvartálneho CRM exportu (XLSX/CSV) pre Recruitera
+function evQUpload(year,q){
+  if(currentUserRole!=='admin')return;
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='.csv,.xlsx,.xls';
+  inp.onchange=function(){
+    const file=inp.files&&inp.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        const wb=XLSX.read(e.target.result,{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false});
+        const res=evQParse(rows);
+        if(!res||!Object.keys(res.counts).length){alert('V súbore sa nepodarilo nájsť stĺpce IS/VP/CC a mená.\nJe to rovnaký export ako vzor (statistics-table)?');return;}
+        const rank=Object.entries(res.counts).map(([n,c])=>({n,b:(c.CC||0)*EVQ_BODY.CC+(c.VP||0)*EVQ_BODY.VP+(c.IS||0)*EVQ_BODY.IS})).sort((a,b)=>b.b-a.b);
+        const top=rank[0];
+        if(!confirm('Q'+q+' '+year+': načítaných '+rank.length+' osôb.\nNajlepší: '+(top?top.n+' ('+top.b+' b)':'–')+'\n\nUložiť?'))return;
+        _evqStore()[year+'-Q'+q]={counts:res.counts,uploadedAt:new Date().toISOString()};
+        saveCrm();
+        renderEvidencia();
+        showToast('Recruiter Q'+q+' '+year+' uložený.','success');
+      }catch(err){alert('Súbor sa nepodarilo načítať: '+err.message);}
+    };
+    reader.readAsArrayBuffer(file);
+  };
+  inp.click();
+}
+// Parser CRM exportu "Nábor": hlavičkový riadok s IS/VP/CC, stĺpec mien s odsadením (hierarchia).
+// Osoba s tímom je v exporte 2×: ako súčet skupiny a hlbšie odsadená ako ona sama —
+// berie sa najhlbšie odsadený výskyt. Súčtové riadky (SÚČET, TOWER POOL, …priama) sa preskočia.
+function evQParse(rows){
+  if(!rows||!rows.length)return null;
+  const TYPES=['CC','VP','IS'];
+  const normU=v=>String(v==null?'':v).trim().toUpperCase();
+  const normH=t=>String(t==null?'':t).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+  // hlavičkový riadok = prvý s aspoň 2 z hodnôt CC/VP/IS
+  let hdrRow=-1;const tCols={CC:-1,VP:-1,IS:-1};
+  for(let ri=0;ri<Math.min(rows.length,10);ri++){
+    const r=rows[ri]||[];
+    const found={};
+    r.forEach((cel,ci)=>{const u=normU(cel);if(TYPES.includes(u))found[u]=ci;});
+    if(Object.keys(found).length>=2){hdrRow=ri;TYPES.forEach(t=>{if(found[t]!==undefined)tCols[t]=found[t];});break;}
+  }
+  if(hdrRow<0)return null;
+  const typeIdxs=Object.values(tCols).filter(c=>c>=0);
+  // stĺpec mien: prvý stĺpec pod hlavičkou s textami, ktorý nie je typový
+  let nameCol=-1;
+  const maxCols=Math.max(...rows.map(r=>(r||[]).length),1);
+  for(let c=0;c<maxCols;c++){
+    if(typeIdxs.includes(c))continue;
+    let texts=0;
+    for(const r of rows.slice(hdrRow+1)){
+      const v=String((r||[])[c]==null?'':r[c]);
+      if(v.trim()&&isNaN(parseFloat(v.trim().replace(',','.'))))texts++;
+    }
+    if(texts>=3){nameCol=c;break;}
+  }
+  if(nameCol<0)return null;
+  // zozbieraj riadky: meno + odsadenie + počty; skupinové/súčtové preskoč
+  const recs={};// normMeno -> {name,indent,c:{CC,VP,IS}}
+  for(const r of rows.slice(hdrRow+1)){
+    const raw=String((r||[])[nameCol]==null?'':r[nameCol]);
+    const nm=raw.trim();
+    if(!nm)continue;
+    const nh=normH(nm);
+    if(nh.includes('sucet')||nh.includes('spolu')||nh.includes('pool')||nh.includes('priama'))continue;
+    const indent=raw.length-raw.replace(/^[\s ]+/,'').length;
+    const c={CC:0,VP:0,IS:0};
+    for(const t of TYPES){
+      if(tCols[t]<0)continue;
+      c[t]=parseFloat(String((r||[])[tCols[t]]).replace(',','.'))||0;
+    }
+    const keyN=Object.keys(recs).find(x=>_namesMatch(recs[x].name,nm))||nh;
+    // najhlbšie odsadenie = osobné čísla (nie súčet skupiny); pri rovnakom odsadení ber posledný výskyt
+    if(!recs[keyN]||indent>=recs[keyN].indent)recs[keyN]={name:nm,indent,c};
+  }
+  const counts={};
+  for(const k in recs)counts[recs[k].name]=recs[k].c;
+  return {counts};
 }
 function saveEvPoznamka(key,val){evidenciaPoznamky[key]=val;tfSave('tf_ev_poznamky',evidenciaPoznamky);}
 function deletePoziciaRow(name,idx){
